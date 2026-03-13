@@ -1,0 +1,76 @@
+Version 2.2.1  [2025-09-29]
+
+  *  Fixed the check for asymmetric cores in isolate-check-environment.
+
+Version 2.2  [2025-09-01]
+
+  *  Switched to a new kernel API for setting filesystem quotas,
+     which works with more filesystems (e.g., tmpfs).
+
+  *  Wall-clock time is reported correctly even if the system
+     clock is re-set during program execution.
+
+Version 2.1.2  [2025-08-14]
+
+  *  Build date and commit are recorded in built binaries only
+     when building from a Git checkout.
+
+Version 2.1.1  [2025-08-14]
+
+  *  isolate-check-environment checks for asymmetric cores.
+
+  *  By mistake, isolate was compiled without optimization.
+     Added -O2 to CFLAGS.
+
+  *  Added packaging for Debian Trixie on both amd64 and arm64.
+
+Version 2.1  [2025-06-08]
+
+  •  There are official packages for Debian Bookworm (amd64, arm64)
+     and last two LTS releases of Ubuntu (amd64 only). Packaged Isolate
+     takes care of starting systemd services properly. It is available
+     only to users that are members of "isolate" group.
+
+  •  Unit files for systemd are installed by default.
+
+  •  Cgroup-based timing works when --run is used multiple times
+     on the same sandbox.
+
+  •  Added manual pages for isolate-cg-keeper and isolate-check-environment.
+     The man page for isolate explains more about cgroups and containers.
+
+  •  isolate-check-environment checks presence of simultaneous
+     multi-threading.
+
+  •  All binaries are compiled with security hardening flags.
+
+  •  Minor bug fixes.
+
+Version 2.0  [2024-02-28]
+
+  •  This version runs only on systems supporting CGroup v2, which are
+     basically all new Linux systems. If you need to stick with CGroup v1,
+     please use Isolate 1.10.1.
+
+  •  If you are running systemd, Isolate now comes with isolate.service
+     that delegates a subtree of the cgroup hierarchy to Isolate.
+     On systems without systemd, you have to set up the delegation
+     yourself and set its root in Isolate's configuration file.
+
+  •  The --cg-timing switch has been removed. In control group mode,
+     this mode of timing is always used.
+
+  •  Added a simple protocol for locking sandboxes. When a sandbox is
+     initialized using "isolate --init", it is reserved for the calling
+     user until "isolate --cleanup" is used. It is also not allowed
+     to call "isolate --run" multiple times in parallel on the same box.
+
+  •  "isolate --init" resets the sandbox if it already existed.
+
+  •  Root can operate sandboxes on behalf of other users using
+     --as-uid and --as-gid options.
+
+  •  Configuration can specify than only root is allowed to create new
+     sandboxes. Together with the previous feature, it allows for creation
+     of system-wide daemons allocating sandboxes to users. One such daemon
+     will probably appear in a future release of Isolate.

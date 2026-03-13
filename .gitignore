@@ -1,0 +1,22 @@
+cat << 'EOF' > .gitignore
+# ==== Node.js & Frontend ====
+node_modules/
+.next/
+out/
+build/
+.env*.local
+
+# ==== C++ Backend ====
+backend/build/
+backend/CMakeCache.txt
+backend/CMakeFiles/
+*.o
+*.out
+
+# ==== IDE & OS ====
+.vscode/
+.DS_Store
+
+# ==== Third-party & Tests ====
+nexttest/node_modules/
+EOF
