@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+// 配置 Inter 字体并生成 CSS 变量供 Tailwind 使用
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "600", "800"],
+  variable: "--font-inter", 
+});
 
 export const metadata: Metadata = {
-  title: "C++ Playground Blog",
-  description: "Interactive C++ learning platform",
+  title: "Personal Log | Life, Tech, & Learning",
 };
 
 export default function RootLayout({
@@ -15,18 +19,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
-      <body className={`${inter.className} bg-gray-950 text-gray-100 min-h-screen`}>
-        <nav className="w-full border-b border-gray-800 p-4">
-          <div className="max-w-4xl mx-auto flex justify-between items-center">
-            <a href="/" className="text-xl font-bold tracking-tighter hover:text-blue-400 transition-colors">
-              DevBlog_
-            </a>
-          </div>
-        </nav>
-        <main className="max-w-4xl mx-auto p-6">
-          {children}
-        </main>
+    <html lang="en" className="dark">
+      {/* 注入字体变量及全局基础类名 */}
+      <body className={`${inter.variable} font-sans selection:bg-brand selection:text-white`}>
+        {children}
       </body>
     </html>
   );
