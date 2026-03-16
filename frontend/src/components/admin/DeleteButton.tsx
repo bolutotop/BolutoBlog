@@ -10,7 +10,6 @@ export default function DeleteButton({ id, title }: { id: string, title: string 
   const handleDelete = () => {
     if (!window.confirm(`确定要永久删除文章 "${title}" 吗？此操作不可逆。`)) return;
 
-    // 使用 transition 包裹 Server Action 调用
     startTransition(async () => {
       const result = await deletePostAction(id);
       if (!result.success) {
@@ -24,9 +23,10 @@ export default function DeleteButton({ id, title }: { id: string, title: string 
       onClick={handleDelete}
       disabled={isPending}
       title="删除"
-      className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors disabled:opacity-50"
+      className="flex items-center gap-1 text-red-500 hover:text-red-700 transition-colors disabled:opacity-50 font-medium text-xs"
     >
-      <TrashIcon className="w-5 h-5" />
+      <TrashIcon className="w-4 h-4" />
+      删除
     </button>
   );
 }

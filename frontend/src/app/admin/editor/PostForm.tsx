@@ -131,10 +131,10 @@ export default function PostForm({ initialPost }: PostFormProps) {
     <div className="max-w-5xl mx-auto space-y-8 pb-20 mt-8">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/admin" className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">
-            <ArrowLeftIcon className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+          <Link href="/admin" className="p-2 rounded-full hover:bg-zinc-100  transition">
+            <ArrowLeftIcon className="w-5 h-5 text-zinc-600 " />
           </Link>
-          <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-3xl font-black text-zinc-900 ">
             {isEditMode ? '编辑文章' : '写新文章'}
           </h1>
         </div>
@@ -151,7 +151,7 @@ export default function PostForm({ initialPost }: PostFormProps) {
                <button 
                  type="button"
                  onClick={handleClearDraft} 
-                 className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition" 
+                 className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50  rounded-full transition" 
                  title="清空草稿"
                >
                  <TrashIcon className="w-5 h-5" />
@@ -161,7 +161,7 @@ export default function PostForm({ initialPost }: PostFormProps) {
             <button
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className="px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full font-bold hover:scale-105 active:scale-95 transition disabled:opacity-50"
+                className="px-6 py-2.5 bg-black  text-white  rounded-full font-bold hover:scale-105 active:scale-95 transition disabled:opacity-50"
             >
                 {isLoading ? '保存中...' : (isEditMode ? '更新文章' : '发布文章')}
             </button>
@@ -177,7 +177,7 @@ export default function PostForm({ initialPost }: PostFormProps) {
                         name="title"
                         value={formData.title}
                         onChange={handleChange}
-                        className="w-full text-lg font-bold px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full text-lg font-bold px-4 py-3 rounded-xl border border-zinc-200  bg-white  outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Article Title"
                         required
                     />
@@ -188,7 +188,7 @@ export default function PostForm({ initialPost }: PostFormProps) {
                         name="slug"
                         value={formData.slug}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 outline-none font-mono text-sm"
+                        className="w-full px-4 py-2 rounded-xl border border-zinc-200  bg-white  outline-none font-mono text-sm"
                         placeholder="为空时将根据标题自动生成"
                     />
                 </div>
@@ -204,7 +204,7 @@ export default function PostForm({ initialPost }: PostFormProps) {
                             value={formData.category}
                             onChange={handleChange}
                             placeholder="e.g. Tech/React, Life"
-                            className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white  outline-none focus:ring-2 focus:ring-blue-500"
                             required
                         />
                     </div>
@@ -214,7 +214,7 @@ export default function PostForm({ initialPost }: PostFormProps) {
                             name="published"
                             value={formData.published}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 rounded-xl border border-zinc-200  bg-white  outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="false">📝 存为草稿</option>
                             <option value="true">✅ 正式发布</option>
@@ -227,7 +227,7 @@ export default function PostForm({ initialPost }: PostFormProps) {
                         name="coverImage"
                         value={formData.coverImage}
                         onChange={handleChange}
-                        className="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 outline-none text-sm"
+                        className="w-full px-4 py-2 rounded-xl border border-zinc-200  bg-white outline-none text-sm"
                         placeholder="https://..."
                     />
                 </div>

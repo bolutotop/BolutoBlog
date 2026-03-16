@@ -1,44 +1,66 @@
-import Link from 'next/link';
-import { DocumentTextIcon, PhotoIcon } from '@heroicons/react/24/outline';
+"use client";
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { 
+  DocumentTextIcon, 
+  PencilSquareIcon, 
+  PhotoIcon
+} from '@heroicons/react/24/outline';
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
+  // 只保留三个核心菜单
+  const menuItems = [
+    { name: '文章列表', href: '/admin', icon: DocumentTextIcon },
+    { name: '新建/编辑', href: '/admin/editor', icon: PencilSquareIcon },
+    { name: '媒体图库', href: '/admin/gallery', icon: PhotoIcon },
+  ];
+
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <div className="h-full px-4 py-6 overflow-y-auto">
-          <h2 className="px-2 mb-6 text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-            Admin Panel
-          </h2>
-          <ul className="space-y-2 font-medium text-sm">
-            <li>
+    <div className="flex h-screen bg-[#f8f9fa] text-gray-900 font-sans">
+      <aside className="w-[240px] bg-white border-r border-gray-100 flex flex-col flex-shrink-0 relative z-10 shadow-[2px_0_8px_-4px_rgba(0,0,0,0.05)]">
+        <div className="h-20 flex items-center px-8 border-b border-gray-50">
+          <span className="text-xl font-black tracking-tight">Censi.</span>
+          <span className="text-xl font-bold text-gray-400">Admin</span>
+        </div>
+
+        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+          {menuItems.map((item) => {
+            const isActive = pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/admin');
+            return (
               <Link 
-                href="/admin" 
-                className="flex items-center gap-3 p-2 text-gray-900 rounded-md dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                key={item.name}
+                href={item.href} 
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all ${
+                  isActive 
+                    ? 'bg-black text-white shadow-md' 
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                }`}
               >
-                <DocumentTextIcon className="w-5 h-5" />
-                文章管理
+                <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                {item.name}
               </Link>
-            </li>
-            {/* 新增图库入口 */}
-            <li>
-              <Link 
-                href="/admin/gallery" 
-                className="flex items-center gap-3 p-2 text-gray-900 rounded-md dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <PhotoIcon className="w-5 h-5" />
-                图库管理
-              </Link>
-            </li>
-          </ul>
+            );
+          })}
+        </nav>
+
+        <div className="p-4">
+          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl border border-gray-100">
+            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
+              A
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-gray-900 leading-tight">Admin User</span>
+              <span className="text-[10px] text-gray-400 font-medium">Super Administrator</span>
+            </div>
+          </div>
         </div>
       </aside>
 
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className="max-w-6xl mx-auto">
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-8 lg:p-12 max-w-[1200px] mx-auto">
           {children}
         </div>
       </main>

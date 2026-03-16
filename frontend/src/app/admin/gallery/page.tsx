@@ -124,16 +124,16 @@ const handleCopy = async (url: string) => {
   return (
     <div className="max-w-7xl mx-auto min-h-screen pb-20">
       
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white dark:bg-zinc-900 p-6 rounded-3xl shadow-sm border border-zinc-100 dark:border-zinc-800">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white  p-6 rounded-3xl shadow-sm border border-zinc-100 ">
         <div>
-          <h1 className="text-2xl font-black text-zinc-900 dark:text-zinc-100">图库大脑</h1>
+          <h1 className="text-2xl font-black text-zinc-900 ">图库大脑</h1>
           <p className="text-zinc-500 text-sm mt-1">管理全站资源文件 ({images.length})</p>
         </div>
 
         <div className="flex gap-3">
           <button 
             onClick={fetchImages} 
-            className="p-2.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition text-zinc-600"
+            className="p-2.5 rounded-full hover:bg-zinc-100  transition text-zinc-600"
             title="刷新列表"
           >
             <ArrowPathIcon className={`w-6 h-6 ${loading ? 'animate-spin' : ''}`} />
@@ -142,7 +142,7 @@ const handleCopy = async (url: string) => {
           <button 
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="flex items-center gap-2 px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full font-bold hover:scale-105 active:scale-95 transition"
+            className="flex items-center gap-2 px-6 py-2.5 bg-black  text-white  rounded-full font-bold hover:scale-105 active:scale-95 transition"
           >
             {uploading ? (
                <span className="animate-pulse">上传中...</span>
@@ -172,7 +172,7 @@ const handleCopy = async (url: string) => {
           {images.map((img) => (
             <div 
               key={img.name} 
-              className="group relative aspect-square bg-zinc-100 dark:bg-zinc-800/50 rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 hover:shadow-lg transition-all"
+              className="group relative aspect-square bg-zinc-100  rounded-2xl overflow-hidden border border-zinc-200  hover:shadow-lg transition-all"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
@@ -199,7 +199,7 @@ const handleCopy = async (url: string) => {
 
                 <button 
                   onClick={() => handleCopy(img.url)}
-                  className="w-full py-2 bg-white/90 dark:bg-black/80 backdrop-blur-md rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-white text-zinc-900 dark:text-zinc-100 transition"
+                  className="w-full py-2 bg-white/90  backdrop-blur-md rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-white text-zinc-900 transition"
                 >
                   {copied === img.url ? (
                     <>
