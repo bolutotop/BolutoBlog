@@ -20,3 +20,14 @@ backend/CMakeFiles/
 # ==== Third-party & Tests ====
 nexttest/node_modules/
 EOF
+
+
+# --- SQLite Database ---
+frontend/prisma/*.db
+frontend/prisma/*.db-journal
+
+# --- User Uploads ---
+frontend/uploads/
+!frontend/uploads/.gitkeep  # 保留空目录结构，但忽略内容
+
+

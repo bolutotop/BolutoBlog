@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
-// 配置 Inter 字体并生成 CSS 变量供 Tailwind 使用
 const inter = Inter({
   subsets: ["latin"],
   weight: ["300", "400", "600", "800"],
@@ -10,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Personal Log | Life, Tech, & Learning",
+  title: "Boluto's Dev Log",
 };
 
 export default function RootLayout({
@@ -19,9 +18,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      {/* 注入字体变量及全局基础类名 */}
-      <body className={`${inter.variable} font-sans selection:bg-brand selection:text-white`}>
+    // 🔴 核心修复：添加 suppressHydrationWarning 忽略插件注入的 class
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans selection:bg-blue-600 selection:text-white bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100`}>
         {children}
       </body>
     </html>

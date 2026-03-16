@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String
+  // 修改：移除 Tag 关联，改用字符串直接存储
+  // 示例值: "Tech/React, Life"
+  category    String?  
+  published   Boolean  @default(false)
+  coverImage  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 注意：如果不再需要 Tag 模型，可以将其删除。
+// 如果保留 Tag 模型，必须移除其中与 Post 的关联字段 posts，否则 Prisma 会报错。
+model Tag {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  
+  parentId  String?
+  parent    Tag?     @relation("TagHierarchy", fields: [parentId], references: [id])
+  children  Tag[]    @relation("TagHierarchy")
+  
+  // 移除原来的 posts 关联，因为 Post 模型已经不再引用它
+}
