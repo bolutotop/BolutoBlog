@@ -126,12 +126,12 @@ const handleCopy = async (url: string) => {
       
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 bg-white  p-6 rounded-3xl shadow-sm border border-zinc-100 ">
         <div>
-          <h1 className="text-2xl font-black text-zinc-900 ">图库大脑</h1>
+          <h1 className="text-2xl font-black text-zinc-900 ">媒体库</h1>
           <p className="text-zinc-500 text-sm mt-1">管理全站资源文件 ({images.length})</p>
         </div>
 
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={fetchImages} 
             className="p-2.5 rounded-full hover:bg-zinc-100  transition text-zinc-600"
             title="刷新列表"

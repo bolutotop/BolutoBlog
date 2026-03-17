@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Boluto's Dev Log",
+  title: "ZHIHUI Dev Log",
 };
 
 export default function RootLayout({
@@ -18,9 +18,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // 🔴 核心修复：添加 suppressHydrationWarning 忽略插件注入的 class
-    <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans selection:bg-blue-600 selection:text-white bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100`}>
+    // 🔴 核心修复：移除 dark: 类名，suppressHydrationWarning 忽略插件注入的 class
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans selection:bg-black selection:text-white bg-white text-gray-900`}>
         {children}
       </body>
     </html>
