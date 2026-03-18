@@ -110,7 +110,7 @@ export default function BlogPostClientWrapper({ post }: BlogPostProps) {
       // 3. 当正文到达屏幕中间时，仅隐藏右侧日历，TOC 从右侧滑入！
       ScrollTrigger.create({
         trigger: '.article-body',
-        start: 'top 50%',
+        start: 'top 150px',
         onEnter: () => {
           document.getElementById('showcase-root')?.classList.add('hide-right-sidebar');
           gsap.to('.toc-sidebar', { x: 0, opacity: 1, pointerEvents: 'auto', duration: 0.6, ease: 'expo.out' });
