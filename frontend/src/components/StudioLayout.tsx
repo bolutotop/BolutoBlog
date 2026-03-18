@@ -7,6 +7,9 @@ import { getCalendarPostsAction } from '@/app/actions';
 
 import { ReactLenis } from '@studio-freight/react-lenis';
 
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
   const [dateInfo, setDateInfo] = useState({ day: '--', month: '--- 202X' });
   const [activeModal, setActiveModal] = useState<any | null>(null);
@@ -118,19 +121,20 @@ useEffect(() => {
     const fetchCalendarPosts = async () => {
       const res = await getCalendarPostsAction();
       if (res.success && res.posts) {
-        const dataMap: Record<number, any> = {};
+        // 👉 2. 修改：将类型改为 any[] 数组，以容纳同一天的多篇文章
+        const dataMap: Record<number, any[]> = {}; 
         res.posts.forEach((post: any) => {
           const postDate = new Date(post.createdAt);
-          // 如果文章是当前这个月发布的，提取它的日期 (几号)
           if (postDate.getFullYear() === year && postDate.getMonth() === month) {
             const day = postDate.getDate();
-            // 存入 Map
-            dataMap[day] = {
+            // 👉 3. 修改：如果这一天还没数据，先初始化为空数组；然后把文章 push 进去
+            if (!dataMap[day]) dataMap[day] = [];
+            dataMap[day].push({
               title: post.title,
               slug: post.slug,
               date: postDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-              excerpt: post.content.substring(0, 100) + '...', // 截取简介
-            };
+              excerpt: post.content.substring(0, 150) + '...', // 稍微加长一点字数，留给 Markdown 渲染
+            });
           }
         });
         setCalendarData(dataMap);
@@ -350,7 +354,7 @@ useEffect(() => {
                   </div>
                 </div>
 
-                {/* 移动端专属 Modal 弹窗 */}
+ {/* 移动端专属 Modal 弹窗 */}
                 {activeModal && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
                     <div 
@@ -359,32 +363,43 @@ useEffect(() => {
                     />
                     
                     <div className={`relative w-full max-w-sm bg-[var(--sc-bg)] sc-border border p-6 shadow-2xl ${isClosing ? 'animate-panel-exit' : 'animate-panel-enter'}`}>
+                      {/* 👉 顶部日期栏，取数组第一篇的日期即可 */}
                       <div className="flex justify-between items-start mb-5 sc-border border-b pb-3">
-                         <div className="font-mono text-[10px] font-bold opacity-50 uppercase tracking-widest">{activeModal.date}</div>
+                         <div className="font-mono text-[10px] font-bold opacity-50 uppercase tracking-widest">{activeModal[0].date}</div>
                          <button onClick={handleCloseModal} className="text-[10px] font-black uppercase active:opacity-50 transition-opacity p-2 -mr-2 -mt-2">
                            [ Close ]
                          </button>
                       </div>
                       
-                      <h2 className="text-xl font-black uppercase tracking-tighter leading-tight mb-3">{activeModal.title}</h2>
-                      <p className="text-xs font-bold leading-relaxed opacity-80 mb-6">{activeModal.excerpt}</p>
-                      
-                      <Link 
-                        href={`/blog/${activeModal.slug}`}
-                        onMouseMove={handleMouseMove}
-                        className="group relative overflow-hidden flex items-center justify-between bg-[var(--sc-inverse-bg)] px-5 py-4 active:scale-95 transition-transform isolate w-full"
-                      >
-                        <span className="relative z-10 font-black text-[10px] uppercase tracking-widest text-[var(--sc-inverse-text)] transition-colors duration-300 group-hover:text-transparent">Read Log</span>
-                        <span className="relative z-10 font-black text-[10px] text-[var(--sc-inverse-text)] group-hover:translate-x-1 transition-transform">→</span>
-                        
-                        <div 
-                          className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-between px-5 group-hover:animate-[rippleSpread_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]"
-                          style={{ clipPath: 'circle(0% at var(--x, 50%) var(--y, 50%))' }}
-                        >
-                          <span className="font-black text-[10px] uppercase tracking-widest text-[var(--sc-text)]">Read Log</span>
-                          <span className="font-black text-[10px] text-[var(--sc-text)] group-hover:translate-x-1 transition-transform">→</span>
-                        </div>
-                      </Link>
+                      {/* 👉 新增：滚动容器，支持多篇文章 */}
+                      <div className="flex flex-col gap-8 max-h-[60vh] overflow-y-auto hide-scrollbar">
+                        {activeModal.map((post: any, idx: number) => (
+                          <div key={idx} className="flex flex-col">
+                            <h2 className="text-xl font-black uppercase tracking-tighter leading-tight mb-3">{post.title}</h2>
+                            {/* 👉 替换：使用 ReactMarkdown 渲染简介，并强制一些基础排版 */}
+                            <div className="text-xs font-bold leading-relaxed opacity-80 mb-6 [&>p]:mb-2 [&>h1]:text-sm [&>h2]:text-sm [&>h3]:text-sm [&_*]:!text-xs">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.excerpt}</ReactMarkdown>
+                            </div>
+                            
+                            <Link 
+                              href={`/blog/${post.slug}`}
+                              onMouseMove={handleMouseMove}
+                              className="group relative overflow-hidden flex items-center justify-between bg-[var(--sc-inverse-bg)] px-5 py-4 active:scale-95 transition-transform isolate w-full"
+                            >
+                              <span className="relative z-10 font-black text-[10px] uppercase tracking-widest text-[var(--sc-inverse-text)] transition-colors duration-300 group-hover:text-transparent">Read Log</span>
+                              <span className="relative z-10 font-black text-[10px] text-[var(--sc-inverse-text)] group-hover:translate-x-1 transition-transform">→</span>
+                              
+                              <div 
+                                className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-between px-5 group-hover:animate-[rippleSpread_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]"
+                                style={{ clipPath: 'circle(0% at var(--x, 50%) var(--y, 50%))' }}
+                              >
+                                <span className="font-black text-[10px] uppercase tracking-widest text-[var(--sc-text)]">Read Log</span>
+                                <span className="font-black text-[10px] text-[var(--sc-text)] group-hover:translate-x-1 transition-transform">→</span>
+                              </div>
+                            </Link>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -475,6 +490,7 @@ useEffect(() => {
                 })}
               </div>
               
+ {/* PC端专属 Modal 弹窗 */}
               {activeModal && (
                 <>
                   <div 
@@ -482,34 +498,49 @@ useEffect(() => {
                     onClick={handleCloseModal} 
                   />
                   
-                  <div className={`absolute top-0 right-[110%] w-80 2xl:w-96 bg-[var(--sc-bg)] sc-border border p-6 2xl:p-8 shadow-2xl z-50 pointer-events-auto ${isClosing ? 'animate-panel-exit' : 'animate-panel-enter'}`}>
+                  <div className={`absolute top-0 right-[110%] w-80 2xl:w-96 bg-[var(--sc-bg)] sc-border border p-6 2xl:p-8 shadow-2xl z-50 pointer-events-auto flex flex-col h-auto max-h-[90vh] ${isClosing ? 'animate-panel-exit' : 'animate-panel-enter'}`}>
                     
-                    <div className="flex justify-between items-start mb-5 sc-border border-b pb-3">
-                       <div className="font-mono text-[10px] 2xl:text-xs font-bold opacity-50 uppercase tracking-widest">{activeModal.date}</div>
+                    {/* 👉 日期取第一篇 */}
+                    <div className="flex justify-between items-start mb-5 sc-border border-b pb-3 shrink-0">
+                       <div className="font-mono text-[10px] 2xl:text-xs font-bold opacity-50 uppercase tracking-widest">{activeModal[0].date}</div>
                        <button onClick={handleCloseModal} className="text-[10px] 2xl:text-xs font-black uppercase hover:opacity-50 transition-opacity">
                          [ Close ]
                        </button>
                     </div>
                     
-                    <h2 className="text-xl 2xl:text-2xl font-black uppercase tracking-tighter leading-tight mb-3">{activeModal.title}</h2>
-                    <p className="text-xs 2xl:text-sm font-bold leading-relaxed opacity-80 mb-6">{activeModal.excerpt}</p>
-                    
-                    <Link 
-                      href={`/blog/${activeModal.slug}`}
-                      onMouseMove={handleMouseMove}
-                      className="group relative overflow-hidden flex items-center justify-between bg-[var(--sc-inverse-bg)] px-5 py-3 transition-transform hover:scale-105 active:scale-95 duration-500 isolate w-full"
-                    >
-                      <span className="relative z-10 font-black text-[10px] 2xl:text-xs uppercase tracking-widest text-[var(--sc-inverse-text)] transition-colors duration-300 group-hover:text-transparent">Read Log</span>
-                      <span className="relative z-10 font-black text-[10px] 2xl:text-xs text-[var(--sc-inverse-text)] group-hover:translate-x-1 transition-transform">→</span>
+                    {/* 👉 滚动容器支持多篇 */}
+                    <div className="flex flex-col gap-10 overflow-y-auto hide-scrollbar pb-4">
+                      {activeModal.map((post: any, idx: number) => (
+                        <div key={idx} className="flex flex-col relative">
+                          {/* 分割线（如果有多篇） */}
+                          {idx > 0 && <div className="absolute -top-5 left-0 w-full h-[1px] bg-[var(--sc-border)] opacity-30"></div>}
+                          
+                          <h2 className="text-xl 2xl:text-2xl font-black uppercase tracking-tighter leading-tight mb-3">{post.title}</h2>
+                          
+                          {/* 👉 Markdown 渲染简介，并用 CSS 强行统一缩小字体，防止破坏版面 */}
+                          <div className="text-xs 2xl:text-sm font-bold leading-relaxed opacity-80 mb-6 [&>p]:mb-2 [&>h1]:text-sm [&>h2]:text-sm [&>h3]:text-sm [&_*]:!text-xs 2xl:[&_*]:!text-sm">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.excerpt}</ReactMarkdown>
+                          </div>
+                          
+                          <Link 
+                            href={`/blog/${post.slug}`}
+                            onMouseMove={handleMouseMove}
+                            className="group relative overflow-hidden flex items-center justify-between bg-[var(--sc-inverse-bg)] px-5 py-3 transition-transform hover:scale-105 active:scale-95 duration-500 isolate w-full"
+                          >
+                            <span className="relative z-10 font-black text-[10px] 2xl:text-xs uppercase tracking-widest text-[var(--sc-inverse-text)] transition-colors duration-300 group-hover:text-transparent">Read Log</span>
+                            <span className="relative z-10 font-black text-[10px] 2xl:text-xs text-[var(--sc-inverse-text)] group-hover:translate-x-1 transition-transform">→</span>
 
-                      <div 
-                        className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-between px-5 group-hover:animate-[rippleSpread_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]"
-                        style={{ clipPath: 'circle(0% at var(--x, 50%) var(--y, 50%))' }}
-                      >
-                        <span className="font-black text-[10px] 2xl:text-xs uppercase tracking-widest text-[var(--sc-text)]">Read Log</span>
-                        <span className="font-black text-[10px] 2xl:text-xs text-[var(--sc-text)] group-hover:translate-x-1 transition-transform">→</span>
-                      </div>
-                    </Link>
+                            <div 
+                              className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-between px-5 group-hover:animate-[rippleSpread_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]"
+                              style={{ clipPath: 'circle(0% at var(--x, 50%) var(--y, 50%))' }}
+                            >
+                              <span className="font-black text-[10px] 2xl:text-xs uppercase tracking-widest text-[var(--sc-text)]">Read Log</span>
+                              <span className="font-black text-[10px] 2xl:text-xs text-[var(--sc-text)] group-hover:translate-x-1 transition-transform">→</span>
+                            </div>
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </>
               )}
