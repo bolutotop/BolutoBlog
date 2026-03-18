@@ -79,6 +79,24 @@ export default function BlogPostClientWrapper({ post }: BlogPostProps) {
   const [pos, setPos] = useState({ x: -100, y: -100 });
   const dragInfo = useRef({ startX: 0, startY: 0, elX: 0, elY: 0, moved: false });
 
+  // 👉 1. 新增：弹窗的 DOM 引用，用于判断点击区域
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  // 👉 2. 新增：监听点击外部自动收起
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      // 如果菜单开着，且点击的位置不在弹窗组件内部，就关闭它
+      if (isMobileMenuOpen && mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isMobileMenuOpen]);
   useEffect(() => {
     setWinSize({ w: window.innerWidth, h: window.innerHeight });
     setPos({ x: window.innerWidth - 80, y: window.innerHeight - 120 }); // 初始在右下角
@@ -229,7 +247,15 @@ useEffect(() => {
         {/* 🚀 融合编辑器的杂志排版与你的 Brutalist 布局风格 */}
         {/* ========================================== */}
         <style jsx global>{`
-
+/* 🚀 修复：强制生效的移动端弹窗“生长/吸入”动画 */
+          .mobile-menu-popover {
+            /* 展开时：带有一点弹簧惯性的“生长”效果 */
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease !important; 
+          }
+          .mobile-menu-popover.menu-closed {
+            /* 收起时：先微微回缩再急速“吸入黑洞”的效果 */
+            transition: transform 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045), opacity 0.2s ease !important; 
+          }
 /* 🚀 严格修复版：TOC 中心向两边展开的下划线动画 */
           .brutalist-toc-nav .toc-text-wrapper {
             position: relative !important;
@@ -448,17 +474,22 @@ useEffect(() => {
            
         </aside>
 {/* ==================== 🚀 新增：移动端全屏可拖拽的悬浮目录 (FAB) ==================== */}
-        {winSize.w > 0 && (
+  {winSize.w > 0 && (
           <div 
+            ref={mobileMenuRef} // 👈 绑定 Ref，用来检测点击外部
             className="mobile-toc-fab fixed z-[100] lg:hidden opacity-0 invisible"
             style={{ left: pos.x, top: pos.y, touchAction: 'none' }}
           >
             {/* 悬浮菜单 Popover */}
-            <div 
-              className={`absolute w-64 bg-[var(--sc-bg)] sc-border border shadow-2xl p-5 flex flex-col gap-4 transition-all duration-300 pointer-events-auto ${
-                isMobileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+               <div 
+              className={`absolute w-64 bg-[var(--sc-bg)] sc-border border shadow-2xl p-5 flex flex-col gap-4 pointer-events-auto mobile-menu-popover transform ${
+                isMobileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-0 pointer-events-none menu-closed'
               } ${
-                pos.x > winSize.w / 2 ? 'right-[120%] origin-right' : 'left-[120%] origin-left'
+                pos.y > winSize.h / 2 
+                  ? (pos.x > winSize.w / 2 ? 'origin-bottom-right' : 'origin-bottom-left') 
+                  : (pos.x > winSize.w / 2 ? 'origin-top-right' : 'origin-top-left')
+              } ${
+                pos.x > winSize.w / 2 ? 'right-[120%]' : 'left-[120%]'
               } ${
                 pos.y > winSize.h / 2 ? 'bottom-0' : 'top-0'
               }`}
