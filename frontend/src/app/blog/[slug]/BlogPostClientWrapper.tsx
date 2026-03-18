@@ -73,7 +73,40 @@ export default function BlogPostClientWrapper({ post }: BlogPostProps) {
     e.currentTarget.style.setProperty('--x', `${x}px`);
     e.currentTarget.style.setProperty('--y', `${y}px`);
   };
+// 🚀 1. 新增：移动端拖拽悬浮按钮的状态与逻辑
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [winSize, setWinSize] = useState({ w: 0, h: 0 });
+  const [pos, setPos] = useState({ x: -100, y: -100 });
+  const dragInfo = useRef({ startX: 0, startY: 0, elX: 0, elY: 0, moved: false });
 
+  useEffect(() => {
+    setWinSize({ w: window.innerWidth, h: window.innerHeight });
+    setPos({ x: window.innerWidth - 80, y: window.innerHeight - 120 }); // 初始在右下角
+    const handleResize = () => setWinSize({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragInfo.current = { startX: e.clientX, startY: e.clientY, elX: pos.x, elY: pos.y, moved: false };
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+    const dx = e.clientX - dragInfo.current.startX;
+    const dy = e.clientY - dragInfo.current.startY;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) dragInfo.current.moved = true;
+    
+    let newX = Math.max(16, Math.min(dragInfo.current.elX + dx, winSize.w - 72));
+    let newY = Math.max(16, Math.min(dragInfo.current.elY + dy, winSize.h - 72));
+    setPos({ x: newX, y: newY });
+  };
+
+  const onPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    if (!dragInfo.current.moved) setIsMobileMenuOpen(prev => !prev);
+  };
 
 useEffect(() => {
     const handleScroll = () => {
@@ -145,10 +178,13 @@ useEffect(() => {
         onEnter: () => {
           document.getElementById('showcase-root')?.classList.add('hide-right-sidebar');
           gsap.to('.toc-sidebar', { x: 0, opacity: 1, pointerEvents: 'auto', duration: 0.6, ease: 'expo.out' });
+          gsap.to('.mobile-toc-fab', { scale: 1, autoAlpha: 1, duration: 0.5, ease: 'back.out(1.5)' });
         },
         onLeaveBack: () => {
           document.getElementById('showcase-root')?.classList.remove('hide-right-sidebar');
           gsap.to('.toc-sidebar', { x: '100%', opacity: 0, pointerEvents: 'none', duration: 0.4, ease: 'expo.out' });
+          gsap.to('.mobile-toc-fab', { scale: 0, autoAlpha: 0, duration: 0.3 });
+          setIsMobileMenuOpen(false);
         },
       });
 
@@ -370,7 +406,7 @@ useEffect(() => {
 
         </section>
 {/* ==================== 🚀 3. 动态 Markdown 目录侧边栏 (从右侧滑入) ==================== */}
-        <aside className="toc-sidebar fixed right-0 top-0 h-screen w-72 2xl:w-96 sc-border border-l z-40 flex flex-col pt-28 pb-10 px-6 2xl:px-8 opacity-0 translate-x-full pointer-events-none bg-[var(--sc-bg)]">
+        <aside className="toc-sidebar hidden lg:flex fixed right-0 top-0 h-screen w-72 2xl:w-96 sc-border border-l z-40 flex flex-col pt-28 pb-10 px-6 2xl:px-8 opacity-0 translate-x-full pointer-events-none bg-[var(--sc-bg)]">
            <div className="text-[10px] 2xl:text-xs font-black uppercase tracking-widest mb-8 sc-border border-b pb-4 opacity-50">
              Table of Contents
            </div>
@@ -409,8 +445,71 @@ useEffect(() => {
                <span className="text-xs font-mono opacity-30 uppercase">No indices found.</span>
              )}
            </nav>
+           
         </aside>
+{/* ==================== 🚀 新增：移动端全屏可拖拽的悬浮目录 (FAB) ==================== */}
+        {winSize.w > 0 && (
+          <div 
+            className="mobile-toc-fab fixed z-[100] lg:hidden opacity-0 invisible"
+            style={{ left: pos.x, top: pos.y, touchAction: 'none' }}
+          >
+            {/* 悬浮菜单 Popover */}
+            <div 
+              className={`absolute w-64 bg-[var(--sc-bg)] sc-border border shadow-2xl p-5 flex flex-col gap-4 transition-all duration-300 pointer-events-auto ${
+                isMobileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+              } ${
+                pos.x > winSize.w / 2 ? 'right-[120%] origin-right' : 'left-[120%] origin-left'
+              } ${
+                pos.y > winSize.h / 2 ? 'bottom-0' : 'top-0'
+              }`}
+            >
+              <div className="text-[10px] font-black uppercase tracking-widest opacity-50 sc-border border-b pb-3">
+                Table of Contents
+              </div>
+              <nav className="brutalist-toc-nav flex flex-col gap-4 overflow-y-auto max-h-[50vh] hide-scrollbar">
+                {toc.length > 0 ? toc.map((item, i) => {
+                  const isActive = item.id === activeId;
+                  return (
+                    <a 
+                      key={i} href={`#${item.id}`} title={item.text}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsMobileMenuOpen(false); // 点击后自动收起
+                        const targetElement = document.getElementById(item.id);
+                        if (targetElement) {
+                          const headerOffset = 140;
+                          const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
+                          window.scrollTo({ top: elementPosition - headerOffset, behavior: 'smooth' });
+                        }
+                      }}
+                      className={`block text-xs font-bold uppercase transition-colors ${
+                        item.level === 3 ? 'ml-3' : ''
+                      } ${isActive ? 'opacity-100' : 'opacity-40'}`}
+                    >
+                      <span className={`toc-text-wrapper truncate max-w-full block ${isActive ? 'active-toc' : ''}`}>{item.text}</span>
+                    </a>
+                  );
+                }) : (
+                  <span className="text-[10px] font-mono opacity-30 uppercase">No indices found.</span>
+                )}
+              </nav>
+            </div>
 
+            {/* 可拖拽的圆圈汉堡按钮 */}
+            <button 
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              className="w-14 h-14 bg-[var(--sc-inverse-bg)] text-[var(--sc-inverse-text)] rounded-full flex items-center justify-center shadow-2xl active:scale-90 transition-transform cursor-grab active:cursor-grabbing"
+            >
+              <div className="relative w-5 h-5 flex flex-col justify-center items-center pointer-events-none">
+                <span className={`absolute h-[2px] w-full bg-current transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45' : '-translate-y-1.5'}`}></span>
+                <span className={`absolute h-[2px] w-full bg-current transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
+                <span className={`absolute h-[2px] w-full bg-current transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45' : 'translate-y-1.5'}`}></span>
+              </div>
+            </button>
+          </div>
+        )}
         {/* ==================== 4. 底部返回操作区 ==================== */}
         <section className="py-20 px-6 lg:px-12 border-t sc-border flex justify-center">
           <Link 
