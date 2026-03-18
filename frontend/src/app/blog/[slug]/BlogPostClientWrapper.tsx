@@ -317,28 +317,26 @@ export default function BlogPostClientWrapper({ post }: BlogPostProps) {
              Table of Contents
            </div>
            
-           <nav className="flex flex-col gap-5 overflow-y-auto">
+ {/* 🚀 新增 hide-scrollbar 类来隐藏丑陋的滚动条 */}
+           <nav className="flex flex-col gap-5 overflow-y-auto hide-scrollbar">
              {toc.length > 0 ? toc.map((item, i) => (
                <a 
                  key={i} 
                  href={`#${item.id}`}
+                 title={item.text}
                  onClick={(e) => {
                    e.preventDefault();
-                   
-                   // 🚀 核心修复：精准计算目标元素的绝对坐标，并减去头部遮挡高度
                    const targetElement = document.getElementById(item.id);
                    if (targetElement) {
-                     const headerOffset = 140; // 设置你需要的偏移量 (头部高度 + 留白)
+                     const headerOffset = 140;
                      const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
                      const offsetPosition = elementPosition - headerOffset;
                      
-                     window.scrollTo({
-                       top: offsetPosition,
-                       behavior: 'smooth'
-                     });
+                     window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
                    }
                  }}
-                 className={`text-xs 2xl:text-sm font-bold uppercase transition-colors hover:text-gray-400 ${
+                 /* 🚀 核心修复：加了 block 和 truncate (单行省略号) */
+                 className={`block truncate text-xs 2xl:text-sm font-bold uppercase transition-colors hover:text-gray-400 ${
                    item.level === 3 ? 'ml-4 opacity-40 text-[10px]' : 'opacity-80'
                  }`}
                >
