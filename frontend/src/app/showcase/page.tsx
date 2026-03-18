@@ -37,18 +37,13 @@ export default function ShowcasePage() {
       gsap.to('.text-mask-bg', { backgroundPosition: '50% 100%', ease: 'none', scrollTrigger: { trigger: '.text-mask-section', start: 'top bottom', end: 'bottom top', scrub: true } });
       gsap.to('.marquee-track', { xPercent: -50, repeat: -1, duration: 15, ease: 'none' });
       
-      // ==========================================
-      // 🚀 核心修改：动态黑白交替触发器 (Zebra-striping Theme Toggle)
-      // 在这个数组里的 class，滚动到时背景变黑；离开时自动变白
-      // ==========================================
+      // 动态黑白交替触发器
       const darkSections = ['.overlap-section', '.learning-section'];
       
       darkSections.forEach(section => {
         ScrollTrigger.create({
           trigger: section,
-          // 当模块顶部到达屏幕中间(50%)时触发变黑
           start: 'top 50%', 
-          // 当模块底部离开屏幕中间(50%)时触发变白
           end: 'bottom 50%', 
           onEnter: () => document.getElementById('showcase-root')?.classList.add('showcase-inverted'),
           onLeave: () => document.getElementById('showcase-root')?.classList.remove('showcase-inverted'),
@@ -57,7 +52,7 @@ export default function ShowcasePage() {
         });
       });
 
-      // 画廊模式开门触发器 (保持不变，只要进了画廊区，侧边栏就一直藏着)
+      // 画廊模式开门触发器
       ScrollTrigger.create({
         trigger: '.overlap-section',
         start: 'top 75%',
@@ -76,6 +71,16 @@ export default function ShowcasePage() {
         );
         gsap.to(img, { yPercent: 15, ease: 'none', scrollTrigger: { trigger: container, start: 'top bottom', end: 'bottom top', scrub: true } });
       });
+
+      // 文本视差进入效果
+      const textBlocks = gsap.utils.toArray('.content-block');
+      textBlocks.forEach((block: any) => {
+        gsap.fromTo(block, 
+          { y: 50, opacity: 0 }, 
+          { y: 0, opacity: 1, duration: 1, ease: 'expo.out', scrollTrigger: { trigger: block, start: 'top 85%' } }
+        );
+      });
+
     }, containerRef);
 
     return () => { ctx.revert(); lenis.destroy(); gsap.ticker.remove((time) => lenis.raf(time * 1000)); };
@@ -98,9 +103,9 @@ export default function ShowcasePage() {
       {/* Hero 区域 */}
       <section className="relative min-h-[90vh] flex flex-col justify-center px-6 lg:px-12 pt-32 pb-20">
         <div className="relative z-10">
-          <div className="uppercase font-black text-[12vw] xl:text-[9rem] leading-[0.85] tracking-tighter text-[var(--sc-text)]"><SplitText text="ZHIHUI" /></div>
-          <div className="uppercase font-black text-[12vw] xl:text-[9rem] leading-[0.85] tracking-tighter text-[var(--sc-text)]"><SplitText text="CREATIVE" /></div>
-          <div className="uppercase font-black text-[12vw] xl:text-[9rem] leading-[0.85] tracking-tighter text-[var(--sc-text)]"><SplitText text="STUDIO" /></div>
+          <div className="uppercase font-black text-[clamp(4rem,11vw,16rem)] leading-[0.85] tracking-tighter text-[var(--sc-text)]"><SplitText text="ZHIHUI" /></div>
+          <div className="uppercase font-black text-[clamp(4rem,11vw,16rem)] leading-[0.85] tracking-tighter text-[var(--sc-text)]"><SplitText text="CREATIVE" /></div>
+          <div className="uppercase font-black text-[clamp(4rem,11vw,16rem)] leading-[0.85] tracking-tighter text-[var(--sc-text)]"><SplitText text="STUDIO" /></div>
         </div>
 
         <div className="hero-bottom-content mt-12 md:mt-16 flex flex-col md:flex-row md:items-center gap-8 md:gap-12 opacity-0">
@@ -141,180 +146,240 @@ export default function ShowcasePage() {
         </div>
       </section>
 
-      {/* 图像矩阵区 */}
+      {/* ==================== 图像矩阵区 (PHILOSOPHY) ==================== */}
       <section className="overlap-section relative py-32 px-6 lg:px-12 mt-20">
         
         <div className="stroke-overlap-text absolute top-[5%] left-[5%] text-[15vw] font-black uppercase tracking-tighter stroke-text z-0 pointer-events-none opacity-20 whitespace-nowrap">
           PHILOSOPHY
         </div>
 
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-y-24 md:gap-x-12 mt-20">
+        <div className="relative z-10 flex flex-col gap-32 md:gap-48 mt-20 max-w-[1600px] mx-auto w-full">
           
-          {/* 图1：1000*1500 (悬崖自由) */}
-          <div className="md:col-span-7 relative">
-            <div className="img-mask-container w-full h-[60vh] md:h-[80vh] bg-[var(--sc-border)] relative overflow-hidden">
-              <img src="/uploads/1773764885354-b53ef7f6ef4665411f4282b6ced7fe32.jpg" alt="Boundless" className="parallax-img absolute -top-[15%] left-0 w-full h-[130%] object-cover object-center opacity-90" />
-            </div>
-            <div className="absolute -bottom-10 -left-4 md:-left-8 sc-bg-inverse p-6 shadow-2xl z-20 transition-transform hover:scale-105 duration-300">
-              <div className="text-[10px] font-bold uppercase tracking-widest mb-2 opacity-60">01 / Mindset</div>
-              <div className="text-2xl md:text-4xl font-black tracking-tight uppercase">Boundless</div>
-              <p className="text-xs font-bold mt-2 opacity-80 uppercase tracking-widest max-w-[200px]">Embrace the vastness.<br/>Your potential is only limited by your perception.</p>
-            </div>
-          </div>
-
-          {/* 图2：736*1011 (Focus on yourself) */}
-          <div className="md:col-span-5 relative mt-12 md:mt-[35vh]">
-            <div className="img-mask-container w-full h-[60vh] md:h-[80vh] bg-[var(--sc-border)] relative overflow-hidden">
-              <img src="/uploads/1773764877338-5424f054c587adc8c024d07f9f7282b9.jpg" alt="Laser Focus" className="parallax-img absolute -top-[12%] left-0 w-full h-[125%] object-cover object-center" />
-            </div>
-            <div className="absolute top-12 -right-4 md:-right-8 sc-bg-inverse p-5 rotate-2 shadow-2xl z-20 transition-transform hover:rotate-0 hover:scale-105 duration-300">
-              <div className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-60">02 / Execution</div>
-              <div className="text-xl md:text-2xl font-black tracking-tight uppercase">Laser Focus</div>
-              <p className="text-[10px] font-bold mt-2 opacity-80 uppercase tracking-widest">Cut the noise.<br/>Direct your energy inward.</p>
-            </div>
-          </div>
-
-          {/* 图3：735*792 (绿灯 What are you waiting for) */}
-          <div className="md:col-span-5 relative mt-12 md:mt-20">
-            <div className="img-mask-container w-full h-[55vh] md:h-[50vh] bg-[var(--sc-border)] relative overflow-hidden">
-              {/* 改为了 object-cover，不留白边 */}
-              <img src="/uploads/1773764865685-a2d455fc052fe6d9ca142f9acbab7a93.jpg" alt="Green Light" className="parallax-img absolute -top-[15%] left-0 w-full h-[130%] object-cover object-center" />
-            </div>
-            <div className="absolute -top-6 -left-4 md:-left-12 sc-bg-inverse p-5 shadow-xl z-20 transition-transform hover:scale-105 duration-300">
-              <div className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">03 / Action</div>
-              <div className="text-xl md:text-3xl font-black tracking-tight uppercase">Green Light</div>
-              <p className="text-[10px] font-bold mt-2 opacity-80 uppercase tracking-widest max-w-[180px]">The perfect moment is an illusion. Start now.</p>
-            </div>
-          </div>
-
-          {/* 图4：563*708 (梅西 If you quit...) */}
-          <div className="md:col-span-7 relative mt-12 md:mt-[-10vh]">
-            {/* 移除了原本的 p-8 内边距，改为高度贴合比例的 65vh */}
-            <div className="img-mask-container w-full h-[60vh] md:h-[100vh] bg-[var(--sc-border)] relative overflow-hidden">
-              <img src="/uploads/1773764633034-68a739ee9fe997396263e982567d9e33.jpg" alt="Relentless" className="parallax-img absolute -top-[12%] left-0 w-full h-[125%] object-cover object-top" />
-            </div>
-            <div className="absolute bottom-12 -right-4 md:-right-8 sc-bg-inverse p-6 shadow-2xl z-20 flex items-center gap-6 transition-transform hover:scale-105 duration-300">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest mb-2 opacity-60">04 / Mastery</div>
-                <div className="text-2xl md:text-4xl font-black tracking-tight uppercase">Relentless</div>
+          {/* Item 1：左图右文 */}
+          <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
+            <div className="w-full md:w-7/12 order-1">
+              <div className="img-mask-container w-full h-[60vh] md:h-[80vh] max-h-[750px] bg-[var(--sc-border)] relative overflow-hidden">
+                <img src="/uploads/1773764885354-b53ef7f6ef4665411f4282b6ced7fe32.jpg" alt="Boundless" className="parallax-img absolute -top-[15%] left-0 w-full h-[130%] object-cover object-center opacity-90" />
               </div>
-              <div className="sc-border border-l-2 pl-6 text-[10px] md:text-xs font-bold leading-relaxed opacity-80 uppercase tracking-widest max-w-[160px]">
-                Endure the pressure. <br/> Let it forge you <br/> into greatness.
+            </div>
+            <div className="w-full md:w-5/12 content-block order-2">
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">01 / Mindset</div>
+              <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">Boundless</h3>
+              <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6">
+                The world tries to put you in a box. It gives you templates, rules, and boundaries. But true creativity begins the moment you step off the edge. Embrace the vastness. Your potential is only limited by your perception.
+              </p>
+              <div className="sc-border border-l-2 pl-4 text-[10px] uppercase tracking-widest font-bold opacity-60">Seek the edge</div>
+            </div>
+          </div>
+
+          {/* Item 2：右图左文 */}
+          <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
+            <div className="w-full md:w-5/12 content-block order-2 md:order-1 text-left md:text-right">
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">02 / Execution</div>
+              <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">Laser Focus</h3>
+              <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6 md:ml-auto">
+                In an era of endless distractions, focus is the ultimate superpower. Cut the noise. Direct your energy inward. The path to mastery requires shutting out the applause and the criticism, and narrowing your vision to the single task at hand.
+              </p>
+              <div className="sc-border border-l-2 md:border-l-0 md:border-r-2 pl-4 md:pl-0 md:pr-4 text-[10px] uppercase tracking-widest font-bold opacity-60">Eliminate noise</div>
+            </div>
+            <div className="w-full md:w-7/12 order-1 md:order-2">
+              <div className="img-mask-container w-full h-[60vh] md:h-[80vh] max-h-[750px] bg-[var(--sc-border)] relative overflow-hidden">
+                <img src="/uploads/1773764877338-5424f054c587adc8c024d07f9f7282b9.jpg" alt="Laser Focus" className="parallax-img absolute -top-[12%] left-0 w-full h-[125%] object-cover object-center" />
+              </div>
+            </div>
+          </div>
+
+          {/* Item 3：左图右文 */}
+          <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
+            <div className="w-full md:w-6/12 order-1">
+              <div className="img-mask-container w-full h-[55vh] md:h-[60vh] bg-[var(--sc-border)] relative overflow-hidden">
+                <img src="/uploads/1773764865685-a2d455fc052fe6d9ca142f9acbab7a93.jpg" alt="Green Light" className="parallax-img absolute -top-[15%] left-0 w-full h-[130%] object-cover object-center" />
+              </div>
+            </div>
+            <div className="w-full md:w-6/12 content-block order-2">
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">03 / Action</div>
+              <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">Green Light</h3>
+              <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6">
+                Stop waiting for permission. The perfect moment is an illusion constructed by fear. The light is already green. The only thing standing between your current reality and your ambitious vision is the courage to press the pedal.
+              </p>
+              <div className="sc-border border-l-2 pl-4 text-[10px] uppercase tracking-widest font-bold opacity-60">Start now</div>
+            </div>
+          </div>
+
+          {/* Item 4：右图左文 (梅西大图) */}
+          <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
+            <div className="w-full md:w-5/12 content-block order-2 md:order-1 text-left md:text-right">
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">04 / Mastery</div>
+              <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">Relentless</h3>
+              <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6 md:ml-auto">
+                Endurance isn't just about surviving the pressure; it's about letting the pressure forge you into greatness. When everyone expects you to fold, that is exactly when you must rise. If you quit, they were right about you. Don't give them that satisfaction.
+              </p>
+              <div className="sc-border border-l-2 md:border-l-0 md:border-r-2 pl-4 md:pl-0 md:pr-4 text-[10px] uppercase tracking-widest font-bold opacity-60">Never fold</div>
+            </div>
+            <div className="w-full md:w-7/12 order-1 md:order-2">
+              <div className="img-mask-container w-full h-[60vh] md:h-[90vh] bg-[var(--sc-border)] relative overflow-hidden">
+                <img src="/uploads/1773764633034-68a739ee9fe997396263e982567d9e33.jpg" alt="Relentless" className="parallax-img absolute -top-[12%] left-0 w-full h-[125%] object-cover object-top" />
               </div>
             </div>
           </div>
 
         </div>
       </section>
-      {/* ===== 新增：篮球文化 / 欧文模块 ===== */}
+
+      {/* ==================== 篮球文化 / 欧文模块 ==================== */}
       <section className="basketball-section relative py-32 px-6 lg:px-12 mt-12">
         
-        {/* 背景漂浮大字，制造空间纵深感 */}
-        <div className="stroke-overlap-text absolute top-[-5%] right-[10%] text-[15vw] font-black uppercase tracking-tighter stroke-text z-0 pointer-events-none opacity-20 whitespace-nowrap">
+        <div className="stroke-overlap-text absolute top-[10%] right-[5%] text-[15vw] font-black uppercase tracking-tighter stroke-text z-0 pointer-events-none opacity-20 whitespace-nowrap">
           BASKETBALL
         </div>
 
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-y-24 md:gap-x-12 mt-20">
+        <div className="relative z-10 flex flex-col gap-32 md:gap-48 mt-20 max-w-[1600px] mx-auto w-full">
           
-          {/* 图1：街球框 (坐框黑夜) 
-              布局说明：占据左侧 6 列 (一半宽度)。因为图片偏正方形/横向，高度设定为 60vh。
-          */}
-          <div className="md:col-span-6 relative">
-            <div className="img-mask-container w-full h-[60vh] bg-[var(--sc-border)] relative overflow-hidden">
-              <img src="/uploads/1773764699908-bed7b0c02faf6ce82f0e0b3d4e8a923a.jpg" alt="Streetball Roots" className="parallax-img absolute -top-[15%] left-0 w-full h-[130%] object-cover object-center" />
-            </div>
-            {/* 文案框定位在右下角，打破网格边缘 */}
-            <div className="absolute -bottom-8 -right-4 md:-right-8 sc-bg-inverse p-5 shadow-2xl z-20 transition-transform hover:scale-105 duration-300">
-              <div className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-60">01 / Origins</div>
-              <div className="text-xl md:text-3xl font-black tracking-tight uppercase">Streetball</div>
-              <p className="text-[10px] font-bold mt-2 opacity-80 uppercase tracking-widest max-w-[180px]">Above the rim. <br/> Where culture is born.</p>
-            </div>
-          </div>
-
-          {/* 图2：欧文篮网黑色海报
-              布局说明：占据 5 列。使用 md:col-start-8 强制将它推到右侧（留出中间 1 列的空白呼吸感）。
-              参数调整：md:mt-[20vh] 让它比左边的图低很多，形成强烈的阶梯错位视差。
-          */}
-          <div className="md:col-span-5 md:col-start-8 relative mt-12 md:mt-[20vh]">
-            <div className="img-mask-container w-full h-[60vh] md:h-[75vh] bg-[var(--sc-border)] relative overflow-hidden">
-              {/* object-top 保证头图人物脸部不被裁掉 */}
-              <img src="/uploads/1773764640138-8130ed5c124fb5f4d3da0e281ae2e027.jpg" alt="Brooklyn Era" className="parallax-img absolute -top-[12%] left-0 w-full h-[125%] object-cover object-top" />
-            </div>
-            {/* 文案框定位在左上角，与图片1形成对角线呼应 */}
-            <div className="absolute top-12 -left-4 md:-left-12 sc-bg-inverse p-6 shadow-2xl z-20 transition-transform hover:scale-105 duration-300">
-              <div className="text-[10px] font-bold uppercase tracking-widest mb-2 opacity-60">02 / Prime</div>
-              <div className="text-2xl md:text-4xl font-black tracking-tight uppercase">Brooklyn Era</div>
-              <p className="text-xs font-bold mt-2 opacity-80 uppercase tracking-widest">Kyrie Irving. <br/> Pure isolation artistry.</p>
-            </div>
-          </div>
-
-          {/* 图3：欧文蓝色流体拼贴海报
-              布局说明：压轴大图，占据中间 8 列 (md:col-span-8 md:col-start-3)，像一幅巨大的壁画。
-              参数调整：md:mt-[15vh] 延续向下的节奏感。高度拉满到 85vh，极具视觉冲击力。
-          */}
-          <div className="md:col-span-8 md:col-start-3 relative mt-12 md:mt-[15vh]">
-            <div className="img-mask-container w-full h-[60vh] md:h-[85vh] bg-[var(--sc-border)] relative overflow-hidden">
-              <img src="/uploads/1773764872552-0263f90d470e22a95a53c422d30d955a.jpg" alt="Fluidity" className="parallax-img absolute -top-[15%] left-0 w-full h-[130%] object-cover object-center" />
-            </div>
-            {/* 底部文案框，使用双栏结构 */}
-            <div className="absolute bottom-12 -right-4 md:-right-8 sc-bg-inverse p-6 shadow-2xl z-20 flex items-center gap-6 transition-transform hover:scale-105 duration-300">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest mb-2 opacity-60">03 / Fluidity</div>
-                <div className="text-2xl md:text-4xl font-black tracking-tight uppercase">The Maestro</div>
+          {/* Item 1：左图右文 */}
+          <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
+            <div className="w-full md:w-6/12 order-1">
+              <div className="img-mask-container w-full h-[50vh] md:h-[60vh] bg-[var(--sc-border)] relative overflow-hidden">
+                <img src="/uploads/1773764699908-bed7b0c02faf6ce82f0e0b3d4e8a923a.jpg" alt="Streetball Roots" className="parallax-img absolute -top-[15%] left-0 w-full h-[130%] object-cover object-center" />
               </div>
-              <div className="sc-border border-l-2 pl-6 text-[10px] md:text-xs font-bold leading-relaxed opacity-80 uppercase tracking-widest max-w-[200px]">
-                Unpredictable motion. <br/> Breaking defenses <br/> like breaking rules.
+            </div>
+            <div className="w-full md:w-6/12 content-block order-2">
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">01 / Origins</div>
+              <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">Streetball Roots</h3>
+              <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6">
+                Before the bright lights of the arena, there is the concrete. The chain nets. The raw, unfiltered competition where reputation is earned, not given. It is above the rim where culture is born and authenticated.
+              </p>
+              <div className="sc-border border-l-2 pl-4 text-[10px] uppercase tracking-widest font-bold opacity-60">Concrete canvas</div>
+            </div>
+          </div>
+
+          {/* Item 2：右图左文 */}
+          <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
+            <div className="w-full md:w-6/12 content-block order-2 md:order-1 text-left md:text-right">
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">02 / Prime</div>
+              <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">Brooklyn Era</h3>
+              <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6 md:ml-auto">
+                Kyrie Irving in Brooklyn was pure isolation artistry. Every possession was a clinic in handles, misdirection, and impossible finishes. It wasn't just about scoring; it was about breaking down the opponent physically and mentally. A true maestro on the hardwood.
+              </p>
+              <div className="sc-border border-l-2 md:border-l-0 md:border-r-2 pl-4 md:pl-0 md:pr-4 text-[10px] uppercase tracking-widest font-bold opacity-60">Isolation art</div>
+            </div>
+            <div className="w-full md:w-6/12 order-1 md:order-2">
+              <div className="img-mask-container w-full h-[60vh] md:h-[75vh] bg-[var(--sc-border)] relative overflow-hidden">
+                <img src="/uploads/1773764640138-8130ed5c124fb5f4d3da0e281ae2e027.jpg" alt="Brooklyn Era" className="parallax-img absolute -top-[12%] left-0 w-full h-[125%] object-cover object-top" />
+              </div>
+            </div>
+          </div>
+
+          {/* Item 3：全屏/大跨度布局 (作为收尾) */}
+          <div className="flex flex-col items-center text-center gap-12 w-full mt-12">
+            <div className="w-full max-w-2xl content-block">
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">03 / Fluidity</div>
+              <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">The Maestro</h3>
+              <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80">
+                Unpredictable motion. Fluidity that defies defensive schemes. When you master the fundamentals so deeply that you no longer have to think, you transcend the game. You stop playing basketball and start performing jazz.
+              </p>
+            </div>
+            <div className="w-full lg:w-10/12">
+              <div className="img-mask-container w-full h-[60vh] md:h-[85vh] bg-[var(--sc-border)] relative overflow-hidden">
+                <img src="/uploads/1773764872552-0263f90d470e22a95a53c422d30d955a.jpg" alt="Fluidity" className="parallax-img absolute -top-[15%] left-0 w-full h-[130%] object-cover object-center" />
               </div>
             </div>
           </div>
 
         </div>
       </section>
-{/* ===== 新增：学习与沉淀模块 ===== */}
+
+      {/* ==================== 学习与沉淀模块 ==================== */}
       <section className="learning-section relative py-32 px-6 lg:px-12 mt-12">
         
-        {/* 背景漂浮大字 */}
         <div className="stroke-overlap-text absolute top-[10%] left-[-5%] text-[15vw] font-black uppercase tracking-tighter stroke-text z-0 pointer-events-none opacity-20 whitespace-nowrap">
           KNOWLEDGE
         </div>
 
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-y-24 md:gap-x-12 mt-20">
+        <div className="relative z-10 flex flex-col gap-32 md:gap-48 mt-20 max-w-[1600px] mx-auto w-full">
           
-          {/* 图1：暗黑书桌 (Deep Work)
-              布局说明：占据左侧 7 列。因为是竖图且氛围感极强，高度设为 80vh，作为该模块的视觉锚点。
-          */}
-          <div className="md:col-span-7 relative">
-            <div className="img-mask-container w-full h-[60vh] md:h-[80vh] bg-[#1a1a1a] relative overflow-hidden">
-              <img src="/uploads/1773764657157-3b1a2b0e7e6e42fc2ef7aedbe633e824.jpg" alt="Deep Work" className="parallax-img absolute -top-[15%] left-0 w-full h-[130%] object-cover object-center opacity-90" />
+          {/* Item 1：左图右文 */}
+          <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
+            <div className="w-full md:w-7/12 order-1">
+              <div className="img-mask-container w-full h-[60vh] md:h-[80vh] bg-[#1a1a1a] relative overflow-hidden">
+                <img src="/uploads/1773764657157-3b1a2b0e7e6e42fc2ef7aedbe633e824.jpg" alt="Deep Work" className="parallax-img absolute -top-[15%] left-0 w-full h-[130%] object-cover object-center opacity-90" />
+              </div>
             </div>
-            {/* 文案框定位在左下角，突破网格对齐 */}
-            <div className="absolute -bottom-10 -left-4 md:-left-8 sc-bg-inverse p-6 shadow-2xl z-20 transition-transform hover:scale-105 duration-300">
-              <div className="text-[10px] font-bold uppercase tracking-widest mb-2 opacity-60">01 / Immersion</div>
-              <div className="text-2xl md:text-4xl font-black tracking-tight uppercase">Deep Work</div>
-              <p className="text-xs font-bold mt-2 opacity-80 uppercase tracking-widest max-w-[220px]">Code, equations, and the silent hours of absolute focus.</p>
+            <div className="w-full md:w-5/12 content-block order-2">
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">01 / Immersion</div>
+              <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">Deep Work</h3>
+              <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6">
+                Real progress happens in the dark. It happens in the silent hours surrounded by code, equations, and textbooks. Absolute immersion is required to tackle hard problems. No shortcuts, just relentless dedication to the craft.
+              </p>
+              <div className="sc-border border-l-2 pl-4 text-[10px] uppercase tracking-widest font-bold opacity-60">Embrace the grind</div>
             </div>
           </div>
 
-          {/* 图2：Learn & Apply 插图 (The Loop)
-              布局说明：占据右侧 5 列。配合大幅度的 margin-top (md:mt-[35vh])，让它与左图形成夸张的高低错位。
-              参数调整：因为这张图是带有文字和白底的插画，我将其背景设为纯白(bg-white)，并且在视差处理上让它居中呈现。
-          */}
-          <div className="md:col-span-5 relative mt-12 md:mt-[35vh]">
-            <div className="img-mask-container w-full h-[50vh] md:h-[55vh] bg-white relative overflow-hidden p-4 md:p-8">
-              {/* 这里使用了 object-contain 配合居中，确保楼梯和文字不会被裁切掉 */}
-              <img src="/uploads/1773764682199-3a4375bc2ae641df781711e1c0cc019d.jpg" alt="Iteration" className="parallax-img absolute -top-[10%] left-0 w-full h-[120%] object-contain object-center mix-blend-multiply" />
+          {/* Item 2：右图左文 */}
+          <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
+            <div className="w-full md:w-6/12 content-block order-2 md:order-1 text-left md:text-right">
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">02 / Iteration</div>
+              <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">The Loop</h3>
+              <p className="text-[clamp(0.875rem,1.2vw,1.25rem)]font-medium leading-relaxed opacity-80 mb-6 md:ml-auto">
+                Knowledge without execution is merely potential. True understanding is forged in the crucible of application. Learn, apply, fail, refine. This continuous loop is the only mechanism that turns raw information into tangible wisdom and skill.
+              </p>
+              <div className="sc-border border-l-2 md:border-l-0 md:border-r-2 pl-4 md:pl-0 md:pr-4 text-[10px] uppercase tracking-widest font-bold opacity-60">Apply relentlessly</div>
             </div>
-            {/* 文案框定位在右上角 */}
-            <div className="absolute top-12 -right-4 md:-right-8 sc-bg-inverse p-5 rotate-2 shadow-2xl z-20 transition-transform hover:rotate-0 hover:scale-105 duration-300">
-              <div className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-60">02 / Iteration</div>
-              <div className="text-xl md:text-2xl font-black tracking-tight uppercase">The Loop</div>
-              <p className="text-[10px] font-bold mt-2 opacity-80 uppercase tracking-widest max-w-[180px]">Knowledge is potential. <br/> Application is power.</p>
+            <div className="w-full md:w-6/12 order-1 md:order-2">
+              <div className="img-mask-container w-full h-[50vh] md:h-[65vh] bg-white relative overflow-hidden p-4 md:p-12">
+                <img src="/uploads/1773764682199-3a4375bc2ae641df781711e1c0cc019d.jpg" alt="Iteration" className="parallax-img absolute -top-[10%] left-0 w-full h-[120%] object-contain object-center mix-blend-multiply" />
+              </div>
             </div>
           </div>
 
         </div>
       </section>
+{/* ==================== 兴趣与生活模块 ==================== */}
+      <section className="hobby-section relative py-32 px-6 lg:px-12 mt-12">
+        
+        <div className="stroke-overlap-text absolute top-[10%] right-[5%] text-[15vw] font-black uppercase tracking-tighter stroke-text z-0 pointer-events-none opacity-20 whitespace-nowrap">
+          LIFESTYLE
+        </div>
 
+        <div className="relative z-10 flex flex-col gap-32 md:gap-48 mt-20 max-w-[1600px] mx-auto w-full">
+          
+          {/* Item 1：左图右文 (吉他手) */}
+          <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
+            <div className="w-full md:w-6/12 order-1">
+              {/* 这张图色彩浓郁，使用较深的边框/背景色衬托 */}
+              <div className="img-mask-container w-full h-[60vh] md:h-[75vh] bg-[#2a2a2a] relative overflow-hidden">
+                <img src="/uploads/1773769782699-The_Guitar_Player_Greeting_Card_by_Jose_Manuel_Abraham.jpg" alt="Acoustic Soul" className="parallax-img absolute -top-[15%] left-0 w-full h-[130%] object-cover object-center opacity-90" />
+              </div>
+            </div>
+            <div className="w-full md:w-6/12 content-block order-2">
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">01 / Rhythm</div>
+              <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">Acoustic Soul</h3>
+              <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6">
+                Beyond the rigid logic of code lies the fluid language of music. The strings offer a different kind of syntax—one where emotion dictates the output. Finding rhythm in the analog world is essential to maintaining balance in the digital one.
+              </p>
+              <div className="sc-border border-l-2 pl-4 text-[10px] uppercase tracking-widest font-bold opacity-60">Find your tempo</div>
+            </div>
+          </div>
+
+          {/* Item 2：右图左文 (滑雪) */}
+          <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
+            <div className="w-full md:w-6/12 content-block order-2 md:order-1 text-left md:text-right">
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">02 / Gravity</div>
+              <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">Free Fall</h3>
+              <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6 md:ml-auto">
+                Carving through powder is the purest form of moving meditation. When you're suspended in the crisp alpine air, negotiating gravity and terrain, there is no past or future. Only the visceral, immediate reality of the present moment.
+              </p>
+              <div className="sc-border border-l-2 md:border-l-0 md:border-r-2 pl-4 md:pl-0 md:pr-4 text-[10px] uppercase tracking-widest font-bold opacity-60">Defy gravity</div>
+            </div>
+            <div className="w-full md:w-6/12 order-1 md:order-2">
+              {/* 滑雪图是极其瘦高的竖图，给足高度展现腾空感 */}
+              <div className="img-mask-container w-full h-[70vh] md:h-[90vh] max-h-[850px] bg-[#87CEEB] relative overflow-hidden">
+                <img src="/uploads/1773764693448-47feac9727767b63ea3c985c2ed8a949.jpg" alt="Free Fall" className="parallax-img absolute -top-[12%] left-0 w-full h-[125%] object-cover object-center" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
     </main>
   );
 }

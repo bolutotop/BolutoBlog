@@ -9,7 +9,7 @@ const mockPosts: Record<number, { title: string, date: string, excerpt: string }
   24: { title: "Spatial UI Patterns", date: "March 24, 2026", excerpt: "Why the grid must be broken to create depth. A deep dive into mix-blend modes and scroll hijacking." }
 };
 
-export default function ShowcaseLayout({ children }: { children: React.ReactNode }) {
+export default function StudioLayout({ children }: { children: React.ReactNode }) {
   const [dateInfo, setDateInfo] = useState({ day: '--', month: '--- 202X' });
   const [activeModal, setActiveModal] = useState<typeof mockPosts[1] | null>(null);
   const [isClosing, setIsClosing] = useState(false);
@@ -216,13 +216,10 @@ export default function ShowcaseLayout({ children }: { children: React.ReactNode
 
       {bootStage >= 1 && (
         <>
-{/* ========================================== */}
-          {/* 1. 顶部 Header (修复断点尴尬期) */}
-          {/* ========================================== */}
+          {/* 1. 顶部 Header */}
           <header className="fixed top-0 left-0 w-full px-5 py-5 md:px-8 z-50 flex justify-between items-center sc-border border-b backdrop-blur-md bg-[var(--sc-bg)]/80 transition-colors duration-700 pointer-events-none animate-header-layout">
             <div className="font-black text-lg md:text-[clamp(1.25rem,1.5vw,1.75rem)] tracking-tighter uppercase pointer-events-auto relative z-50">ZHIHUI.</div>
             
-            {/* 🚀 修复点：用一个右侧容器把导航和汉堡包包起来，实现整体靠右对齐 */}
             <div className="flex items-center gap-6 md:gap-8 pointer-events-auto relative z-50">
               <nav className="flex gap-4 md:gap-8 text-[10px] md:text-xs font-bold uppercase tracking-widest">
                 <Link href="#" className="hover:line-through">Index</Link>
@@ -242,10 +239,7 @@ export default function ShowcaseLayout({ children }: { children: React.ReactNode
             </div>
           </header>
 
-          {/* ========================================== */}
           {/* 2. 移动端专属下拉菜单 */}
-          {/* ========================================== */}
-          {/* 🚀 修复点：改成 xl:hidden */}
           <div 
             className={`
               fixed inset-0 bg-[var(--sc-bg)] z-40 flex flex-col justify-center px-8 xl:hidden
@@ -255,7 +249,6 @@ export default function ShowcaseLayout({ children }: { children: React.ReactNode
           >
             <div className="w-full max-w-sm mx-auto flex flex-col gap-8 mt-16">
               
-              {/* 个人档案卡片 */}
               <div className="flex items-center gap-5 sc-border border-b pb-6">
                 <div className="w-14 h-14 rounded-full overflow-hidden sc-border border-2 shrink-0">
                   <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Zhihui&backgroundColor=e2e8f0" alt="Zhihui" className="w-full h-full object-cover grayscale" />
@@ -266,7 +259,6 @@ export default function ShowcaseLayout({ children }: { children: React.ReactNode
                 </div>
               </div>
 
-              {/* 日期与状态 */}
               <div className="flex justify-between items-end">
                 <div>
                   <div className="text-4xl font-black tabular-nums tracking-tighter leading-none">{dateInfo.day}</div>
@@ -281,10 +273,8 @@ export default function ShowcaseLayout({ children }: { children: React.ReactNode
                 </div>
               </div>
 
-              {/* 🚀 修复点：带有水波纹特效的日历弹窗 */}
-        <div className="mt-2 sc-border border-t pt-6 relative">
-                {/* 增加 max-w-[260px] 居中，防止按钮在手机上过大 */}
-                <div className="max-w-[350px] mx-auto">
+              <div className="mt-2 sc-border border-t pt-6 relative">
+                <div className="max-w-[260px] mx-auto">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Publication Log</span>
                     <span className="text-[10px] font-mono font-bold">2026.03</span>
@@ -315,7 +305,6 @@ export default function ShowcaseLayout({ children }: { children: React.ReactNode
                           {hasPost ? (
                             <>
                               <span className="relative z-10 font-black text-[var(--sc-inverse-text)] transition-colors duration-300 group-hover:text-transparent">{day}</span>
-                              {/* 🚀 恢复水波纹遮罩 */}
                               <div 
                                 className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-center group-hover:animate-[rippleSpread_0.6s_cubic-bezier(0.16,1,0.3,1)_forwards]"
                                 style={{ clipPath: 'circle(0% at var(--x, 50%) var(--y, 50%))' }}
@@ -352,7 +341,6 @@ export default function ShowcaseLayout({ children }: { children: React.ReactNode
                       <h2 className="text-xl font-black uppercase tracking-tighter leading-tight mb-3">{activeModal.title}</h2>
                       <p className="text-xs font-bold leading-relaxed opacity-80 mb-6">{activeModal.excerpt}</p>
                       
-                      {/* 弹窗内的 Read Log 按钮也加上了鼠标计算与特效 */}
                       <Link 
                         href="#" 
                         onMouseMove={handleMouseMove}
@@ -376,7 +364,8 @@ export default function ShowcaseLayout({ children }: { children: React.ReactNode
 
             </div>
           </div>
-          {/* ===== 以下是原本的侧边栏结构，保持不变 ===== */}
+
+          {/* 3. 左侧边栏 (PC端) */}
           <aside id="sidebar-left" className="fixed left-0 top-0 h-screen w-64 2xl:w-80 sc-border border-r z-30 flex-col justify-between pt-28 pb-10 px-8 hidden xl:flex pointer-events-none animate-sidebar-left">
             <div className="pointer-events-auto">
               <div className="w-16 h-16 2xl:w-20 2xl:h-20 rounded-full overflow-hidden mb-5 sc-border border-2">
@@ -398,6 +387,7 @@ export default function ShowcaseLayout({ children }: { children: React.ReactNode
             </div>
           </aside>
 
+          {/* 4. 右侧边栏 (PC端) */}
           <aside id="sidebar-right" className="fixed right-0 top-0 h-screen w-72 2xl:w-96 sc-border border-l z-30 flex-col pt-28 pb-10 px-6 2xl:px-8 hidden xl:flex pointer-events-none animate-sidebar-right">
             <div className="pointer-events-auto flex items-end justify-between sc-border border-b pb-4">
               <div>
@@ -503,6 +493,7 @@ export default function ShowcaseLayout({ children }: { children: React.ReactNode
             </div>
           </aside>
 
+          {/* 5. 主体内容盒子 */}
           <div id="main-wrapper" className="relative z-10">
             {children}
           </div>
