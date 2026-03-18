@@ -57,7 +57,8 @@ export default function BlogPostClientWrapper({ post }: BlogPostProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isReadyToAnimate, setIsReadyToAnimate] = useState(false);
   const [toc, setToc] = useState<{ level: number, text: string, id: string }[]>([]);
-  
+  const [activeId, setActiveId] = useState<string>('');
+
   const setRef = useCallback((node: HTMLDivElement) => {
     if (node !== null) {
       containerRef.current = node;
@@ -72,6 +73,36 @@ export default function BlogPostClientWrapper({ post }: BlogPostProps) {
     e.currentTarget.style.setProperty('--x', `${x}px`);
     e.currentTarget.style.setProperty('--y', `${y}px`);
   };
+
+
+useEffect(() => {
+    const handleScroll = () => {
+      const headings = toc.map(item => document.getElementById(item.id)).filter(Boolean) as HTMLElement[];
+      let currentActiveId = '';
+      
+      // 遍历所有标题，找到最后一个已经越过页面顶部 160px 警戒线的标题
+      for (const heading of headings) {
+        const rect = heading.getBoundingClientRect();
+        if (rect.top <= 160) {
+          currentActiveId = heading.id;
+        } else {
+          break; 
+        }
+      }
+      
+      // 设置高亮 ID（如果滑到最顶端，默认高亮第一个）
+      if (currentActiveId) {
+        setActiveId(currentActiveId);
+      } else if (headings.length > 0) {
+        setActiveId(headings[0].id);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    setTimeout(handleScroll, 100); // 页面加载后立即测算一次
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [toc]);
 
   useEffect(() => {
     // 依然提取正文中的二级 (##) 和三级 (###) 标题生成目录
@@ -162,6 +193,33 @@ export default function BlogPostClientWrapper({ post }: BlogPostProps) {
         {/* 🚀 融合编辑器的杂志排版与你的 Brutalist 布局风格 */}
         {/* ========================================== */}
         <style jsx global>{`
+
+/* 🚀 严格修复版：TOC 中心向两边展开的下划线动画 */
+          .brutalist-toc-nav .toc-text-wrapper {
+            position: relative !important;
+            display: inline-block !important; /* inline 改为 inline-block，确保高度被撑开 */
+            overflow: visible !important; /* 核心修复：防止父级 truncate 把下划线切掉 */
+          }
+
+          .brutalist-toc-nav .toc-text-wrapper::after {
+            content: '' !important;
+            position: absolute !important;
+            bottom: -2px !important; /* 距离文字的底边距，确保能看见 */
+            left: 50% !important;
+            width: 0 !important;
+            height: 2px !important;
+            background-color: var(--sc-text) !important;
+            transition: width 0.3s cubic-bezier(0.65, 0.05, 0.36, 1) !important; /* 更脆的动画 */
+            transform: translateX(-50%) !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+
+          /* 悬浮时，或处于当前阅读进度时，下划线完全展开 */
+          .brutalist-toc-nav a:hover .toc-text-wrapper::after,
+          .brutalist-toc-nav .active-toc::after {
+            width: 100% !important;
+          }
           /* 专门用于只隐藏右侧边栏的类 */
           .hide-right-sidebar #sidebar-right {
             translate: 100% 0 !important;
@@ -317,32 +375,37 @@ export default function BlogPostClientWrapper({ post }: BlogPostProps) {
              Table of Contents
            </div>
            
- {/* 🚀 新增 hide-scrollbar 类来隐藏丑陋的滚动条 */}
-           <nav className="flex flex-col gap-5 overflow-y-auto hide-scrollbar">
-             {toc.length > 0 ? toc.map((item, i) => (
-               <a 
-                 key={i} 
-                 href={`#${item.id}`}
-                 title={item.text}
-                 onClick={(e) => {
-                   e.preventDefault();
-                   const targetElement = document.getElementById(item.id);
-                   if (targetElement) {
-                     const headerOffset = 140;
-                     const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
-                     const offsetPosition = elementPosition - headerOffset;
-                     
-                     window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-                   }
-                 }}
-                 /* 🚀 核心修复：加了 block 和 truncate (单行省略号) */
-                 className={`block truncate text-xs 2xl:text-sm font-bold uppercase transition-colors hover:text-gray-400 ${
-                   item.level === 3 ? 'ml-4 opacity-40 text-[10px]' : 'opacity-80'
-                 }`}
-               >
-                 {item.text}
-               </a>
-             )) : (
+{/* 🚀 核心修复：给 nav 加了专门的类 brutalist-toc-nav */}
+           <nav className="brutalist-toc-nav flex flex-col gap-5 overflow-y-auto hide-scrollbar">
+             {toc.length > 0 ? toc.map((item, i) => {
+               const isActive = item.id === activeId;
+               return (
+                 <a 
+                   key={i} 
+                   href={`#${item.id}`}
+                   title={item.text}
+                   onClick={(e) => {
+                     e.preventDefault();
+                     const targetElement = document.getElementById(item.id);
+                     if (targetElement) {
+                       const headerOffset = 140;
+                       const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
+                       const offsetPosition = elementPosition - headerOffset;
+                       window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                     }
+                   }}
+                   // 🚀 修复：父级删掉了 block 和 truncate，仅保留透明度逻辑
+                   className={`block text-xs 2xl:text-sm font-bold uppercase transition-colors hover:text-[var(--sc-text)] ${
+                     item.level === 3 ? 'ml-4' : ''
+                   } ${isActive ? 'opacity-100' : 'opacity-40 hover:opacity-80'}`}
+                 >
+                   {/* 🚀 核心修复：承载下划线的 span 必须加上 active-toc 类，并负责 truncate */}
+                   <span className={`toc-text-wrapper truncate max-w-full block ${isActive ? 'active-toc' : ''}`}>
+                     {item.text}
+                   </span>
+                 </a>
+               );
+             }) : (
                <span className="text-xs font-mono opacity-30 uppercase">No indices found.</span>
              )}
            </nav>
