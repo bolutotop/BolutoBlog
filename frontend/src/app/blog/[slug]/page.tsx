@@ -1,34 +1,43 @@
+import React from 'react';
 import { notFound } from 'next/navigation';
-import fs from 'fs/promises';
-import path from 'path';
-import { MDXRemote } from 'next-mdx-remote/rsc';
-import CodePlayground from '@/components/CodePlayground'; // 需后续创建
+import prisma from '@/lib/prisma';
+import BlogPostClientWrapper from './BlogPostClientWrapper';
 
-// 定义自定义组件映射，允许在 MDX 中直接使用 <CodePlayground />
-const components = {
-    CodePlayground,
-};
+// 强制动态渲染 (可选，确保每次访问都能拿到最新数据)
+export const dynamic = 'force-dynamic';
 
-interface BlogPostProps {
-    params: { slug: string };
-}
+export default async function BlogPostPage({
+  params,
+}: {
+  // 兼容 Next.js 15 的异步 params
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
 
-export default async function BlogPost({ params }: BlogPostProps) {
-    const { slug } = params;
-    const filePath = path.join(process.cwd(), 'content', `${slug}.mdx`);
+  // 1. 去数据库查询对应 slug 的文章
+  const post = await prisma.post.findUnique({
+    where: { slug },
+  });
 
-    let fileContent: string;
-    try {
-        fileContent = await fs.readFile(filePath, 'utf8');
-    } catch (error) {
-        // 文件不存在则触发 404
-        notFound();
-    }
+  // 2. 如果没找到文章，或者文章设为草稿未发布，则返回 404
+  if (!post || !post.published) {
+    notFound();
+  }
 
-    return (
-        <article className="prose prose-invert max-w-4xl mx-auto p-6">
-            {/* 服务端组件直接渲染 MDX，并将 CodePlayground 作为客户端组件水合 (Hydration) */}
-            <MDXRemote source={fileContent} components={components} />
-        </article>
-    );
+  // 3. 格式化数据，传递给客户端组件
+  const formattedPost = {
+    id: post.id,
+    title: post.title,
+    category: post.category || 'Uncategorized',
+    date: post.createdAt.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }),
+    content: post.content,
+    // 如果没有封面图，给一张极简的黑白建筑占位图
+    coverImage: post.coverImage || 'https://images.unsplash.com/photo-1513628253939-010e64ac66cd?q=80&w=2564&auto=format&fit=crop&grayscale',
+  };
+
+  return <BlogPostClientWrapper post={formattedPost} />;
 }

@@ -100,3 +100,18 @@ export async function uploadImage(formData: FormData) {
     throw new Error(error.message || '上传失败');
   }
 }
+
+// app/actions.ts 追加内容
+
+export async function getCalendarPostsAction() {
+  try {
+    const posts = await prisma.post.findMany({
+      where: { published: true },
+      select: { title: true, slug: true, content: true, createdAt: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    return { success: true, posts };
+  } catch (error: any) {
+    return { success: false, message: error.message || '获取日历数据失败' };
+  }
+}

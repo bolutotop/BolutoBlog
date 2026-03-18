@@ -3,15 +3,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import gsap from 'gsap';
+import { getCalendarPostsAction } from '@/app/actions';
 
-const mockPosts: Record<number, { title: string, date: string, excerpt: string }> = {
-  16: { title: "The Brutalist Web Architecture", date: "March 16, 2026", excerpt: "Exploring the intersections of raw CSS, GSAP physics, and typography as graphic. No templates. Pure uncompromising digital experiences." },
-  24: { title: "Spatial UI Patterns", date: "March 24, 2026", excerpt: "Why the grid must be broken to create depth. A deep dive into mix-blend modes and scroll hijacking." }
-};
+import { ReactLenis } from '@studio-freight/react-lenis';
 
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
   const [dateInfo, setDateInfo] = useState({ day: '--', month: '--- 202X' });
-  const [activeModal, setActiveModal] = useState<typeof mockPosts[1] | null>(null);
+  const [activeModal, setActiveModal] = useState<any | null>(null);
+  const [calendarData, setCalendarData] = useState<Record<number, any>>({});
   const [isClosing, setIsClosing] = useState(false);
 
   const [bootStage, setBootStage] = useState(0); 
@@ -105,8 +104,9 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
     e.currentTarget.style.setProperty('--y', `${y}px`);
   };
 
-  const year = 2026;
-  const month = 2; 
+const currentD = new Date();
+  const year = currentD.getFullYear();
+  const month = currentD.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate(); 
   const firstDayOfMonth = new Date(year, month, 1).getDay(); 
 
@@ -114,8 +114,32 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const allCalendarCells = [...blanks, ...days];
   const weekDays = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-
+useEffect(() => {
+    const fetchCalendarPosts = async () => {
+      const res = await getCalendarPostsAction();
+      if (res.success && res.posts) {
+        const dataMap: Record<number, any> = {};
+        res.posts.forEach((post: any) => {
+          const postDate = new Date(post.createdAt);
+          // 如果文章是当前这个月发布的，提取它的日期 (几号)
+          if (postDate.getFullYear() === year && postDate.getMonth() === month) {
+            const day = postDate.getDate();
+            // 存入 Map
+            dataMap[day] = {
+              title: post.title,
+              slug: post.slug,
+              date: postDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+              excerpt: post.content.substring(0, 100) + '...', // 截取简介
+            };
+          }
+        });
+        setCalendarData(dataMap);
+      }
+    };
+    fetchCalendarPosts();
+  }, [year, month]);
   return (
+    <ReactLenis root options={{ lerp: 0.1, duration: 1.5, smoothWheel: true }}>
     <div id="showcase-root" className="showcase-theme min-h-screen font-sans selection:bg-black selection:text-white transition-colors duration-700 overflow-x-hidden relative">
       
       {isFirstVisit && bootStage < 2 && (
@@ -133,6 +157,10 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
       )}
 
       <style jsx global>{`
+      .hide-right-sidebar #sidebar-right {
+          translate: 100% 0 !important;
+          opacity: 0 !important;
+        }
         .showcase-theme {
           --sc-bg: #ffffff; --sc-text: #000000; --sc-border: rgba(0, 0, 0, 0.15);
           --sc-inverse-bg: #000000; --sc-inverse-text: #ffffff;
@@ -287,8 +315,8 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
                   <div className="grid grid-cols-7 gap-y-2 gap-x-2 font-mono text-[10px]">
                     {allCalendarCells.slice(0, 28).map((day, idx) => {
                       if (day === null) return <div key={`blank-${idx}`} className="aspect-square" />;
-                      const hasPost = mockPosts[day];
-                      const isToday = day === 17; 
+                      const hasPost = calendarData[day];
+                      const isToday = day === currentD.getDate(); // 顺便把高亮的 isToday 改成真实的“今天”
                       
                       return (
                         <button 
@@ -342,7 +370,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
                       <p className="text-xs font-bold leading-relaxed opacity-80 mb-6">{activeModal.excerpt}</p>
                       
                       <Link 
-                        href="#" 
+                        href={`/blog/${activeModal.slug}`}
                         onMouseMove={handleMouseMove}
                         className="group relative overflow-hidden flex items-center justify-between bg-[var(--sc-inverse-bg)] px-5 py-4 active:scale-95 transition-transform isolate w-full"
                       >
@@ -413,8 +441,8 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
               <div className="grid grid-cols-7 gap-y-2 gap-x-1 font-mono text-xs 2xl:text-sm">
                 {allCalendarCells.map((day, idx) => {
                   if (day === null) return <div key={`blank-${idx}`} className="aspect-square" />;
-                  const hasPost = mockPosts[day];
-                  const isToday = day === 17; 
+                  const hasPost = calendarData[day];
+                 const isToday = day === currentD.getDate();
 
                   return (
                     <button 
@@ -467,7 +495,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
                     <p className="text-xs 2xl:text-sm font-bold leading-relaxed opacity-80 mb-6">{activeModal.excerpt}</p>
                     
                     <Link 
-                      href="#" 
+                      href={`/blog/${activeModal.slug}`}
                       onMouseMove={handleMouseMove}
                       className="group relative overflow-hidden flex items-center justify-between bg-[var(--sc-inverse-bg)] px-5 py-3 transition-transform hover:scale-105 active:scale-95 duration-500 isolate w-full"
                     >
@@ -500,5 +528,6 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
         </>
       )}
     </div>
+    </ReactLenis>
   );
 }

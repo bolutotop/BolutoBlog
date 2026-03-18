@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Lenis from '@studio-freight/lenis';
 import Link from 'next/link';
 import StudioLayout from '@/components/StudioLayout'
 
@@ -52,15 +51,6 @@ export default function ShowcasePage() {
     // 🚀 核心修复 3：如果 DOM 还没出来（开机动画没播完），直接拦截 GSAP，不让它瞎跑
     if (!isReadyToAnimate || !containerRef.current) return;
 
-    // 1. 初始化 Lenis 平滑滚动
-    const lenis = new Lenis({ 
-      duration: 1.2, 
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
-      orientation: 'vertical', 
-      smoothWheel: true 
-    });
-    lenis.on('scroll', ScrollTrigger.update);
-    gsap.ticker.add((time) => { lenis.raf(time * 1000); });
     gsap.ticker.lagSmoothing(0);
 
     // 2. 集中管理所有 GSAP 动画
@@ -129,8 +119,6 @@ export default function ShowcasePage() {
     return () => { 
       clearTimeout(timer);
       ctx.revert(); 
-      lenis.destroy(); 
-      gsap.ticker.remove((time) => lenis.raf(time * 1000)); 
     };
   }, [isReadyToAnimate]); // 依赖项加上 isReadyToAnimate，确保重跑一次
 
@@ -161,7 +149,7 @@ export default function ShowcasePage() {
             Breaking grids. Defying templates. Pure uncompromising digital architecture.
           </div>
           <Link 
-            href="/" 
+            href="/blog" 
             onMouseMove={handleMouseMove}
             className="group relative overflow-hidden bg-[var(--sc-inverse-bg)] border border-[var(--sc-inverse-bg)] px-10 py-5 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 duration-500 ease-[cubic-bezier(0.8,0,0.2,1)] isolate w-fit"
           >
