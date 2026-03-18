@@ -16,7 +16,8 @@ import '@fontsource/playfair-display/700.css';
 import '@fontsource/noto-serif-sc/400.css';
 import '@fontsource/noto-serif-sc/700.css';
 
-const generateSlug = (text: string) => text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+// 🚀 修复：使用支持 Unicode 的正则，保留中文、英文、数字，过滤掉特殊标点符号
+const generateSlug = (text: string) => text.toLowerCase().replace(/\s+/g, '-').replace(/[^\p{L}\p{N}\-_]/gu, '');
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
@@ -310,8 +311,7 @@ export default function BlogPostClientWrapper({ post }: BlogPostProps) {
           </div>
 
         </section>
-
-        {/* ==================== 🚀 动态 Markdown 目录侧边栏 (从右侧滑入) ==================== */}
+{/* ==================== 🚀 3. 动态 Markdown 目录侧边栏 (从右侧滑入) ==================== */}
         <aside className="toc-sidebar fixed right-0 top-0 h-screen w-72 2xl:w-96 sc-border border-l z-40 flex flex-col pt-28 pb-10 px-6 2xl:px-8 opacity-0 translate-x-full pointer-events-none bg-[var(--sc-bg)]">
            <div className="text-[10px] 2xl:text-xs font-black uppercase tracking-widest mb-8 sc-border border-b pb-4 opacity-50">
              Table of Contents
@@ -324,7 +324,19 @@ export default function BlogPostClientWrapper({ post }: BlogPostProps) {
                  href={`#${item.id}`}
                  onClick={(e) => {
                    e.preventDefault();
-                   document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                   
+                   // 🚀 核心修复：精准计算目标元素的绝对坐标，并减去头部遮挡高度
+                   const targetElement = document.getElementById(item.id);
+                   if (targetElement) {
+                     const headerOffset = 140; // 设置你需要的偏移量 (头部高度 + 留白)
+                     const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
+                     const offsetPosition = elementPosition - headerOffset;
+                     
+                     window.scrollTo({
+                       top: offsetPosition,
+                       behavior: 'smooth'
+                     });
+                   }
                  }}
                  className={`text-xs 2xl:text-sm font-bold uppercase transition-colors hover:text-gray-400 ${
                    item.level === 3 ? 'ml-4 opacity-40 text-[10px]' : 'opacity-80'
