@@ -6,6 +6,7 @@ import prisma from '@/lib/prisma';
 
 // 2. 引入分离出去的交互式动画客户端组件 (我们稍后创建它)
 import BlogArchiveClientWrapper from './BlogArchiveClientWrapper';
+import PaginationWidget from '@/components/blog/PaginationWidget'; // 根据你的实际路径调整
 
 // 巨型标题文字切割组件 (保持不变，因为它是纯 UI)
 const SplitText = ({ text, className = "" }: { text: string, className?: string }) => (
@@ -243,63 +244,12 @@ const getPaginationGroup = () => {
               </Link>
             ))}
           </div>
-{totalPages > 1 && (
-            <div className="mt-24 pt-8 border-t-4 border-[var(--sc-text)] flex flex-col md:flex-row items-center justify-between gap-6 content-block">
-              
-              {/* [ PREV ] 按钮 */}
-              {currentPage > 1 ? (
-                <Link 
-                  href={`/blog?page=${currentPage - 1}`} 
-                  className="group flex items-center justify-center border-2 border-[var(--sc-text)] bg-[var(--sc-bg)] text-[var(--sc-text)] hover:bg-[var(--sc-inverse-bg)] hover:text-[var(--sc-inverse-text)] px-6 py-3 transition-colors duration-300 w-full md:w-auto"
-                >
-                  <span className="font-black text-[10px] md:text-xs uppercase tracking-widest">[ ← PREV ]</span>
-                </Link>
-              ) : (
-                <div className="w-full md:w-auto px-6 py-3 border-2 border-[var(--sc-border)] opacity-30 cursor-not-allowed text-center">
-                  <span className="font-black text-[10px] md:text-xs uppercase tracking-widest">[ ← PREV ]</span>
-                </div>
-              )}
-
-              {/* [ 01 ] [ 02 ] ... [ 10 ] 数字矩阵 */}
-              <div className="flex items-center gap-2 flex-wrap justify-center">
-                {paginationGroup.map((p, i) => {
-                  if (p === '...') {
-                    return <span key={i} className="px-1 md:px-2 opacity-40 font-black tracking-widest">///</span>;
-                  }
-                  
-                  const isCurrent = p === currentPage;
-                  return (
-                    <Link
-                      key={i}
-                      href={`/blog?page=${p}`}
-                      className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center font-mono font-black text-xs md:text-sm transition-colors duration-300 border-2 ${
-                        isCurrent 
-                          ? 'bg-[var(--sc-text)] text-[var(--sc-inverse-text)] border-[var(--sc-text)]' 
-                          : 'border-[var(--sc-border)] hover:border-[var(--sc-text)] hover:bg-[var(--sc-text)] hover:text-[var(--sc-inverse-text)]'
-                      }`}
-                    >
-                      {String(p).padStart(2, '0')}
-                    </Link>
-                  )
-                })}
-              </div>
-
-              {/* [ NEXT ] 按钮 */}
-              {currentPage < totalPages ? (
-                <Link 
-                  href={`/blog?page=${currentPage + 1}`} 
-                  className="group flex items-center justify-center border-2 border-[var(--sc-text)] bg-[var(--sc-bg)] text-[var(--sc-text)] hover:bg-[var(--sc-inverse-bg)] hover:text-[var(--sc-inverse-text)] px-6 py-3 transition-colors duration-300 w-full md:w-auto"
-                >
-                  <span className="font-black text-[10px] md:text-xs uppercase tracking-widest">[ NEXT → ]</span>
-                </Link>
-              ) : (
-                <div className="w-full md:w-auto px-6 py-3 border-2 border-[var(--sc-border)] opacity-30 cursor-not-allowed text-center">
-                  <span className="font-black text-[10px] md:text-xs uppercase tracking-widest">[ NEXT → ]</span>
-                </div>
-              )}
-              
-            </div>
-          )}
+{/* ==================== 4. 分页控件 ==================== */}
+          <PaginationWidget 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            basePath="/blog" 
+          />
 
         </div>
       </section>
