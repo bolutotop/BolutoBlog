@@ -150,3 +150,52 @@ export async function getCategoriesAction() {
     return { success: false, categories: [] };
   }
 }
+
+
+export async function searchPostsAction(query: string) {
+  // 如果搜索词为空，直接返回空数组，不查数据库
+  if (!query || query.trim() === '') {
+    return { success: true, posts: [] };
+  }
+
+  try {
+    // 🚀 核心查询逻辑：
+    // 这里我们特意使用了 contains (在 SQL 底层就是 LIKE '%关键字%')
+    const posts = await prisma.post.findMany({
+      where: {
+        published: true,
+        OR: [
+          // 条件 A：标题中包含你输入的字符（输入 1，匹配 "123"）
+          { title: { contains: query } },
+          // 条件 B：标签分类中包含你输入的字符（输入 1，匹配 "Tech 1"）
+          { category: { contains: query } }
+        ]
+      },
+      // 为了保证搜索速度和前端全屏排版不被撑爆，只提取必要的字段，并限制最多返回 6 条
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        category: true,
+        createdAt: true,
+      },
+      take: 6, 
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // 格式化一下日期，让前端拿到手就能直接渲染，不用再算一遍
+    const formattedPosts = posts.map(post => ({
+      ...post,
+      date: post.createdAt.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      })
+    }));
+
+    return { success: true, posts: formattedPosts };
+  } catch (error) {
+    console.error("Search failed:", error);
+    return { success: false, posts: [] };
+  }
+}
