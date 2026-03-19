@@ -26,6 +26,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
   const preloaderRef = useRef<HTMLDivElement>(null);
   const counterRef = useRef<HTMLDivElement>(null);
 const [categories, setCategories] = useState<string[]>([]);
+const [showAllCats, setShowAllCats] = useState(false);
 useEffect(() => {
     const fetchCategories = async () => {
       const res = await getCategoriesAction();
@@ -315,7 +316,43 @@ useEffect(() => {
                   </div>
                 </div>
               </div>
-
+{/* ================================================= */}
+              {/* 👉 新增：移动端专属的分类导航 (塞在日历的上方) */}
+              {/* ================================================= */}
+              <div className="mt-2 sc-border border-t pt-6">
+                <div className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-4">
+                  Index / Categories
+                </div>
+                <div className="flex flex-wrap gap-2 font-mono text-[10px] font-bold uppercase">
+                  {categories.length > 0 ? (
+                    <>
+                      {/* 移动端横向空间小，这里默认截取前 6 个 */}
+                      {(showAllCats ? categories : categories.slice(0, 6)).map((tag) => (
+                        <Link 
+                          key={tag} 
+                          href={`/blog/category/${encodeURIComponent(tag)}`}
+                          onClick={() => setIsMobileMenuOpen(false)} // 🚀 核心细节：点击跳转后自动关掉手机菜单
+                          className="sc-border border px-3 py-1.5 active:bg-[var(--sc-text)] active:text-[var(--sc-inverse-text)] transition-colors"
+                        >
+                          {tag}
+                        </Link>
+                      ))}
+                      
+                      {/* 超过 6 个显示展开按钮（虚线边框区分） */}
+                      {categories.length > 6 && (
+                        <button 
+                          onClick={() => setShowAllCats(!showAllCats)}
+                          className="sc-border border border-dashed px-3 py-1.5 opacity-50 active:opacity-100 transition-opacity"
+                        >
+                          {showAllCats ? '[-]' : '[+]'}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <span className="opacity-30 animate-pulse">Loading...</span>
+                  )}
+                </div>
+              </div>
               <div className="mt-2 sc-border border-t pt-6 relative">
                 <div className="max-w-[260px] mx-auto">
                   <div className="flex justify-between items-center mb-4">
@@ -434,23 +471,36 @@ useEffect(() => {
               <div className="text-[10px] 2xl:text-xs font-black uppercase tracking-widest mb-4 sc-border border-b pb-2 opacity-50">
                 Index / Categories
               </div>
-              <div className="flex flex-col gap-3 font-mono text-xs 2xl:text-sm font-bold uppercase">
-                {categories.length > 0 ? categories.map((tag, index) => (
-                  <Link 
-                    key={tag} 
-                    href={`/blog?category=${encodeURIComponent(tag)}`} // 预留了点击跳转到分类过滤的参数
-                    className="group flex items-center gap-3 cursor-pointer opacity-70 hover:opacity-100 transition-all hover:translate-x-2"
-                  >
-                    {/* 前面的 01, 02 序号 */}
-                    <span className="text-[9px] opacity-40 group-hover:opacity-100 transition-opacity">
-                      {(index + 1).toString().padStart(2, '0')}
-                    </span>
-                    {/* 悬浮时文字反色，背景变黑的粗野主义特效 */}
-                    <span className="group-hover:bg-[var(--sc-text)] group-hover:text-[var(--sc-inverse-text)] px-1 -ml-1 transition-colors">
-                      {tag}
-                    </span>
-                  </Link>
-                )) : (
+<div className="flex flex-col gap-3 font-mono text-xs 2xl:text-sm font-bold uppercase">
+                {categories.length > 0 ? (
+                  <>
+                    {/* 👉 2. 核心修改：如果没展开，就只 slice(0, 5) 截取前 5 个显示 */}
+                    {(showAllCats ? categories : categories.slice(0, 5)).map((tag, index) => (
+                      <Link 
+                        key={tag} 
+                       href={`/blog/category/${encodeURIComponent(tag)}`}
+                        className="group flex items-center gap-3 cursor-pointer opacity-70 hover:opacity-100 transition-all hover:translate-x-2"
+                      >
+                        <span className="text-[9px] opacity-40 group-hover:opacity-100 transition-opacity">
+                          {(index + 1).toString().padStart(2, '0')}
+                        </span>
+                        <span className="group-hover:bg-[var(--sc-text)] group-hover:text-[var(--sc-inverse-text)] px-1 -ml-1 transition-colors">
+                          {tag}
+                        </span>
+                      </Link>
+                    ))}
+
+                    {/* 👉 3. 新增：如果总数超过 5 个，渲染展开/收起按钮 */}
+                    {categories.length > 5 && (
+                      <button 
+                        onClick={() => setShowAllCats(!showAllCats)}
+                        className="text-left mt-2 text-[10px] 2xl:text-xs font-black uppercase tracking-widest opacity-50 hover:opacity-100 transition-opacity"
+                      >
+                        {showAllCats ? '[- COLLAPSE]' : '[+ VIEW ALL]'}
+                      </button>
+                    )}
+                  </>
+                ) : (
                   <span className="text-[10px] opacity-30 animate-pulse">Loading Data...</span>
                 )}
               </div>
