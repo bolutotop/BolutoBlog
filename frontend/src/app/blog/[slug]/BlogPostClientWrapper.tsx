@@ -5,11 +5,11 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Link from 'next/link';
 import StudioLayout from '@/components/StudioLayout';
-
+import './blog-post.css';
 // 🚀 1. 引入 md-editor-rt 预览组件及样式
 import { MdPreview } from 'md-editor-rt';
 import 'md-editor-rt/lib/preview.css';
-
+import TocSidebar from '@/components/post/TocSidebar';
 // 🚀 2. 引入你配置的精美字体
 import '@fontsource/playfair-display/400.css';
 import '@fontsource/playfair-display/700.css';
@@ -240,131 +240,6 @@ useEffect(() => {
     <StudioLayout>
       <main ref={setRef} className="overflow-x-hidden pb-32 min-h-screen bg-[var(--sc-bg)]">
         
-        {/* ========================================== */}
-        {/* 🚀 融合编辑器的杂志排版与你的 Brutalist 布局风格 */}
-        {/* ========================================== */}
-        {/* ========================================== */}
-        {/* 🚀 融合编辑器的杂志排版与你的 Brutalist 布局风格 */}
-        {/* ========================================== */}
-        <style jsx global>{`
-/* 🚀 修复：强制生效的移动端弹窗“生长/吸入”动画 */
-          .mobile-menu-popover {
-            /* 展开时：带有一点弹簧惯性的“生长”效果 */
-            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease !important; 
-          }
-          .mobile-menu-popover.menu-closed {
-            /* 收起时：先微微回缩再急速“吸入黑洞”的效果 */
-            transition: transform 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045), opacity 0.2s ease !important; 
-          }
-/* 🚀 严格修复版：TOC 中心向两边展开的下划线动画 */
-          .brutalist-toc-nav .toc-text-wrapper {
-            position: relative !important;
-            display: inline-block !important; /* inline 改为 inline-block，确保高度被撑开 */
-            overflow: visible !important; /* 核心修复：防止父级 truncate 把下划线切掉 */
-          }
-
-          .brutalist-toc-nav .toc-text-wrapper::after {
-            content: '' !important;
-            position: absolute !important;
-            bottom: -2px !important; /* 距离文字的底边距，确保能看见 */
-            left: 50% !important;
-            width: 0 !important;
-            height: 2px !important;
-            background-color: var(--sc-text) !important;
-            transition: width 0.3s cubic-bezier(0.65, 0.05, 0.36, 1) !important; /* 更脆的动画 */
-            transform: translateX(-50%) !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-          }
-
-          /* 悬浮时，或处于当前阅读进度时，下划线完全展开 */
-          .brutalist-toc-nav a:hover .toc-text-wrapper::after,
-          .brutalist-toc-nav .active-toc::after {
-            width: 100% !important;
-          }
-          /* 专门用于只隐藏右侧边栏的类 */
-          .hide-right-sidebar #sidebar-right {
-            translate: 100% 0 !important;
-            opacity: 0 !important;
-          }
-
-          .brutalist-hero-text { color: var(--sc-text) !important; }
-          .brutalist-hero-meta { color: var(--sc-text) !important; opacity: 0.6; }
-
-          /* ========================================== */
-          /* 🚀 md-editor-rt 预览区域专属覆盖样式 (严格对齐你的 Editor) */
-          /* ========================================== */
-          .magazine-preview-wrapper .md-editor {
-            /* 强制锁定为白底黑字，防止被外部暗黑模式污染 */
-            --md-bk-color: #ffffff !important;
-            --md-color: #18181b !important;
-            background-color: #ffffff !important;
-          }
-
-          .magazine-preview-wrapper .md-editor-preview {
-            font-family: 'Noto Serif SC', 'Playfair Display', serif !important;
-            font-size: clamp(1.125rem, 1.5vw, 1.35rem);
-            line-height: 1.8;
-            padding: 0; /* 移除多余的内边距 */
-          }
-          
-          .magazine-preview-wrapper .md-editor-preview p {
-            font-weight: 500;
-            opacity: 0.85;
-            margin-bottom: 2.5rem;
-          }
-
-          .magazine-preview-wrapper .md-editor-preview h1,
-          .magazine-preview-wrapper .md-editor-preview h2,
-          .magazine-preview-wrapper .md-editor-preview h3 {
-            font-family: 'Playfair Display', 'Noto Serif SC', serif !important;
-            font-weight: 700;
-            text-transform: uppercase;
-          }
-
-          .magazine-preview-wrapper .md-editor-preview h2 {
-            scroll-margin-top: 120px; 
-            font-size: clamp(2rem, 3vw, 3.5rem);
-            letter-spacing: -0.03em;
-            margin-top: 5rem;
-            margin-bottom: 2rem;
-            border-bottom: 3px solid var(--sc-border);
-            padding-bottom: 1rem;
-            line-height: 1.1;
-          }
-
-          .magazine-preview-wrapper .md-editor-preview h3 {
-            scroll-margin-top: 120px; 
-            font-size: clamp(1.5rem, 2vw, 2rem);
-            margin-top: 3rem;
-            margin-bottom: 1.5rem;
-          }
-
-          .magazine-preview-wrapper .md-editor-preview blockquote {
-            border-left: 6px solid var(--sc-text);
-            padding-left: 2rem;
-            font-size: clamp(1.5rem, 2.5vw, 2.5rem);
-            font-style: italic;
-            font-weight: 800;
-            line-height: 1.3;
-            margin: 4rem 0;
-            opacity: 0.9;
-            background: transparent;
-            color: var(--sc-text);
-          }
-
-          .magazine-preview-wrapper .md-editor-preview img {
-            width: 100%;
-            height: auto;
-            border: 2px solid var(--sc-border);
-            margin: 4rem 0;
-            filter: grayscale(20%); 
-          }
-          
-          /* 🚨 注：已经彻底删除了所有对 pre 和 code 的强制覆盖！ */
-          /* 现在代码块会完美呈现 md-editor-rt 自带的 github 主题语法高亮 */
-        `}</style>
-
         {/* 顶部阅读进度条 */}
         <div className="fixed top-0 left-0 w-full h-[3px] bg-[var(--sc-border)] z-[60]">
           <div className="reading-progress h-full bg-[var(--sc-text)] origin-left scale-x-0" />
@@ -431,116 +306,13 @@ useEffect(() => {
           </div>
 
         </section>
-{/* ==================== 🚀 3. 动态 Markdown 目录侧边栏 (从右侧滑入) ==================== */}
-        <aside className="toc-sidebar hidden lg:flex fixed right-0 top-0 h-screen w-72 2xl:w-96 sc-border border-l z-40 flex flex-col pt-28 pb-10 px-6 2xl:px-8 opacity-0 translate-x-full pointer-events-none bg-[var(--sc-bg)]">
-           <div className="text-[10px] 2xl:text-xs font-black uppercase tracking-widest mb-8 sc-border border-b pb-4 opacity-50">
-             Table of Contents
-           </div>
-           
-{/* 🚀 核心修复：给 nav 加了专门的类 brutalist-toc-nav */}
-           <nav className="brutalist-toc-nav flex flex-col gap-5 overflow-y-auto hide-scrollbar">
-             {toc.length > 0 ? toc.map((item, i) => {
-               const isActive = item.id === activeId;
-               return (
-                 <a 
-                   key={i} 
-                   href={`#${item.id}`}
-                   title={item.text}
-                   onClick={(e) => {
-                     e.preventDefault();
-                     const targetElement = document.getElementById(item.id);
-                     if (targetElement) {
-                       const headerOffset = 140;
-                       const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
-                       const offsetPosition = elementPosition - headerOffset;
-                       window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-                     }
-                   }}
-                   // 🚀 修复：父级删掉了 block 和 truncate，仅保留透明度逻辑
-                   className={`block text-xs 2xl:text-sm font-bold uppercase transition-colors hover:text-[var(--sc-text)] ${
-                     item.level === 3 ? 'ml-4' : ''
-                   } ${isActive ? 'opacity-100' : 'opacity-40 hover:opacity-80'}`}
-                 >
-                   {/* 🚀 核心修复：承载下划线的 span 必须加上 active-toc 类，并负责 truncate */}
-                   <span className={`toc-text-wrapper truncate max-w-full block ${isActive ? 'active-toc' : ''}`}>
-                     {item.text}
-                   </span>
-                 </a>
-               );
-             }) : (
-               <span className="text-xs font-mono opacity-30 uppercase">No indices found.</span>
-             )}
-           </nav>
-           
-        </aside>
-{/* ==================== 🚀 新增：移动端全屏可拖拽的悬浮目录 (FAB) ==================== */}
-  {winSize.w > 0 && (
-          <div 
-            ref={mobileMenuRef} // 👈 绑定 Ref，用来检测点击外部
-            className="mobile-toc-fab fixed z-[100] lg:hidden opacity-0 invisible"
-            style={{ left: pos.x, top: pos.y, touchAction: 'none' }}
-          >
-            {/* 悬浮菜单 Popover */}
-               <div 
-              className={`absolute w-64 bg-[var(--sc-bg)] sc-border border shadow-2xl p-5 flex flex-col gap-4 pointer-events-auto mobile-menu-popover transform ${
-                isMobileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-0 pointer-events-none menu-closed'
-              } ${
-                pos.y > winSize.h / 2 
-                  ? (pos.x > winSize.w / 2 ? 'origin-bottom-right' : 'origin-bottom-left') 
-                  : (pos.x > winSize.w / 2 ? 'origin-top-right' : 'origin-top-left')
-              } ${
-                pos.x > winSize.w / 2 ? 'right-[120%]' : 'left-[120%]'
-              } ${
-                pos.y > winSize.h / 2 ? 'bottom-0' : 'top-0'
-              }`}
-            >
-              <div className="text-[10px] font-black uppercase tracking-widest opacity-50 sc-border border-b pb-3">
-                Table of Contents
-              </div>
-              <nav className="brutalist-toc-nav flex flex-col gap-4 overflow-y-auto max-h-[50vh] hide-scrollbar">
-                {toc.length > 0 ? toc.map((item, i) => {
-                  const isActive = item.id === activeId;
-                  return (
-                    <a 
-                      key={i} href={`#${item.id}`} title={item.text}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setIsMobileMenuOpen(false); // 点击后自动收起
-                        const targetElement = document.getElementById(item.id);
-                        if (targetElement) {
-                          const headerOffset = 140;
-                          const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
-                          window.scrollTo({ top: elementPosition - headerOffset, behavior: 'smooth' });
-                        }
-                      }}
-                      className={`block text-xs font-bold uppercase transition-colors ${
-                        item.level === 3 ? 'ml-3' : ''
-                      } ${isActive ? 'opacity-100' : 'opacity-40'}`}
-                    >
-                      <span className={`toc-text-wrapper truncate max-w-full block ${isActive ? 'active-toc' : ''}`}>{item.text}</span>
-                    </a>
-                  );
-                }) : (
-                  <span className="text-[10px] font-mono opacity-30 uppercase">No indices found.</span>
-                )}
-              </nav>
-            </div>
-
-            {/* 可拖拽的圆圈汉堡按钮 */}
-            <button 
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              className="w-14 h-14 bg-[var(--sc-inverse-bg)] text-[var(--sc-inverse-text)] rounded-full flex items-center justify-center shadow-2xl active:scale-90 transition-transform cursor-grab active:cursor-grabbing"
-            >
-              <div className="relative w-5 h-5 flex flex-col justify-center items-center pointer-events-none">
-                <span className={`absolute h-[2px] w-full bg-current transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45' : '-translate-y-1.5'}`}></span>
-                <span className={`absolute h-[2px] w-full bg-current transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
-                <span className={`absolute h-[2px] w-full bg-current transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45' : 'translate-y-1.5'}`}></span>
-              </div>
-            </button>
-          </div>
-        )}
+        {/* ==================== 🚀 3. 动态 Markdown 目录侧边栏 (组件化) ==================== */}
+        <TocSidebar 
+          toc={toc} 
+          activeId={activeId} 
+          isMobileMenuOpen={isMobileMenuOpen} 
+          setIsMobileMenuOpen={setIsMobileMenuOpen} 
+        />
         {/* ==================== 4. 底部返回操作区 ==================== */}
         <section className="py-20 px-6 lg:px-12 border-t sc-border flex justify-center">
           <Link 

@@ -1,0 +1,75 @@
+/* components/studio-layout.css */
+
+.hide-right-sidebar #sidebar-right {
+  translate: 100% 0 !important;
+  opacity: 0 !important;
+}
+
+.showcase-theme {
+  --sc-bg: #ffffff; 
+  --sc-text: #000000; 
+  --sc-border: rgba(0, 0, 0, 0.15);
+  --sc-inverse-bg: #000000; 
+  --sc-inverse-text: #ffffff;
+  background-color: var(--sc-bg); 
+  color: var(--sc-text);
+}
+
+.showcase-theme.showcase-inverted {
+  --sc-bg: #0a0a0a; 
+  --sc-text: #ffffff; 
+  --sc-border: rgba(255, 255, 255, 0.2);
+  --sc-inverse-bg: #ffffff; 
+  --sc-inverse-text: #000000;
+}
+
+.sc-border { border-color: var(--sc-border); transition: border-color 0.7s ease; }
+.sc-bg-inverse { background-color: var(--sc-inverse-bg); color: var(--sc-inverse-text); transition: background-color 0.7s ease, color 0.7s ease; }
+
+@keyframes rippleSpread {
+  from { clip-path: circle(0% at var(--x, 50%) var(--y, 50%)); }
+  to { clip-path: circle(150% at var(--x, 50%) var(--y, 50%)); }
+}
+
+@keyframes headerEnter {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes sidebarLeftEnter {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes sidebarRightEnter {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-header-layout { animation: headerEnter 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-sidebar-left { animation: sidebarLeftEnter 1s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.2s; opacity: 0; }
+.animate-sidebar-right { animation: sidebarRightEnter 1s cubic-bezier(0.16, 1, 0.3, 1) forwards 0.4s; opacity: 0; }
+
+@keyframes panelEnter {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes panelExit {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(100%); }
+}
+.animate-panel-enter { animation: panelEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-panel-exit { animation: panelExit 0.4s cubic-bezier(0.8, 0, 0.2, 1) forwards; }
+
+#sidebar-left, #sidebar-right {
+  transition: translate 0.8s cubic-bezier(0.8, 0, 0.2, 1), opacity 0.6s ease;
+  translate: 0 0;
+}
+
+.hide-sidebars #sidebar-left { translate: -100% 0 !important; opacity: 0 !important; }
+.hide-sidebars #sidebar-right { translate: 100% 0 !important; opacity: 0 !important; }
+
+#main-wrapper { transition: margin 0.8s cubic-bezier(0.8, 0, 0.2, 1); }
+
+@media (min-width: 1280px) { #main-wrapper { margin-left: 16rem; margin-right: 18rem; } }
+@media (min-width: 1536px) { #main-wrapper { margin-left: 20rem; margin-right: 24rem; } }
+
+.hide-sidebars #main-wrapper { margin-left: 0 !important; margin-right: 0 !important; }

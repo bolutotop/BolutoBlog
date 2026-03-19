@@ -1,0 +1,116 @@
+/* blog-post.css */
+
+/* 🚀 修复：强制生效的移动端弹窗“生长/吸入”动画 */
+.mobile-menu-popover {
+  /* 展开时：带有一点弹簧惯性的“生长”效果 */
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease !important; 
+}
+.mobile-menu-popover.menu-closed {
+  /* 收起时：先微微回缩再急速“吸入黑洞”的效果 */
+  transition: transform 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045), opacity 0.2s ease !important; 
+}
+
+/* 🚀 严格修复版：TOC 中心向两边展开的下划线动画 */
+.brutalist-toc-nav .toc-text-wrapper {
+  position: relative !important;
+  display: inline-block !important; 
+  overflow: visible !important; 
+}
+
+.brutalist-toc-nav .toc-text-wrapper::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: -2px !important; 
+  left: 50% !important;
+  width: 0 !important;
+  height: 2px !important;
+  background-color: var(--sc-text) !important;
+  transition: width 0.3s cubic-bezier(0.65, 0.05, 0.36, 1) !important; 
+  transform: translateX(-50%) !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* 悬浮时，或处于当前阅读进度时，下划线完全展开 */
+.brutalist-toc-nav a:hover .toc-text-wrapper::after,
+.brutalist-toc-nav .active-toc::after {
+  width: 100% !important;
+}
+
+/* 专门用于只隐藏右侧边栏的类 */
+.hide-right-sidebar #sidebar-right {
+  translate: 100% 0 !important;
+  opacity: 0 !important;
+}
+
+.brutalist-hero-text { color: var(--sc-text) !important; }
+.brutalist-hero-meta { color: var(--sc-text) !important; opacity: 0.6; }
+
+/* ========================================== */
+/* 🚀 md-editor-rt 预览区域专属覆盖样式 */
+/* ========================================== */
+.magazine-preview-wrapper .md-editor {
+  --md-bk-color: #ffffff !important;
+  --md-color: #18181b !important;
+  background-color: #ffffff !important;
+}
+
+.magazine-preview-wrapper .md-editor-preview {
+  font-family: 'Noto Serif SC', 'Playfair Display', serif !important;
+  font-size: clamp(1.125rem, 1.5vw, 1.35rem);
+  line-height: 1.8;
+  padding: 0; 
+}
+
+.magazine-preview-wrapper .md-editor-preview p {
+  font-weight: 500;
+  opacity: 0.85;
+  margin-bottom: 2.5rem;
+}
+
+.magazine-preview-wrapper .md-editor-preview h1,
+.magazine-preview-wrapper .md-editor-preview h2,
+.magazine-preview-wrapper .md-editor-preview h3 {
+  font-family: 'Playfair Display', 'Noto Serif SC', serif !important;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.magazine-preview-wrapper .md-editor-preview h2 {
+  scroll-margin-top: 120px; 
+  font-size: clamp(2rem, 3vw, 3.5rem);
+  letter-spacing: -0.03em;
+  margin-top: 5rem;
+  margin-bottom: 2rem;
+  border-bottom: 3px solid var(--sc-border);
+  padding-bottom: 1rem;
+  line-height: 1.1;
+}
+
+.magazine-preview-wrapper .md-editor-preview h3 {
+  scroll-margin-top: 120px; 
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+}
+
+.magazine-preview-wrapper .md-editor-preview blockquote {
+  border-left: 6px solid var(--sc-text);
+  padding-left: 2rem;
+  font-size: clamp(1.5rem, 2.5vw, 2.5rem);
+  font-style: italic;
+  font-weight: 800;
+  line-height: 1.3;
+  margin: 4rem 0;
+  opacity: 0.9;
+  background: transparent;
+  color: var(--sc-text);
+}
+
+.magazine-preview-wrapper .md-editor-preview img {
+  width: 100%;
+  height: auto;
+  border: 2px solid var(--sc-border);
+  margin: 4rem 0;
+  filter: grayscale(20%); 
+}
