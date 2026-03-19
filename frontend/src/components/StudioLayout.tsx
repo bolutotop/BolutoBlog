@@ -3,42 +3,38 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import gsap from 'gsap';
-import { getCalendarPostsAction,getCategoriesAction } from '@/app/actions';
-
+import { getCategoriesAction } from '@/app/actions';
 import { ReactLenis } from '@studio-freight/react-lenis';
-
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-
 import { usePathname, useSearchParams } from 'next/navigation';
+
+// ① 顶部引入新组件
+import CalendarWidget from './CalendarWidget';
 
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
   const [dateInfo, setDateInfo] = useState({ day: '--', month: '--- 202X' });
-  const [activeModal, setActiveModal] = useState<any | null>(null);
-  const [calendarData, setCalendarData] = useState<Record<number, any>>({});
-  const [isClosing, setIsClosing] = useState(false);
-
+  
+  // ② 删除了 activeModal, calendarData, isClosing
+  
   const [bootStage, setBootStage] = useState(0); 
   const [isFirstVisit, setIsFirstVisit] = useState(true); 
-  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const preloaderRef = useRef<HTMLDivElement>(null);
   const counterRef = useRef<HTMLDivElement>(null);
-const [categories, setCategories] = useState<string[]>([]);
-const [showAllCats, setShowAllCats] = useState(false);
-const lenisRef = useRef<any>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [showAllCats, setShowAllCats] = useState(false);
+  const lenisRef = useRef<any>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-useEffect(() => {
+  useEffect(() => {
     if (lenisRef.current?.lenis) {
       // immediate: true 是核心魔法，它会瞬间清除滚动惯性并回到 y: 0
       lenisRef.current.lenis.scrollTo(0, { immediate: true });
     }
   }, [pathname, searchParams]);
 
-useEffect(() => {
+  useEffect(() => {
     const fetchCategories = async () => {
       const res = await getCategoriesAction();
       if (res.success && res.categories) {
@@ -47,6 +43,7 @@ useEffect(() => {
     };
     fetchCategories();
   }, []);
+
   useEffect(() => {
     const d = new Date();
     setDateInfo({
@@ -114,13 +111,7 @@ useEffect(() => {
     }
   }, [isMobileMenuOpen]);
 
-  const handleCloseModal = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setActiveModal(null);
-      setIsClosing(false);
-    }, 400); 
-  };
+  // ② 删除了 handleCloseModal
 
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -130,41 +121,9 @@ useEffect(() => {
     e.currentTarget.style.setProperty('--y', `${y}px`);
   };
 
-const currentD = new Date();
-  const year = currentD.getFullYear();
-  const month = currentD.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate(); 
-  const firstDayOfMonth = new Date(year, month, 1).getDay(); 
+  // ② 删除了所有的日期计算变量 (currentD, year, month 等)
+  // ② 删除了 fetchCalendarPosts 的 useEffect
 
-  const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => null);
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-  const allCalendarCells = [...blanks, ...days];
-  const weekDays = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-useEffect(() => {
-    const fetchCalendarPosts = async () => {
-      const res = await getCalendarPostsAction();
-      if (res.success && res.posts) {
-        // 👉 2. 修改：将类型改为 any[] 数组，以容纳同一天的多篇文章
-        const dataMap: Record<number, any[]> = {}; 
-        res.posts.forEach((post: any) => {
-          const postDate = new Date(post.createdAt);
-          if (postDate.getFullYear() === year && postDate.getMonth() === month) {
-            const day = postDate.getDate();
-            // 👉 3. 修改：如果这一天还没数据，先初始化为空数组；然后把文章 push 进去
-            if (!dataMap[day]) dataMap[day] = [];
-            dataMap[day].push({
-              title: post.title,
-              slug: post.slug,
-              date: postDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-              excerpt: post.content.substring(0, 150) + '...', // 稍微加长一点字数，留给 Markdown 渲染
-            });
-          }
-        });
-        setCalendarData(dataMap);
-      }
-    };
-    fetchCalendarPosts();
-  }, [year, month]);
   return (
     <ReactLenis ref={lenisRef} root options={{ lerp: 0.1, duration: 1.5, smoothWheel: true }}>
     <div id="showcase-root" className="showcase-theme min-h-screen font-sans selection:bg-black selection:text-white transition-colors duration-700 overflow-x-hidden relative">
@@ -327,9 +286,8 @@ useEffect(() => {
                   </div>
                 </div>
               </div>
-{/* ================================================= */}
-              {/* 👉 新增：移动端专属的分类导航 (塞在日历的上方) */}
-              {/* ================================================= */}
+
+              {/* 移动端专属的分类导航 */}
               <div className="mt-2 sc-border border-t pt-6">
                 <div className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-4">
                   Index / Categories
@@ -337,19 +295,17 @@ useEffect(() => {
                 <div className="flex flex-wrap gap-2 font-mono text-[10px] font-bold uppercase">
                   {categories.length > 0 ? (
                     <>
-                      {/* 移动端横向空间小，这里默认截取前 6 个 */}
                       {(showAllCats ? categories : categories.slice(0, 6)).map((tag) => (
                         <Link 
                           key={tag} 
                           href={`/blog/category/${encodeURIComponent(tag)}`}
-                          onClick={() => setIsMobileMenuOpen(false)} // 🚀 核心细节：点击跳转后自动关掉手机菜单
+                          onClick={() => setIsMobileMenuOpen(false)} 
                           className="sc-border border px-3 py-1.5 active:bg-[var(--sc-text)] active:text-[var(--sc-inverse-text)] transition-colors"
                         >
                           {tag}
                         </Link>
                       ))}
                       
-                      {/* 超过 6 个显示展开按钮（虚线边框区分） */}
                       {categories.length > 6 && (
                         <button 
                           onClick={() => setShowAllCats(!showAllCats)}
@@ -364,104 +320,10 @@ useEffect(() => {
                   )}
                 </div>
               </div>
-              <div className="mt-2 sc-border border-t pt-6 relative">
-                <div className="max-w-[260px] mx-auto">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Publication Log</span>
-                    <span className="text-[10px] font-mono font-bold">2026.03</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-7 gap-1 text-center font-mono text-[9px] font-bold uppercase mb-2 opacity-40">
-                    {weekDays.map((d, i) => <div key={i}>{d}</div>)}
-                  </div>
-                  
-                  <div className="grid grid-cols-7 gap-y-2 gap-x-2 font-mono text-[10px]">
-                    {allCalendarCells.slice(0, 28).map((day, idx) => {
-                      if (day === null) return <div key={`blank-${idx}`} className="aspect-square" />;
-                      const hasPost = calendarData[day];
-                      const isToday = day === currentD.getDate(); // 顺便把高亮的 isToday 改成真实的“今天”
-                      
-                      return (
-                        <button 
-                          key={day}
-                          onClick={() => hasPost && setActiveModal(hasPost)}
-                          onMouseMove={hasPost ? handleMouseMove : undefined}
-                          disabled={!hasPost}
-                          className={`
-                            relative aspect-square flex items-center justify-center transition-transform duration-300
-                            ${hasPost ? 'group overflow-hidden isolate bg-[var(--sc-inverse-bg)] shadow-md active:scale-90 z-10 cursor-pointer' : 'border-transparent opacity-40'}
-                            ${isToday && !hasPost ? 'sc-border border font-bold opacity-100' : ''}
-                          `}
-                        >
-                          {hasPost ? (
-                            <>
-                              <span className="relative z-10 font-black text-[var(--sc-inverse-text)] transition-colors duration-300 group-hover:text-transparent">{day}</span>
-                              <div 
-                                className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-center group-hover:animate-[rippleSpread_0.6s_cubic-bezier(0.16,1,0.3,1)_forwards]"
-                                style={{ clipPath: 'circle(0% at var(--x, 50%) var(--y, 50%))' }}
-                              >
-                                 <span className="font-black text-[var(--sc-text)]">{day}</span>
-                              </div>
-                            </>
-                          ) : (
-                            <span>{day}</span>
-                          )}
-                          {isToday && !hasPost && <div className="absolute w-1 h-1 bg-green-500 rounded-full bottom-0.5" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
 
- {/* 移动端专属 Modal 弹窗 */}
-                {activeModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
-                    <div 
-                      className={`absolute inset-0 bg-[var(--sc-bg)]/90 backdrop-blur-md transition-opacity duration-400 ${isClosing ? 'opacity-0' : 'opacity-100'}`} 
-                      onClick={handleCloseModal} 
-                    />
-                    
-                    <div className={`relative w-full max-w-sm bg-[var(--sc-bg)] sc-border border p-6 shadow-2xl ${isClosing ? 'animate-panel-exit' : 'animate-panel-enter'}`}>
-                      {/* 👉 顶部日期栏，取数组第一篇的日期即可 */}
-                      <div className="flex justify-between items-start mb-5 sc-border border-b pb-3">
-                         <div className="font-mono text-[10px] font-bold opacity-50 uppercase tracking-widest">{activeModal[0].date}</div>
-                         <button onClick={handleCloseModal} className="text-[10px] font-black uppercase active:opacity-50 transition-opacity p-2 -mr-2 -mt-2">
-                           [ Close ]
-                         </button>
-                      </div>
-                      
-                      {/* 👉 新增：滚动容器，支持多篇文章 */}
-                      <div className="flex flex-col gap-8 max-h-[60vh] overflow-y-auto hide-scrollbar">
-                        {activeModal.map((post: any, idx: number) => (
-                          <div key={idx} className="flex flex-col">
-                            <h2 className="text-xl font-black uppercase tracking-tighter leading-tight mb-3">{post.title}</h2>
-                            {/* 👉 替换：使用 ReactMarkdown 渲染简介，并强制一些基础排版 */}
-                            <div className="text-xs font-bold leading-relaxed opacity-80 mb-6 [&>p]:mb-2 [&>h1]:text-sm [&>h2]:text-sm [&>h3]:text-sm [&_*]:!text-xs">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.excerpt}</ReactMarkdown>
-                            </div>
-                            
-                            <Link 
-                              href={`/blog/${post.slug}`}
-                              onMouseMove={handleMouseMove}
-                              className="group relative overflow-hidden flex items-center justify-between bg-[var(--sc-inverse-bg)] px-5 py-4 active:scale-95 transition-transform isolate w-full"
-                            >
-                              <span className="relative z-10 font-black text-[10px] uppercase tracking-widest text-[var(--sc-inverse-text)] transition-colors duration-300 group-hover:text-transparent">Read Log</span>
-                              <span className="relative z-10 font-black text-[10px] text-[var(--sc-inverse-text)] group-hover:translate-x-1 transition-transform">→</span>
-                              
-                              <div 
-                                className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-between px-5 group-hover:animate-[rippleSpread_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]"
-                                style={{ clipPath: 'circle(0% at var(--x, 50%) var(--y, 50%))' }}
-                              >
-                                <span className="font-black text-[10px] uppercase tracking-widest text-[var(--sc-text)]">Read Log</span>
-                                <span className="font-black text-[10px] text-[var(--sc-text)] group-hover:translate-x-1 transition-transform">→</span>
-                              </div>
-                            </Link>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
+              {/* ③ 日历组件 (Mobile 版) */}
+              <div className="mt-2 sc-border border-t pt-6 relative">
+                 <CalendarWidget variant="mobile" />
               </div>
 
             </div>
@@ -477,15 +339,13 @@ useEffect(() => {
               <p className="text-[10px] 2xl:text-xs font-bold mt-2 uppercase tracking-widest opacity-50">Creative Developer</p>
             </div>
 
-{/* 👉 4. 替换：动态分类标签渲染区 */}
             <div className="pointer-events-auto">
               <div className="text-[10px] 2xl:text-xs font-black uppercase tracking-widest mb-4 sc-border border-b pb-2 opacity-50">
                 Index / Categories
               </div>
-<div className="flex flex-col gap-3 font-mono text-xs 2xl:text-sm font-bold uppercase">
+              <div className="flex flex-col gap-3 font-mono text-xs 2xl:text-sm font-bold uppercase">
                 {categories.length > 0 ? (
                   <>
-                    {/* 👉 2. 核心修改：如果没展开，就只 slice(0, 5) 截取前 5 个显示 */}
                     {(showAllCats ? categories : categories.slice(0, 5)).map((tag, index) => (
                       <Link 
                         key={tag} 
@@ -501,7 +361,6 @@ useEffect(() => {
                       </Link>
                     ))}
 
-                    {/* 👉 3. 新增：如果总数超过 5 个，渲染展开/收起按钮 */}
                     {categories.length > 5 && (
                       <button 
                         onClick={() => setShowAllCats(!showAllCats)}
@@ -531,110 +390,11 @@ useEffect(() => {
               </div>
             </div>
 
+            {/* ④ 日历组件 (Desktop 版) */}
             <div className="pointer-events-auto mt-8 relative z-20">
-              <div className="flex justify-between items-center mb-6">
-                <span className="text-[10px] 2xl:text-xs font-black uppercase tracking-widest opacity-50">Publication Log</span>
-                <span className="text-[10px] 2xl:text-xs font-mono font-bold">2026.03</span>
-              </div>
-              
-              <div className="grid grid-cols-7 gap-1 text-center font-mono text-[9px] 2xl:text-[10px] font-bold uppercase mb-4 opacity-40">
-                {weekDays.map((d, i) => <div key={i}>{d}</div>)}
-              </div>
-              
-              <div className="grid grid-cols-7 gap-y-2 gap-x-1 font-mono text-xs 2xl:text-sm">
-                {allCalendarCells.map((day, idx) => {
-                  if (day === null) return <div key={`blank-${idx}`} className="aspect-square" />;
-                  const hasPost = calendarData[day];
-                 const isToday = day === currentD.getDate();
-
-                  return (
-                    <button 
-                      key={day}
-                      onClick={() => hasPost && setActiveModal(hasPost)}
-                      onMouseMove={hasPost ? handleMouseMove : undefined}
-                      disabled={!hasPost}
-                      className={`
-                        relative aspect-square flex items-center justify-center transition-transform duration-300
-                        ${hasPost ? 'group overflow-hidden isolate bg-[var(--sc-inverse-bg)] shadow-md hover:scale-110 hover:shadow-xl z-10 cursor-pointer' : 'border-transparent opacity-40 cursor-default hover:opacity-100'}
-                        ${isToday && !hasPost ? 'sc-border border font-bold opacity-100' : ''}
-                      `}
-                    >
-                      {hasPost ? (
-                        <>
-                          <span className="relative z-10 font-black text-[var(--sc-inverse-text)] transition-colors duration-300 group-hover:text-transparent">{day}</span>
-                          <div 
-                            className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-center group-hover:animate-[rippleSpread_0.6s_cubic-bezier(0.16,1,0.3,1)_forwards]"
-                            style={{ clipPath: 'circle(0% at var(--x, 50%) var(--y, 50%))' }}
-                          >
-                             <span className="font-black text-[var(--sc-text)]">{day}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <span className="font-mono text-xs 2xl:text-sm">{day}</span>
-                      )}
-                      {isToday && !hasPost && <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-green-500 rounded-full" />}
-                    </button>
-                  );
-                })}
-              </div>
-              
- {/* PC端专属 Modal 弹窗 */}
-              {activeModal && (
-                <>
-                  <div 
-                    className={`fixed inset-0 bg-[var(--sc-bg)]/80 backdrop-blur-sm z-40 transition-opacity duration-400 ${isClosing ? 'opacity-0' : 'opacity-100'}`} 
-                    onClick={handleCloseModal} 
-                  />
-                  
-                  <div className={`absolute top-0 right-[110%] w-80 2xl:w-96 bg-[var(--sc-bg)] sc-border border p-6 2xl:p-8 shadow-2xl z-50 pointer-events-auto flex flex-col h-auto max-h-[90vh] ${isClosing ? 'animate-panel-exit' : 'animate-panel-enter'}`}>
-                    
-                    {/* 👉 日期取第一篇 */}
-                    <div className="flex justify-between items-start mb-5 sc-border border-b pb-3 shrink-0">
-                       <div className="font-mono text-[10px] 2xl:text-xs font-bold opacity-50 uppercase tracking-widest">{activeModal[0].date}</div>
-                       <button onClick={handleCloseModal} className="text-[10px] 2xl:text-xs font-black uppercase hover:opacity-50 transition-opacity">
-                         [ Close ]
-                       </button>
-                    </div>
-                    
-                    {/* 👉 滚动容器支持多篇 */}
-                    <div className="flex flex-col gap-10 overflow-y-auto hide-scrollbar pb-4">
-                      {activeModal.map((post: any, idx: number) => (
-                        <div key={idx} className="flex flex-col relative">
-                          {/* 分割线（如果有多篇） */}
-                          {idx > 0 && <div className="absolute -top-5 left-0 w-full h-[1px] bg-[var(--sc-border)] opacity-30"></div>}
-                          
-                          <h2 className="text-xl 2xl:text-2xl font-black uppercase tracking-tighter leading-tight mb-3">{post.title}</h2>
-                          
-                          {/* 👉 Markdown 渲染简介，并用 CSS 强行统一缩小字体，防止破坏版面 */}
-                          <div className="text-xs 2xl:text-sm font-bold leading-relaxed opacity-80 mb-6 [&>p]:mb-2 [&>h1]:text-sm [&>h2]:text-sm [&>h3]:text-sm [&_*]:!text-xs 2xl:[&_*]:!text-sm">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.excerpt}</ReactMarkdown>
-                          </div>
-                          
-                          <Link 
-                            href={`/blog/${post.slug}`}
-                            onMouseMove={handleMouseMove}
-                            className="group relative overflow-hidden flex items-center justify-between bg-[var(--sc-inverse-bg)] px-5 py-3 transition-transform hover:scale-105 active:scale-95 duration-500 isolate w-full"
-                          >
-                            <span className="relative z-10 font-black text-[10px] 2xl:text-xs uppercase tracking-widest text-[var(--sc-inverse-text)] transition-colors duration-300 group-hover:text-transparent">Read Log</span>
-                            <span className="relative z-10 font-black text-[10px] 2xl:text-xs text-[var(--sc-inverse-text)] group-hover:translate-x-1 transition-transform">→</span>
-
-                            <div 
-                              className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-between px-5 group-hover:animate-[rippleSpread_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]"
-                              style={{ clipPath: 'circle(0% at var(--x, 50%) var(--y, 50%))' }}
-                            >
-                              <span className="font-black text-[10px] 2xl:text-xs uppercase tracking-widest text-[var(--sc-text)]">Read Log</span>
-                              <span className="font-black text-[10px] 2xl:text-xs text-[var(--sc-text)] group-hover:translate-x-1 transition-transform">→</span>
-                            </div>
-                          </Link>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
+               <CalendarWidget variant="desktop" />
             </div>
 
-{/* 👉 替换：社交矩阵图标 */}
             <div className="pointer-events-auto mt-auto pt-6 sc-border border-t flex items-center justify-between">
                <div className="text-[10px] 2xl:text-xs font-black uppercase tracking-widest opacity-50">
                  Connect
@@ -648,12 +408,12 @@ useEffect(() => {
                    </svg>
                  </a>
                  
-                 {/* Awwwards (使用经典的衬线体 W. 标志) */}
+                 {/* Awwwards */}
                  <a href="https://www.awwwards.com/" target="_blank" rel="noopener noreferrer" className="opacity-40 hover:opacity-100 transition-all hover:-translate-y-1" aria-label="Awwwards">
                    <span className="font-serif italic font-bold text-lg 2xl:text-xl leading-none tracking-tighter">W.</span>
                  </a>
                  
-                 {/* GitHub (绑定了你的真实项目地址) */}
+                 {/* GitHub */}
                  <a href="https://github.com/bolutotop/BolutoBlog" target="_blank" rel="noopener noreferrer" className="opacity-40 hover:opacity-100 transition-all hover:-translate-y-1" aria-label="GitHub">
                    <svg className="w-4 h-4 2xl:w-5 2xl:h-5" viewBox="0 0 24 24" fill="currentColor">
                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
