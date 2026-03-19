@@ -12,7 +12,6 @@ model Post {
   title       String
   slug        String   @unique
   content     String
-  // 修改：移除 Tag 关联，改用字符串直接存储
   // 示例值: "Tech/React, Life"
   category    String?  
   published   Boolean  @default(false)
@@ -32,5 +31,4 @@ model Tag {
   parent    Tag?     @relation("TagHierarchy", fields: [parentId], references: [id])
   children  Tag[]    @relation("TagHierarchy")
   
-  // 移除原来的 posts 关联，因为 Post 模型已经不再引用它
 }

@@ -3,12 +3,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import gsap from 'gsap';
-import { getCalendarPostsAction } from '@/app/actions';
+import { getCalendarPostsAction,getCategoriesAction } from '@/app/actions';
 
 import { ReactLenis } from '@studio-freight/react-lenis';
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
+
 
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
   const [dateInfo, setDateInfo] = useState({ day: '--', month: '--- 202X' });
@@ -23,7 +25,16 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
   
   const preloaderRef = useRef<HTMLDivElement>(null);
   const counterRef = useRef<HTMLDivElement>(null);
-
+const [categories, setCategories] = useState<string[]>([]);
+useEffect(() => {
+    const fetchCategories = async () => {
+      const res = await getCategoriesAction();
+      if (res.success && res.categories) {
+        setCategories(res.categories);
+      }
+    };
+    fetchCategories();
+  }, []);
   useEffect(() => {
     const d = new Date();
     setDateInfo({
@@ -418,14 +429,30 @@ useEffect(() => {
               <p className="text-[10px] 2xl:text-xs font-bold mt-2 uppercase tracking-widest opacity-50">Creative Developer</p>
             </div>
 
+{/* 👉 4. 替换：动态分类标签渲染区 */}
             <div className="pointer-events-auto">
-              <div className="text-[10px] 2xl:text-xs font-black uppercase tracking-widest mb-4 sc-border border-b pb-2 opacity-50">Core Stack</div>
-              <div className="flex flex-col gap-2 font-mono text-xs 2xl:text-sm font-bold uppercase">
-                {['01. React / Next.js', '02. WebGL / GSAP', '03. Prisma / SQL', '04. Brutalism UI'].map(tag => (
-                  <div key={tag} className="hover:translate-x-2 transition-transform cursor-pointer opacity-80 hover:opacity-100">
-                    {tag}
-                  </div>
-                ))}
+              <div className="text-[10px] 2xl:text-xs font-black uppercase tracking-widest mb-4 sc-border border-b pb-2 opacity-50">
+                Index / Categories
+              </div>
+              <div className="flex flex-col gap-3 font-mono text-xs 2xl:text-sm font-bold uppercase">
+                {categories.length > 0 ? categories.map((tag, index) => (
+                  <Link 
+                    key={tag} 
+                    href={`/blog?category=${encodeURIComponent(tag)}`} // 预留了点击跳转到分类过滤的参数
+                    className="group flex items-center gap-3 cursor-pointer opacity-70 hover:opacity-100 transition-all hover:translate-x-2"
+                  >
+                    {/* 前面的 01, 02 序号 */}
+                    <span className="text-[9px] opacity-40 group-hover:opacity-100 transition-opacity">
+                      {(index + 1).toString().padStart(2, '0')}
+                    </span>
+                    {/* 悬浮时文字反色，背景变黑的粗野主义特效 */}
+                    <span className="group-hover:bg-[var(--sc-text)] group-hover:text-[var(--sc-inverse-text)] px-1 -ml-1 transition-colors">
+                      {tag}
+                    </span>
+                  </Link>
+                )) : (
+                  <span className="text-[10px] opacity-30 animate-pulse">Loading Data...</span>
+                )}
               </div>
             </div>
           </aside>

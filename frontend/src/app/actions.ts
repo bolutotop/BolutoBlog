@@ -115,3 +115,38 @@ export async function getCalendarPostsAction() {
     return { success: false, message: error.message || '获取日历数据失败' };
   }
 }
+
+
+export async function getCategoriesAction() {
+  try {
+    // 1. 获取所有包含分类的文章
+    const posts = await prisma.post.findMany({
+      where: { category: { not: null } },
+      select: { category: true },
+    });
+
+    const topLevelCategories = new Set<string>();
+
+    // 2. 遍历并解析字符串 (例如："Tech/React, Life")
+    posts.forEach(post => {
+      if (!post.category) return;
+      
+      // 先按逗号拆分出所有分类
+      const categories = post.category.split(',').map(c => c.trim());
+      
+      categories.forEach(cat => {
+        // 再按斜杠拆分，永远只取第一项作为“一级标签”
+        const topLevel = cat.split('/')[0].trim();
+        if (topLevel) {
+          topLevelCategories.add(topLevel); // Set 会自动去重
+        }
+      });
+    });
+
+    // 3. 转回数组并返回
+    return { success: true, categories: Array.from(topLevelCategories) };
+  } catch (error) {
+    console.error("Failed to fetch top-level categories from posts:", error);
+    return { success: false, categories: [] };
+  }
+}
