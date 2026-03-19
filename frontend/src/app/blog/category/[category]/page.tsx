@@ -3,6 +3,8 @@ import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import BlogArchiveClientWrapper from '../../BlogArchiveClientWrapper';
 import PaginationWidget from '@/components/blog/PaginationWidget'; // 根据你的实际路径调整
+
+import PostLayoutSwitcher from '@/components/blog/PostLayoutSwitcher';
 // 巨型标题文字切割组件 (保持不变)
 const SplitText = ({ text, className = "" }: { text: string, className?: string }) => (
   <div className={`flex flex-wrap overflow-hidden pb-4 -mb-4 ${className}`}>
@@ -191,45 +193,15 @@ export default async function CategoryArchivePage({
         </section>
       )}
 
-      {/* ==================== 3. Grid List ==================== */}
+{/* ==================== 3. Grid List (自带双视图切换) ==================== */}
       <section className="relative py-20 px-6 lg:px-12 bg-[var(--sc-bg)] transition-colors duration-700">
-        <div className="max-w-[1600px] mx-auto w-full">
+        <div className="max-w-[1600px] mx-auto w-full content-block">
           
-          <div className="flex justify-between items-end border-b-2 sc-border pb-6 mb-16 content-block">
-            <h4 className="text-xl md:text-3xl font-black uppercase tracking-tight">Recent Logs</h4>
-            <span className="text-xs font-bold uppercase tracking-widest opacity-50">Filter: {decodedCategory}</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-24">
-            {gridPosts.map((post, index) => (
-              <Link href={`/blog/${post.slug}`} scroll={false} key={post.id} className={`flex flex-col group cursor-pointer content-block ${index % 2 !== 0 && gridPosts.length > 1 ? 'md:mt-32' : ''}`}>
-                <div className="img-mask-container w-full h-[40vh] md:h-[55vh] bg-[var(--sc-border)] relative overflow-hidden mb-8">
-                  <img src={post.image} alt={post.title} className="parallax-img absolute -top-[10%] left-0 w-full h-[120%] object-cover object-center transition-transform duration-[1.5s] ease-out group-hover:scale-105 opacity-90 group-hover:opacity-100" />
-                  <div className="absolute inset-0 bg-[var(--sc-inverse-bg)]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10" />
-                </div>
-                <div className="flex flex-col flex-grow">
-                  <div className="flex justify-between items-center mb-4 pb-4 border-b sc-border">
-                    <span className="text-[clamp(1.5rem,2.5vw,3rem)] font-black tabular-nums tracking-tighter opacity-20 group-hover:opacity-100 transition-opacity duration-500">
-                      {post.displayIndex}
-                    </span>
-                    <span className="text-[10px] font-mono uppercase tracking-widest opacity-60">
-                      {post.category} • {post.date}
-                    </span>
-                  </div>
-                  <h3 className="text-[clamp(1.5rem,2vw,2.5rem)] font-black tracking-tight uppercase mb-4 leading-tight group-hover:translate-x-2 transition-transform duration-300">
-                    {post.title}
-                  </h3>
-                  <p className="text-sm md:text-base font-medium leading-relaxed opacity-70 mb-8 line-clamp-3">
-                    {post.excerpt}
-                  </p>
-                  <div className="mt-auto flex items-center gap-4 text-[10px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">
-                    <div className="w-8 h-[2px] bg-current transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-out" />
-                    Read More
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <PostLayoutSwitcher 
+            posts={gridPosts} 
+            headerTitle="Recent Logs" 
+            headerSubtitle={`Filter: ${decodedCategory}`} 
+          />
 
           {/* ==================== 4. 分页控件 ==================== */}
           <PaginationWidget 
