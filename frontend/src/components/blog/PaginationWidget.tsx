@@ -42,7 +42,7 @@ export default function PaginationWidget({
   const paginationGroup = getPaginationGroup();
 
   return (
-    <div className="mt-32 pt-12 border-t sc-border flex flex-col md:flex-row items-center justify-between gap-8 content-block">
+    <div className="mt-32 pt-12 border-t sc-border flex flex-col md:flex-row items-center justify-between gap-8">
       
       {/* ================= [ PREV ] ================= */}
       {currentPage > 1 ? (
