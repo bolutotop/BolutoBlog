@@ -24,15 +24,47 @@ const SplitText = ({ text, className = "" }: { text: string, className?: string 
 
 // --- Server Component ---
 // 因为我们要查询数据库，所以这个页面不再有 'use client'，它是一个纯粹的服务端组件。
-export default async function BlogArchivePage() {
+export default async function BlogArchivePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>; // 🚀 接收 page 参数
+}) {
+  const resolvedParams = await searchParams;
   
-  // 🚀 核心 1：从数据库获取数据
-  // 我们只获取 published = true 的文章，按创建时间倒序排列
-  const posts = await prisma.post.findMany({
-    where: { published: true },
-    orderBy: { createdAt: 'desc' }
-  });
+  // 🚀 1. 分页核心设置
+  const currentPage = Number(resolvedParams.page) || 1; 
+  const POSTS_PER_PAGE = 5; // 设定每页显示几篇 (1篇作为头条 + 10篇网格)
+  
+  // 🚀 2. 并行查询：同时获取“总文章数”和“当前页的文章”
+  const [totalPosts, posts] = await Promise.all([
+    prisma.post.count({ where: { published: true } }),
+    prisma.post.findMany({
+      where: { published: true },
+      orderBy: { createdAt: 'desc' },
+      skip: (currentPage - 1) * POSTS_PER_PAGE, // 跳过前面的文章
+      take: POSTS_PER_PAGE, // 限制提取数量
+    })
+  ]);
 
+  const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
+  
+const getPaginationGroup = () => {
+    let pages: (number | string)[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        pages = [1, 2, 3, 4, '...', totalPages];
+      } else if (currentPage >= totalPages - 2) {
+        pages = [1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+      } else {
+        pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+      }
+    }
+    return pages;
+  };
+  const paginationGroup = getPaginationGroup();
+  
   // 如果没有文章，提供一个空状态或者默认占位
   if (!posts || posts.length === 0) {
     return (
@@ -211,6 +243,63 @@ export default async function BlogArchivePage() {
               </Link>
             ))}
           </div>
+{totalPages > 1 && (
+            <div className="mt-24 pt-8 border-t-4 border-[var(--sc-text)] flex flex-col md:flex-row items-center justify-between gap-6 content-block">
+              
+              {/* [ PREV ] 按钮 */}
+              {currentPage > 1 ? (
+                <Link 
+                  href={`/blog?page=${currentPage - 1}`} 
+                  className="group flex items-center justify-center border-2 border-[var(--sc-text)] bg-[var(--sc-bg)] text-[var(--sc-text)] hover:bg-[var(--sc-inverse-bg)] hover:text-[var(--sc-inverse-text)] px-6 py-3 transition-colors duration-300 w-full md:w-auto"
+                >
+                  <span className="font-black text-[10px] md:text-xs uppercase tracking-widest">[ ← PREV ]</span>
+                </Link>
+              ) : (
+                <div className="w-full md:w-auto px-6 py-3 border-2 border-[var(--sc-border)] opacity-30 cursor-not-allowed text-center">
+                  <span className="font-black text-[10px] md:text-xs uppercase tracking-widest">[ ← PREV ]</span>
+                </div>
+              )}
+
+              {/* [ 01 ] [ 02 ] ... [ 10 ] 数字矩阵 */}
+              <div className="flex items-center gap-2 flex-wrap justify-center">
+                {paginationGroup.map((p, i) => {
+                  if (p === '...') {
+                    return <span key={i} className="px-1 md:px-2 opacity-40 font-black tracking-widest">///</span>;
+                  }
+                  
+                  const isCurrent = p === currentPage;
+                  return (
+                    <Link
+                      key={i}
+                      href={`/blog?page=${p}`}
+                      className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center font-mono font-black text-xs md:text-sm transition-colors duration-300 border-2 ${
+                        isCurrent 
+                          ? 'bg-[var(--sc-text)] text-[var(--sc-inverse-text)] border-[var(--sc-text)]' 
+                          : 'border-[var(--sc-border)] hover:border-[var(--sc-text)] hover:bg-[var(--sc-text)] hover:text-[var(--sc-inverse-text)]'
+                      }`}
+                    >
+                      {String(p).padStart(2, '0')}
+                    </Link>
+                  )
+                })}
+              </div>
+
+              {/* [ NEXT ] 按钮 */}
+              {currentPage < totalPages ? (
+                <Link 
+                  href={`/blog?page=${currentPage + 1}`} 
+                  className="group flex items-center justify-center border-2 border-[var(--sc-text)] bg-[var(--sc-bg)] text-[var(--sc-text)] hover:bg-[var(--sc-inverse-bg)] hover:text-[var(--sc-inverse-text)] px-6 py-3 transition-colors duration-300 w-full md:w-auto"
+                >
+                  <span className="font-black text-[10px] md:text-xs uppercase tracking-widest">[ NEXT → ]</span>
+                </Link>
+              ) : (
+                <div className="w-full md:w-auto px-6 py-3 border-2 border-[var(--sc-border)] opacity-30 cursor-not-allowed text-center">
+                  <span className="font-black text-[10px] md:text-xs uppercase tracking-widest">[ NEXT → ]</span>
+                </div>
+              )}
+              
+            </div>
+          )}
 
         </div>
       </section>
