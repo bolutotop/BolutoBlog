@@ -127,12 +127,16 @@ export default function SearchWidget({
           }
         `}
       />
-
-      {/* 现代风格下拉菜单 */}
+{/* 现代风格下拉菜单 */}
       {isDropdownOpen && term.trim().length > 0 && (
-        <div 
+<div 
           className={`
-            absolute top-[120%] right-0 md:left-0 w-[85vw] md:w-[400px] 
+            /* 📱 移动端：强制屏幕物理居中 (fixed + mx-auto)，完美避开动画冲突 */
+            fixed top-[60px] left-40 right-0 mx-auto w-[90vw] max-w-[300px]
+            
+            /* 💻 PC端：绝对不碰！保持你的左边对齐 */
+            md:absolute md:top-[120%] md:left-0 md:right-auto md:mx-0 md:w-[400px] 
+            
             bg-[var(--sc-bg)] flex flex-col transform origin-top animate-panel-enter
             shadow-xl border border-[var(--sc-border)] overflow-hidden
             max-h-[60vh] overflow-y-auto hide-scrollbar
