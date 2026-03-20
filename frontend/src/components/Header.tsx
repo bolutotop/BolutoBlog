@@ -4,15 +4,27 @@ import React from 'react';
 import Link from 'next/link';
 // 🚀 引入我们刚刚封装的搜索组件
 import SearchWidget from './SearchWidget';
-
+import MobileMenu from './MobileMenu'; // 🚀 1. 引入菜单组件
 interface HeaderProps {
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  dateInfo: { day: string; month: string };
+  categories: string[];
+  showAllCats: boolean;
+  setShowAllCats: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen }: HeaderProps) {
+export default function Header({ 
+  isMobileMenuOpen, 
+  setIsMobileMenuOpen,
+  dateInfo,
+  categories,
+  showAllCats,
+  setShowAllCats
+}: HeaderProps) {
   return (
-    <header className="fixed top-0 left-0 w-full px-5 py-5 md:px-8 z-50 flex justify-between items-center sc-border border-b backdrop-blur-md bg-[var(--sc-bg)]/80 transition-colors duration-700 pointer-events-none animate-header-layout">
+<>
+    <header className="fixed top-0 left-0 w-full px-5 py-2 md:px-8 z-50 flex justify-between items-center sc-border border-b backdrop-blur-md bg-[var(--sc-bg)]/80 transition-colors duration-700 pointer-events-none animate-header-layout">
       
       {/* 1. 左侧 Logo */}
       <Link href="/" className="font-black text-lg md:text-[clamp(1.25rem,1.5vw,1.75rem)] tracking-tighter uppercase pointer-events-auto relative z-50">
@@ -50,5 +62,14 @@ export default function Header({ isMobileMenuOpen, setIsMobileMenuOpen }: Header
         </button>
       </div>
     </header>
+    <MobileMenu 
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+        dateInfo={dateInfo}
+        categories={categories}
+        showAllCats={showAllCats}
+        setShowAllCats={setShowAllCats}
+      />
+      </>
   );
 }

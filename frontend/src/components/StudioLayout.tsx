@@ -130,14 +130,9 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
 
         {bootStage >= 1 && (
           <>
-            <Header 
+<Header 
               isMobileMenuOpen={isMobileMenuOpen} 
               setIsMobileMenuOpen={setIsMobileMenuOpen} 
-            />
-
-            <MobileMenu 
-              isMobileMenuOpen={isMobileMenuOpen}
-              setIsMobileMenuOpen={setIsMobileMenuOpen}
               dateInfo={dateInfo}
               categories={categories}
               showAllCats={showAllCats}
