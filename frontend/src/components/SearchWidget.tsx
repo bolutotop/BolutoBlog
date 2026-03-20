@@ -6,11 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { searchPostsAction } from '@/app/actions';
 
 interface SearchWidgetProps {
-  /** 输入框的圆角 (默认: rounded-full 胶囊状) */
   inputRadius?: string;
-  /** 下拉面板的圆角 (默认: rounded-2xl 大圆角) */
   dropdownRadius?: string;
-  /** 动画持续时间 (默认: duration-500) */
   animationSpeed?: string;
 }
 
@@ -22,7 +19,8 @@ export default function SearchWidget({
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  const [term, setTerm] = useState(searchParams.get('q') || '');
+  // 🚀 核心修复 1：直接初始化为空字符串！不要去读 searchParams，确保每次出来都是干干净净的
+  const [term, setTerm] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -61,14 +59,25 @@ export default function SearchWidget({
     return () => clearTimeout(delayDebounceFn);
   }, [term]);
 
-  // 回车提交跳转逻辑
+  // 🚀 核心修复 2：利用 setTimeout 把耗时的网络请求往后推，让 UI 先瞬间收起！
+  const executeSearch = (searchQuery: string) => {
+    if (!searchQuery.trim()) return;
+    
+    // 1. 第一时间强制收起面板、失去焦点、清空文字
+    setIsDropdownOpen(false); 
+    setIsFocused(false);
+    setTerm(''); 
+    
+    // 2. 把跳转任务放进宏任务队列。这就骗过了 Next.js，让 UI 瞬间刷新，然后再跳转！
+    setTimeout(() => {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }, 10);
+  };
+
+  // 回车提交
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (term.trim()) {
-      router.push(`/search?q=${encodeURIComponent(term.trim())}`);
-      setIsDropdownOpen(false); 
-      setIsFocused(false);
-    }
+    executeSearch(term);
   };
 
   // 展开状态判断
@@ -93,7 +102,7 @@ export default function SearchWidget({
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
       </svg>
 
-      {/* 🚀 输入框主体 */}
+      {/* 输入框主体 */}
       <input
         type="text"
         value={term}
@@ -108,15 +117,10 @@ export default function SearchWidget({
         onBlur={() => setIsFocused(false)}
         placeholder={isExpanded ? "Search..." : ""}
         className={`
-          /* 核心基础样式：移除边框/轮廓/聚焦环，设定高度和颜色 */
           outline-none border-none focus:ring-0 focus:outline-none h-9 
           ${inputRadius} 
           text-sm text-[var(--sc-text)] placeholder:text-[var(--sc-text)]/40
-          
-          /* 🚀 核心修复：明确指定过渡属性，确保 width 变化极其丝滑 */
           transition-[width,background-color,padding] ${animationSpeed} ease-[cubic-bezier(0.4,0,0.2,1)]
-          
-          /* 🚀 严格互斥的状态控制：宽度、背景和内边距 */
           ${isExpanded 
             ? 'w-36 md:w-48 pl-10 pr-4 bg-[var(--sc-text)]/10 cursor-text' 
             : 'w-9 pl-9 pr-0 bg-transparent cursor-pointer hover:bg-[var(--sc-text)]/10'
@@ -124,7 +128,7 @@ export default function SearchWidget({
         `}
       />
 
-      {/* 🚀 现代风格下拉菜单 */}
+      {/* 现代风格下拉菜单 */}
       {isDropdownOpen && term.trim().length > 0 && (
         <div 
           className={`
@@ -135,7 +139,7 @@ export default function SearchWidget({
             ${dropdownRadius}
           `}
         >
-          {/* 顶部的加载进度条 */}
+          {/* 加载进度条 */}
           {isSearching && (
             <div className="h-[2px] w-full bg-[var(--sc-text)]/10 overflow-hidden relative">
               <div className="absolute left-0 top-0 h-full bg-[var(--sc-text)] opacity-60 w-1/3 animate-[slide_1s_infinite_ease-in-out]"></div>
@@ -144,28 +148,41 @@ export default function SearchWidget({
           
           <div className="flex flex-col p-2">
             {searchResults.length > 0 ? (
-              searchResults.map((post) => (
-                <Link 
-                  key={post.id} 
-                  href={`/blog/${post.slug}`}
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    setTerm(''); 
-                  }}
-                  className="
-                    group flex flex-col p-3 mx-1 my-0.5 rounded-xl 
-                    hover:bg-[var(--sc-text)]/5 
-                    transition-colors duration-200
-                  "
-                >
-                  <div className="text-[10px] font-mono font-bold uppercase tracking-widest opacity-40 mb-1 transition-opacity">
-                    {post.category || 'LOG'} • {post.date}
-                  </div>
-                  <h4 className="text-sm font-bold tracking-tight leading-tight group-hover:translate-x-1 transition-transform duration-300 text-[var(--sc-text)]">
-                    {post.title}
-                  </h4>
-                </Link>
-              ))
+              <>
+                {searchResults.slice(0, 5).map((post) => (
+                  <Link 
+                    key={post.id} 
+                    href={`/blog/${post.slug}`}
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      setTerm(''); 
+                    }}
+                    className="
+                      group flex flex-col p-3 mx-1 my-0.5 rounded-xl 
+                      hover:bg-[var(--sc-text)]/5 
+                      transition-colors duration-200
+                    "
+                  >
+                    <div className="text-[10px] font-mono font-bold uppercase tracking-widest opacity-40 mb-1 transition-opacity">
+                      {post.category || 'LOG'} • {post.date}
+                    </div>
+                    <h4 className="text-sm font-bold tracking-tight leading-tight group-hover:translate-x-1 transition-transform duration-300 text-[var(--sc-text)]">
+                      {post.title}
+                    </h4>
+                  </Link>
+                ))}
+
+                {searchResults.length >= 5 && (
+                  // 🚀 核心修复 3：把底部的 Link 换成了 button，调用专门打破冻结的 executeSearch 函数
+                  <button 
+                    type="button"
+                    onClick={() => executeSearch(term)}
+                    className="mt-2 pt-3 border-t sc-border text-center text-[10px] font-black uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center gap-2 w-full pb-1"
+                  >
+                    View all results for "{term}" <span>→</span>
+                  </button>
+                )}
+              </>
             ) : (
               !isSearching && (
                 <div className="py-8 text-xs font-bold uppercase tracking-widest opacity-40 text-center">
