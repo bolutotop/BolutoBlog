@@ -42,30 +42,34 @@ export default function PaginationWidget({
   const paginationGroup = getPaginationGroup();
 
   return (
-    <div className="mt-32 pt-12 border-t sc-border flex flex-col md:flex-row items-center justify-between gap-8">
+    // 🚀 核心修复：删除 flex-col，全屏保持 flex-row 横向排布。缩小编距。
+    <div className="mt-16 md:mt-32 pt-8 md:pt-12 border-t sc-border flex flex-row items-center justify-between gap-2 md:gap-8 w-full">
       
       {/* ================= [ PREV ] ================= */}
       {currentPage > 1 ? (
         <Link 
           href={`${basePath}?page=${currentPage - 1}`}
-          className="group flex items-center gap-4 text-xs font-black uppercase tracking-widest hover:text-[var(--sc-text)] opacity-60 hover:opacity-100 transition-all"
+          className="group flex items-center gap-2 md:gap-4 text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[var(--sc-text)] opacity-60 hover:opacity-100 transition-all shrink-0"
         >
-          <span className="w-10 h-10 rounded-full border border-current flex items-center justify-center group-hover:-translate-x-2 transition-transform">←</span>
-          Prev Page
+          <span className="w-7 h-7 md:w-10 md:h-10 rounded-full border border-current flex items-center justify-center group-hover:-translate-x-1 md:group-hover:-translate-x-2 transition-transform">←</span>
+          {/* 手机端显示短文案，PC端显示长文案 */}
+          <span className="hidden sm:inline">Prev Page</span>
+          <span className="sm:hidden">Prev</span>
         </Link>
       ) : (
-        <div className="opacity-20 flex items-center gap-4 text-xs font-black uppercase tracking-widest cursor-not-allowed">
-          <span className="w-10 h-10 rounded-full border border-current flex items-center justify-center">←</span>
-          Prev Page
+        <div className="opacity-20 flex items-center gap-2 md:gap-4 text-[9px] md:text-xs font-black uppercase tracking-widest cursor-not-allowed shrink-0">
+          <span className="w-7 h-7 md:w-10 md:h-10 rounded-full border border-current flex items-center justify-center">←</span>
+          <span className="hidden sm:inline">Prev Page</span>
+          <span className="sm:hidden">Prev</span>
         </div>
       )}
 
       {/* ================= [ NUMBERS ] ================= */}
-      <div className="flex gap-2 font-mono text-sm font-bold flex-wrap justify-center">
+      <div className="flex gap-1 md:gap-2 font-mono text-xs md:text-sm font-bold justify-center">
         {paginationGroup.map((p, i) => {
           if (p === '...') {
             return (
-              <span key={`dots-${i}`} className="w-10 h-10 flex items-center justify-center opacity-40 font-black tracking-widest">
+              <span key={`dots-${i}`} className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center opacity-40 font-black tracking-widest">
                 ...
               </span>
             );
@@ -76,7 +80,7 @@ export default function PaginationWidget({
             <Link 
               key={`page-${p}`} 
               href={`${basePath}?page=${p}`}
-              className={`w-10 h-10 flex items-center justify-center border sc-border transition-colors ${
+              className={`w-7 h-7 md:w-10 md:h-10 flex items-center justify-center border sc-border transition-colors ${
                 isCurrent 
                   ? 'bg-[var(--sc-text)] text-[var(--sc-bg)]' 
                   : 'hover:bg-[var(--sc-text)] hover:text-[var(--sc-bg)] opacity-60 hover:opacity-100'
@@ -92,15 +96,17 @@ export default function PaginationWidget({
       {currentPage < totalPages ? (
         <Link 
           href={`${basePath}?page=${currentPage + 1}`}
-          className="group flex items-center gap-4 text-xs font-black uppercase tracking-widest hover:text-[var(--sc-text)] opacity-60 hover:opacity-100 transition-all"
+          className="group flex items-center gap-2 md:gap-4 text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[var(--sc-text)] opacity-60 hover:opacity-100 transition-all shrink-0"
         >
-          Next Page
-          <span className="w-10 h-10 rounded-full border border-current flex items-center justify-center group-hover:translate-x-2 transition-transform">→</span>
+          <span className="hidden sm:inline">Next Page</span>
+          <span className="sm:hidden">Next</span>
+          <span className="w-7 h-7 md:w-10 md:h-10 rounded-full border border-current flex items-center justify-center group-hover:translate-x-1 md:group-hover:translate-x-2 transition-transform">→</span>
         </Link>
       ) : (
-        <div className="opacity-20 flex items-center gap-4 text-xs font-black uppercase tracking-widest cursor-not-allowed">
-          Next Page
-          <span className="w-10 h-10 rounded-full border border-current flex items-center justify-center">→</span>
+        <div className="opacity-20 flex items-center gap-2 md:gap-4 text-[9px] md:text-xs font-black uppercase tracking-widest cursor-not-allowed shrink-0">
+          <span className="hidden sm:inline">Next Page</span>
+          <span className="sm:hidden">Next</span>
+          <span className="w-7 h-7 md:w-10 md:h-10 rounded-full border border-current flex items-center justify-center">→</span>
         </div>
       )}
       
