@@ -106,12 +106,14 @@ export default async function CategoryArchivePage({
     image: post.coverImage || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
   }));
 
-  return (
+return (
     <BlogArchiveClientWrapper postsCount={totalPosts} lastUpdated={featuredPost ? featuredPost.date : gridPosts[0]?.date || 'N/A'}>
       
       {/* ==================== 1. Hero 区域 (定制化大字) ==================== */}
-      <section className="relative min-h-[70vh] flex flex-col justify-end px-6 lg:px-12 pb-20">
-        <div className="relative z-10 border-b sc-border pb-12">
+      {/* 🚀 核心修复：把 justify-end 改为 justify-start，加入 pt-28/40 让文字吸顶。保留 min-h-[50vh] 作为滚动缓冲池 */}
+      <section className="relative min-h-[50vh] lg:min-h-[60vh] flex flex-col justify-start pt-28 md:pt-40 px-6 lg:px-12 pb-10">
+        {/* 💡 缩小底边距 pb-12 -> pb-8 md:pb-12 */}
+        <div className="relative z-10 border-b sc-border pb-8 md:pb-12">
           
           <div className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] opacity-50 mb-4 animate-pulse">
             Filtered By Category
@@ -129,7 +131,8 @@ export default async function CategoryArchivePage({
           </div>
         </div>
 
-        <div className="hero-bottom-content mt-8 flex flex-col md:flex-row md:items-center justify-between gap-8 opacity-0">
+        {/* 💡 缩小顶边距 mt-8 -> mt-6 md:mt-8 */}
+        <div className="hero-bottom-content mt-6 md:mt-8 flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8 opacity-0">
           <Link href="/blog" className="text-xs md:text-sm font-black tracking-widest leading-tight uppercase hover:opacity-50 transition-opacity">
             [ ← RETURN TO ALL LOGS ]
           </Link>
@@ -141,7 +144,9 @@ export default async function CategoryArchivePage({
 
       {/* ==================== 2. Featured Post (仅在第一页显示) ==================== */}
       {featuredPost && (
-        <section className="dark-section hide-sidebar-trigger relative py-32 px-6 lg:px-12 mt-12 bg-[var(--sc-bg)] transition-colors duration-700">
+        // 💡 调整 Hero 到 Featured 的距离：mt-12 改为 mt-0。
+        // 💡 调整移动端上下内边距：py-32 改为 py-16 md:py-32。
+        <section className="dark-section hide-sidebar-trigger relative py-16 md:py-32 px-6 lg:px-12 mt-0 bg-[var(--sc-bg)] transition-colors duration-700">
           <div className="max-w-[1600px] mx-auto w-full">
             <div className="flex flex-col lg:flex-row gap-12 lg:gap-24 items-center">
               
@@ -193,22 +198,31 @@ export default async function CategoryArchivePage({
         </section>
       )}
 
-{/* ==================== 3. Grid List (自带双视图切换) ==================== */}
-      <section className="relative py-20 px-6 lg:px-12 bg-[var(--sc-bg)] transition-colors duration-700">
-        <div className="max-w-[1600px] mx-auto w-full content-block">
+      {/* ==================== 3. Grid List (自带双视图切换) ==================== */}
+      {/* 💡 调整列表距离上方块的间距：原 py-20 改为 pt-12 pb-20，拉近顶部距离 */}
+      <section className="relative pt-12 pb-20 px-6 lg:px-12 bg-[var(--sc-bg)] transition-colors duration-700">
+        
+        {/* 🚀 核心修复：去掉了包裹在外面的 content-block，防止分页器被 GSAP 隐藏！ */}
+        <div className="max-w-[1600px] mx-auto w-full">
           
-          <PostLayoutSwitcher 
-            posts={gridPosts} 
-            headerTitle="Recent Logs" 
-            headerSubtitle={`Filter: ${decodedCategory}`} 
-          />
+          {/* 只有列表区域参与滚动淡入动画 */}
+          <div className="content-block">
+            <PostLayoutSwitcher 
+              posts={gridPosts} 
+              headerTitle="Recent Logs" 
+              headerSubtitle={`Filter: ${decodedCategory}`} 
+            />
+          </div>
 
           {/* ==================== 4. 分页控件 ==================== */}
-          <PaginationWidget 
-            currentPage={currentPage} 
-            totalPages={totalPages} 
-            basePath={`/blog/category/${resolvedParams.category}`} 
-          />
+          {/* 分页器独立，永远可见 */}
+          <div>
+            <PaginationWidget 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              basePath={`/blog/category/${resolvedParams.category}`} 
+            />
+          </div>
 
         </div>
       </section>

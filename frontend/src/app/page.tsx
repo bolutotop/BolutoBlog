@@ -131,7 +131,11 @@ export default function ShowcasePage() {
       `}</style>
       
       {/* ==================== 1. Hero 区域 ==================== */}
-      <section className="relative min-h-[90vh] flex flex-col justify-center px-6 lg:px-12 pt-32 pb-20">
+{/* ==================== 1. Hero 区域 ==================== */}
+      {/* 🚀 核心修改：将 justify-center 改为 justify-start，让大字向上吸顶 */}
+      {/* 💡 吸顶距离：通过 pt-28 (移动端) 和 md:pt-40 (PC端) 精准控制与 Header 的间距 */}
+      {/* 💡 缓冲高度：保留 min-h-[70vh] 撑开底部空间，防止下方的 VISION 动画在加载时提前触发 */}
+      <section className="relative min-h-[70vh] lg:min-h-[85vh] flex flex-col justify-start px-6 lg:px-12 pt-28 md:pt-40 pb-20">
         <div className="relative z-10">
           <div className="uppercase font-black text-[clamp(4rem,11vw,16rem)] leading-[0.85] tracking-tighter text-[var(--sc-text)]">
             <SplitText text="ZHIHUI" />
@@ -167,13 +171,13 @@ export default function ShowcasePage() {
       </section>
 
       {/* ==================== 2. VISION & 跑马灯 ==================== */}
-      <section className="text-mask-section h-[60vh] flex flex-col items-center justify-center sc-border border-y relative z-10 bg-[var(--sc-bg)]">
+      <section className="text-mask-section h-[40vh] md:h-[60vh] flex flex-col items-center justify-center sc-border border-y relative z-10 bg-[var(--sc-bg)]">
          <h2 className="text-mask-bg text-[20vw] xl:text-[15rem] font-black uppercase tracking-tighter leading-none m-0 p-0 w-full text-center" style={{ backgroundImage: "url('/uploads/1773747290074-dbc2a046d7e894928498b6c95ad29482.jpg')", backgroundSize: '120%', backgroundPosition: '50% 0%', WebkitBackgroundClip: 'text', color: 'transparent' }}>
            VISION
          </h2>
       </section>
 
-      <section className="py-12 overflow-hidden sc-bg-inverse flex whitespace-nowrap transform -rotate-2 scale-110 relative z-20 shadow-2xl mt-20">
+      <section className="py-8 md:py-12 overflow-hidden sc-bg-inverse flex whitespace-nowrap transform -rotate-2 scale-110 relative z-20 shadow-2xl mt-12 md:mt-20">
         <div className="marquee-track flex gap-12 text-5xl md:text-7xl font-black uppercase tracking-tighter">
            <span>ZHIHUI STUDIO · PURE CODE · ZERO COMPROMISES · BESPOKE ARCHITECTURE ·</span>
            <span>ZHIHUI STUDIO · PURE CODE · ZERO COMPROMISES · BESPOKE ARCHITECTURE ·</span>
@@ -181,12 +185,12 @@ export default function ShowcasePage() {
       </section>
 
       {/* ==================== 3. 图像矩阵区 (PHILOSOPHY) ==================== */}
-      <section className="overlap-section relative py-32 px-6 lg:px-12 mt-20">
-        <div className="stroke-overlap-text absolute top-[5%] left-[5%] text-[15vw] font-black uppercase tracking-tighter stroke-text z-0 pointer-events-none opacity-20 whitespace-nowrap">
+      <section className="overlap-section relative pt-8 pb-16 md:py-32 px-6 lg:px-12 mt-0 md:mt-20">
+        <div className="stroke-overlap-text absolute top-[2%] md:top-[5%] left-[5%] text-[15vw] font-black uppercase tracking-tighter stroke-text z-0 pointer-events-none opacity-20 whitespace-nowrap">
           PHILOSOPHY
         </div>
 
-        <div className="relative z-10 flex flex-col gap-32 md:gap-48 mt-20 max-w-[1600px] mx-auto w-full">
+        <div className="relative z-10 flex flex-col gap-12 md:gap-48 mt-6 md:mt-20 max-w-[1600px] mx-auto w-full">
           {/* Item 1：左图右文 */}
           <div className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
             <div className="w-full md:w-7/12 order-1">
