@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
+// 🚀 核心修复 1：引入 useDragControls 来精确控制拖拽区域
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 
-// 🚀 定义目录项的类型
 interface TocItem {
   level: number;
   text: string;
   id: string;
 }
 
-// 🚀 接收从父组件传来的必要状态
 interface TocSidebarProps {
   toc: TocItem[];
   activeId: string;
@@ -18,13 +18,18 @@ interface TocSidebarProps {
 }
 
 export default function TocSidebar({ toc, activeId, isMobileMenuOpen, setIsMobileMenuOpen }: TocSidebarProps) {
-  // === 移动端悬浮球的内部状态 ===
-  const [winSize, setWinSize] = useState({ w: 0, h: 0 });
-  const [pos, setPos] = useState({ x: -100, y: -100 });
-  const dragInfo = useRef({ startX: 0, startY: 0, elX: 0, elY: 0, moved: false });
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  
+  const [isDragging, setIsDragging] = useState(false);
+  // 🚀 核心修复 2：新增状态，控制悬浮球是否显示（默认隐藏）
+  const [isVisible, setIsVisible] = useState(false); 
+  
+  // 实例化拖拽控制器
+  const dragControls = useDragControls();
 
-  // 1. 监听点击外部关闭弹窗
+  const EXPANDED_WIDTH = 280; 
+
+  // 监听外部点击关闭弹窗
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (isMobileMenuOpen && mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
@@ -39,47 +44,38 @@ export default function TocSidebar({ toc, activeId, isMobileMenuOpen, setIsMobil
     };
   }, [isMobileMenuOpen, setIsMobileMenuOpen]);
 
-  // 2. 初始化和监听窗口大小
+  // 🚀 核心修复 3：监听滚动高度，超过 300px（滑过首屏）才显示悬浮球
   useEffect(() => {
-    setWinSize({ w: window.innerWidth, h: window.innerHeight });
-    setPos({ x: window.innerWidth - 80, y: window.innerHeight - 120 }); // 初始在右下角
-    const handleResize = () => setWinSize({ w: window.innerWidth, h: window.innerHeight });
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+        setIsMobileMenuOpen(false); // 滚回顶部时自动收起菜单
+      }
+    };
 
-  // 3. 拖拽事件处理
-  const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    dragInfo.current = { startX: e.clientX, startY: e.clientY, elX: pos.x, elY: pos.y, moved: false };
-  };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // 初始化检测一次
 
-  const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
-    const dx = e.clientX - dragInfo.current.startX;
-    const dy = e.clientY - dragInfo.current.startY;
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) dragInfo.current.moved = true;
-    
-    let newX = Math.max(16, Math.min(dragInfo.current.elX + dx, winSize.w - 72));
-    let newY = Math.max(16, Math.min(dragInfo.current.elY + dy, winSize.h - 72));
-    setPos({ x: newX, y: newY });
-  };
-
-  const onPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
-    e.currentTarget.releasePointerCapture(e.pointerId);
-    if (!dragInfo.current.moved) setIsMobileMenuOpen(prev => !prev);
-  };
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [setIsMobileMenuOpen]);
 
   return (
     <>
       {/* ========================================== */}
-      {/* 🖥️ Desktop 版侧边栏 */}
+      {/* 🖥️ Desktop 版侧边栏 (原封不动) */}
       {/* ========================================== */}
-      <aside className="toc-sidebar hidden lg:flex fixed right-0 top-0 h-screen w-72 2xl:w-96 sc-border border-l z-40 flex-col pt-28 pb-10 px-6 2xl:px-8 opacity-0 translate-x-full pointer-events-none bg-[var(--sc-bg)]">
-        <div className="text-[10px] 2xl:text-xs font-black uppercase tracking-widest mb-8 sc-border border-b pb-4 opacity-50">
+<aside className="toc-sidebar hidden xl:flex fixed right-0 top-0 h-screen w-72 2xl:w-96 sc-border border-l z-40 flex-col pt-28 pb-10 px-6 2xl:px-8 opacity-0 translate-x-full pointer-events-none bg-[var(--sc-bg)]">
+        
+        {/* 💡 修复 1：加上 shrink-0，防止在屏幕太矮时标题被挤变形 */}
+        <div className="shrink-0 text-[10px] 2xl:text-xs font-black uppercase tracking-widest mb-8 sc-border border-b pb-4 opacity-50">
           Table of Contents
         </div>
-        <nav className="brutalist-toc-nav flex flex-col gap-5 overflow-y-auto hide-scrollbar">
+        
+        {/* 🚀 核心修复 2：加上 flex-1 min-h-0。强制它动态占据浏览器所有剩余的纵向空间！ */}
+        {/* 💡 顺便加上 pb-8 让底部留点呼吸空间，防止真出现滚动条时文字贴死底边 */}
+        <nav className="brutalist-toc-nav flex-1 min-h-0 flex flex-col gap-5 overflow-y-auto hide-scrollbar pb-8">
           {toc.length > 0 ? toc.map((item, i) => {
             const isActive = item.id === activeId;
             return (
@@ -112,75 +108,127 @@ export default function TocSidebar({ toc, activeId, isMobileMenuOpen, setIsMobil
       </aside>
 
       {/* ========================================== */}
-      {/* 📱 Mobile 版全屏可拖拽的悬浮目录 (FAB) */}
+      {/* 📱 Mobile 版：Framer Motion 丝滑形变悬浮球 */}
       {/* ========================================== */}
-      {winSize.w > 0 && (
-        <div 
-          ref={mobileMenuRef}
-          className="mobile-toc-fab fixed z-[100] lg:hidden opacity-0 invisible"
-          style={{ left: pos.x, top: pos.y, touchAction: 'none' }}
-        >
-          {/* 悬浮菜单 Popover */}
-          <div 
-            className={`absolute w-64 bg-[var(--sc-bg)] sc-border border shadow-2xl p-5 flex flex-col gap-4 pointer-events-auto mobile-menu-popover transform ${
-              isMobileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-0 pointer-events-none menu-closed'
-            } ${
-              pos.y > winSize.h / 2 
-                ? (pos.x > winSize.w / 2 ? 'origin-bottom-right' : 'origin-bottom-left') 
-                : (pos.x > winSize.w / 2 ? 'origin-top-right' : 'origin-top-left')
-            } ${
-              pos.x > winSize.w / 2 ? 'right-[120%]' : 'left-[120%]'
-            } ${
-              pos.y > winSize.h / 2 ? 'bottom-0' : 'top-0'
-            }`}
-          >
-            <div className="text-[10px] font-black uppercase tracking-widest opacity-50 sc-border border-b pb-3">
-              Table of Contents
-            </div>
-            <nav className="brutalist-toc-nav flex flex-col gap-4 overflow-y-auto max-h-[50vh] hide-scrollbar">
-              {toc.length > 0 ? toc.map((item, i) => {
-                const isActive = item.id === activeId;
-                return (
-                  <a 
-                    key={i} href={`#${item.id}`} title={item.text}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsMobileMenuOpen(false);
-                      const targetElement = document.getElementById(item.id);
-                      if (targetElement) {
-                        const headerOffset = 140;
-                        const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
-                        window.scrollTo({ top: elementPosition - headerOffset, behavior: 'smooth' });
-                      }
-                    }}
-                    className={`block text-xs font-bold uppercase transition-colors ${
-                      item.level === 3 ? 'ml-3' : ''
-                    } ${isActive ? 'opacity-100' : 'opacity-40'}`}
-                  >
-                    <span className={`toc-text-wrapper truncate max-w-full block ${isActive ? 'active-toc' : ''}`}>{item.text}</span>
-                  </a>
-                );
-              }) : (
-                <span className="text-[10px] font-mono opacity-30 uppercase">No indices found.</span>
-              )}
-            </nav>
-          </div>
+      <motion.nav
+        ref={mobileMenuRef}
+        drag
+        // 🚀 核心修复 4：绑定拖拽控制器，并且关闭整个容器的默认拖拽监听！
+        dragControls={dragControls}
+        dragListener={false} 
+        
+        dragMomentum={false}
+        whileDrag={{ scale: 1.1 }}
+        
+        // 初始状态修改为缩小且透明
+        initial={{ opacity: 0, scale: 0.8, width: 56, height: 56, borderRadius: 28 }}
+        
+        // 动画状态：结合 isVisible 控制整体显示隐藏
+        animate={{
+          opacity: isVisible ? (isMobileMenuOpen || isDragging ? 1 : 0.8) : 0,
+          scale: isVisible ? 1 : 0.8,
+          width: isMobileMenuOpen ? EXPANDED_WIDTH : 56,
+          height: isMobileMenuOpen ? 'auto' : 56,
+          borderRadius: isMobileMenuOpen ? 16 : 28,
+        }}
+        
+        transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
+        
+        onDragStart={() => setIsDragging(true)}
+        onDragEnd={() => setTimeout(() => setIsDragging(false), 100)}
+        
+        // 根据 isVisible 开启或关闭底层点击事件
+        style={{ pointerEvents: isVisible ? 'auto' : 'none' }}
 
-          {/* 可拖拽的圆圈汉堡按钮 */}
-          <button 
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            className="w-14 h-14 bg-[var(--sc-inverse-bg)] text-[var(--sc-inverse-text)] rounded-full flex items-center justify-center shadow-2xl active:scale-90 transition-transform cursor-grab active:cursor-grabbing"
-          >
-            <div className="relative w-5 h-5 flex flex-col justify-center items-center pointer-events-none">
-              <span className={`absolute h-[2px] w-full bg-current transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45' : '-translate-y-1.5'}`}></span>
-              <span className={`absolute h-[2px] w-full bg-current transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
-              <span className={`absolute h-[2px] w-full bg-current transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45' : 'translate-y-1.5'}`}></span>
-            </div>
-          </button>
+        className={`
+          lg:hidden fixed bottom-12 right-6 z-[100]
+          bg-[var(--sc-bg)]/90 backdrop-blur-md sc-border border shadow-2xl overflow-hidden
+          flex flex-col text-[var(--sc-text)]
+          will-change-[width,height]
+        `}
+      >
+        
+        {/* ========================================================= */}
+        {/* 🚀 顶部拖拽把手与点击区域 (仅这部分可以拖动和触发开关) */}
+        {/* ========================================================= */}
+        <div 
+          // 把 cursor-grab 移到这里，明确告诉用户只有这里可以拖
+          className={`flex items-center justify-center flex-shrink-0 cursor-grab active:cursor-grabbing ${isMobileMenuOpen ? 'w-full h-12 border-b sc-border' : 'w-14 h-14'}`}
+          
+          // 这两行是魔法：接管指针按下事件并传递给 dragControls，禁止触摸默认事件
+          onPointerDown={(e) => dragControls.start(e)}
+          style={{ touchAction: "none" }}
+          
+          // 点击控制展开/收起
+          onClick={() => {
+            if (!isDragging) setIsMobileMenuOpen(!isMobileMenuOpen);
+          }}
+        >
+          {isMobileMenuOpen ? (
+             <div className="flex items-center justify-between w-full px-5 pointer-events-none">
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-50">TOC</span>
+                <div className="relative w-4 h-4 opacity-50">
+                  <span className="absolute top-1/2 left-0 w-full h-[2px] bg-current rotate-45 -translate-y-1/2"></span>
+                  <span className="absolute top-1/2 left-0 w-full h-[2px] bg-current -rotate-45 -translate-y-1/2"></span>
+                </div>
+             </div>
+          ) : (
+             <div className="relative w-5 h-4 flex flex-col justify-between pointer-events-none">
+                <span className="w-full h-[2px] bg-current"></span>
+                <span className="w-full h-[2px] bg-current"></span>
+                <span className="w-full h-[2px] bg-current"></span>
+             </div>
+          )}
         </div>
-      )}
+
+        {/* 列表内容区域 (带有淡入淡出效果) */}
+        <AnimatePresence>
+            {isMobileMenuOpen && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }} 
+                    className="overflow-y-auto hide-scrollbar max-h-[50vh]"
+                    style={{ minWidth: EXPANDED_WIDTH }} 
+                >
+                    <nav className="brutalist-toc-nav flex flex-col gap-4 p-5">
+                      {toc.length > 0 ? toc.map((item, i) => {
+                        const isActive = item.id === activeId;
+                        return (
+                          <a 
+                            key={i} href={`#${item.id}`} title={item.text}
+                            // 保持拦截点击，防止穿透
+                            onPointerDownCapture={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation(); 
+                              setIsMobileMenuOpen(false);
+                              setTimeout(() => {
+                                const targetElement = document.getElementById(item.id);
+                                if (targetElement) {
+                                  const headerOffset = 140;
+                                  const elementPosition = targetElement.getBoundingClientRect().top + window.scrollY;
+                                  window.scrollTo({ top: elementPosition - headerOffset, behavior: 'smooth' });
+                                }
+                              }, 50);
+                            }}
+                            className={`block text-xs font-bold uppercase transition-colors ${
+                              item.level === 3 ? 'ml-3' : ''
+                            } ${isActive ? 'opacity-100 text-[var(--sc-text)]' : 'opacity-40 hover:opacity-80'}`}
+                          >
+                            <span className={`toc-text-wrapper truncate max-w-full block ${isActive ? 'active-toc' : ''}`}>{item.text}</span>
+                          </a>
+                        );
+                      }) : (
+                        <span className="text-[10px] font-mono opacity-30 uppercase">No indices found.</span>
+                      )}
+                    </nav>
+                </motion.div>
+            )}
+        </AnimatePresence>
+
+      </motion.nav>
     </>
   );
 }
