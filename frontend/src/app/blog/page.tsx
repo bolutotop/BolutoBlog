@@ -9,9 +9,11 @@ import BlogArchiveClientWrapper from './BlogArchiveClientWrapper';
 import PostLayoutSwitcher from '@/components/blog/PostLayoutSwitcher';
 import PaginationWidget from '@/components/blog/PaginationWidget';
 
-// 巨型标题文字切割组件 (保持不变)
+// 巨型标题文字切割组件
 const SplitText = ({ text, className = "" }: { text: string, className?: string }) => (
-  <div className={`flex flex-wrap overflow-hidden pb-4 -mb-4 ${className}`}>
+  // 🚀 核心修复：将上下缓冲区 (pb, mb) 扩大到 8，并增加左右缓冲区 (px, mx)，
+  // 彻底防止巨大的中文字体在动画旋转 (rotate-12) 或静止时被 overflow-hidden 误伤裁切！
+  <div className={`flex flex-wrap overflow-hidden pb-8 -mb-8 px-4 -mx-4 ${className}`}>
     {text.split('').map((char, i) => (
       <span 
         key={i} 
@@ -23,7 +25,6 @@ const SplitText = ({ text, className = "" }: { text: string, className?: string 
     ))}
   </div>
 );
-
 // --- Server Component ---
 export default async function BlogArchivePage({
   searchParams,
@@ -107,11 +108,11 @@ return (
         
         <div className="relative z-10 border-b sc-border pb-8 md:pb-12">
           
-          <div className="uppercase font-black text-[clamp(3rem,8vw,12rem)] leading-[0.85] tracking-tighter text-[var(--sc-text)]">
+          <div className="uppercase font-black text-[clamp(3rem,8vw,12rem)] leading-none tracking-tighter text-[var(--sc-text)]">
             <SplitText text="" />
           </div>
           
-          <div className="uppercase font-black text-[clamp(3rem,8vw,12rem)] leading-[0.85] tracking-tighter text-[var(--sc-text)] flex flex-wrap items-center gap-6">
+          <div className="uppercase font-black text-[clamp(3rem,8vw,12rem)] leading-none tracking-tighter text-[var(--sc-text)] flex flex-wrap items-center gap-6">
             <SplitText text="全部文章" />
             <span className="text-[clamp(1rem,2vw,3rem)] font-mono opacity-40 translate-y-[-20%] hero-bottom-content">
               ({totalPosts})

@@ -265,7 +265,7 @@ useEffect(() => {
                 {post.category}
               </span>
             </div>
-            <div className="uppercase font-black text-[clamp(2.5rem,6vw,8rem)] leading-[0.9] tracking-tighter brutalist-hero-text mb-12 max-w-6xl">
+            <div className="uppercase font-black text-[clamp(2.5rem,6vw,8rem)] leading-none brutalist-hero-text mb-12 max-w-6xl">
               <SplitText text={post.title} />
             </div>
             <div className="meta-fade flex flex-wrap items-end justify-between gap-8 py-8 border-y sc-border opacity-0">
