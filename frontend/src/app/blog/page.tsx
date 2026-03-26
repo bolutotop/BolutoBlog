@@ -108,11 +108,11 @@ return (
         <div className="relative z-10 border-b sc-border pb-8 md:pb-12">
           
           <div className="uppercase font-black text-[clamp(3rem,8vw,12rem)] leading-[0.85] tracking-tighter text-[var(--sc-text)]">
-            <SplitText text="PUBLICATION" />
+            <SplitText text="" />
           </div>
           
           <div className="uppercase font-black text-[clamp(3rem,8vw,12rem)] leading-[0.85] tracking-tighter text-[var(--sc-text)] flex flex-wrap items-center gap-6">
-            <SplitText text="ARCHIVE" />
+            <SplitText text="目录" />
             <span className="text-[clamp(1rem,2vw,3rem)] font-mono opacity-40 translate-y-[-20%] hero-bottom-content">
               ({totalPosts})
             </span>
