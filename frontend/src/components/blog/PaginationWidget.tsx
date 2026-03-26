@@ -53,14 +53,14 @@ export default function PaginationWidget({
         >
           <span className="w-7 h-7 md:w-10 md:h-10 rounded-full border border-current flex items-center justify-center group-hover:-translate-x-1 md:group-hover:-translate-x-2 transition-transform">←</span>
           {/* 手机端显示短文案，PC端显示长文案 */}
-          <span className="hidden sm:inline">Prev Page</span>
-          <span className="sm:hidden">Prev</span>
+          <span className="hidden sm:inline">上一页</span>
+          <span className="sm:hidden">上一页</span>
         </Link>
       ) : (
         <div className="opacity-20 flex items-center gap-2 md:gap-4 text-[9px] md:text-xs font-black uppercase tracking-widest cursor-not-allowed shrink-0">
           <span className="w-7 h-7 md:w-10 md:h-10 rounded-full border border-current flex items-center justify-center">←</span>
-          <span className="hidden sm:inline">Prev Page</span>
-          <span className="sm:hidden">Prev</span>
+          <span className="hidden sm:inline">上一页</span>
+          <span className="sm:hidden">上一页</span>
         </div>
       )}
 
@@ -98,14 +98,14 @@ export default function PaginationWidget({
           href={`${basePath}?page=${currentPage + 1}`}
           className="group flex items-center gap-2 md:gap-4 text-[9px] md:text-xs font-black uppercase tracking-widest hover:text-[var(--sc-text)] opacity-60 hover:opacity-100 transition-all shrink-0"
         >
-          <span className="hidden sm:inline">Next Page</span>
-          <span className="sm:hidden">Next</span>
+          <span className="hidden sm:inline">下一页</span>
+          <span className="sm:hidden">下一页</span>
           <span className="w-7 h-7 md:w-10 md:h-10 rounded-full border border-current flex items-center justify-center group-hover:translate-x-1 md:group-hover:translate-x-2 transition-transform">→</span>
         </Link>
       ) : (
         <div className="opacity-20 flex items-center gap-2 md:gap-4 text-[9px] md:text-xs font-black uppercase tracking-widest cursor-not-allowed shrink-0">
-          <span className="hidden sm:inline">Next Page</span>
-          <span className="sm:hidden">Next</span>
+          <span className="hidden sm:inline">下一页</span>
+          <span className="sm:hidden">下一页</span>
           <span className="w-7 h-7 md:w-10 md:h-10 rounded-full border border-current flex items-center justify-center">→</span>
         </div>
       )}

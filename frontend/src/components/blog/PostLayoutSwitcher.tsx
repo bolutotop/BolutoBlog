@@ -167,7 +167,7 @@ export default function PostLayoutSwitcher({
                   
                   <div className="mt-auto flex items-center gap-3 md:gap-4 text-[9px] md:text-[10px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">
                     <div className="w-6 md:w-8 h-[2px] bg-current transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-out" />
-                    Read Article
+                    阅读文章
                   </div>
                 </div>
 

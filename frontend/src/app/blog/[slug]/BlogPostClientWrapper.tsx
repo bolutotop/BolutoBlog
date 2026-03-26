@@ -258,7 +258,7 @@ useEffect(() => {
           <div className="relative z-20 px-6 lg:px-12 max-w-[1600px] mx-auto w-full">
             <div className="meta-fade flex items-center gap-4 mb-8 opacity-0">
               <Link href="/blog" className="text-[10px] font-black uppercase tracking-widest hover:line-through transition-all brutalist-hero-text">
-                ← Archive
+                ← 返回
               </Link>
               <span className="w-1 h-1 rounded-full bg-[var(--sc-border)]"></span>
               <span className="text-[10px] font-bold uppercase tracking-widest brutalist-hero-meta">
@@ -271,15 +271,15 @@ useEffect(() => {
             <div className="meta-fade flex flex-wrap items-end justify-between gap-8 py-8 border-y sc-border opacity-0">
               <div className="flex gap-12">
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest brutalist-hero-meta mb-2">Published</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest brutalist-hero-meta mb-2">发布时间</div>
                   <div className="font-mono text-sm font-bold uppercase brutalist-hero-text">{post.date}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest brutalist-hero-meta mb-2">Author</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest brutalist-hero-meta mb-2">作者</div>
                   <div className="font-mono text-sm font-bold uppercase brutalist-hero-text">Zhihui</div>
                 </div>
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-widest brutalist-hero-meta mb-2">Log ID</div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest brutalist-hero-meta mb-2">日志 ID</div>
                   <div className="font-mono text-sm font-bold uppercase brutalist-hero-text">#{post.id.slice(-6)}</div>
                 </div>
               </div>
@@ -323,14 +323,14 @@ useEffect(() => {
             className="group relative overflow-hidden bg-[var(--sc-inverse-bg)] border border-[var(--sc-inverse-bg)] px-16 py-8 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 duration-500 isolate w-fit"
           >
             <span className="relative z-10 font-black text-sm md:text-base uppercase tracking-[0.2em] text-[var(--sc-inverse-text)] transition-colors duration-300 group-hover:text-transparent">
-              Return to Archive
+              返回
             </span>
             <div 
               className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-center px-16 group-hover:animate-[rippleSpread_1s_cubic-bezier(0.16,1,0.3,1)_forwards]"
               style={{ clipPath: 'circle(0% at var(--x, 50%) var(--y, 50%))' }}
             >
               <span className="font-black text-sm md:text-base uppercase tracking-[0.2em] text-[var(--sc-text)]">
-                Return to Archive
+                返回
               </span>
             </div>
           </Link>

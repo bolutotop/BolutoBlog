@@ -18,16 +18,16 @@ export default function LeftSidebar({ categories }: LeftSidebarProps) {
       {/* 1. 个人信息区 */}
       <div className="pointer-events-auto">
         <div className="w-16 h-16 2xl:w-20 2xl:h-20 rounded-full overflow-hidden mb-5 sc-border border-2">
-          <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Zhihui&backgroundColor=e2e8f0" alt="Zhihui" className="w-full h-full object-cover grayscale" />
+          <img src="/uploads/1774537145969-_20260326225851.jpg" alt="Zhihui" className="w-full h-full object-cover" />
         </div>
         <h3 className="font-black uppercase text-[clamp(1.25rem,1.5vw,1.75rem)] leading-none tracking-tight">Zhihui</h3>
-        <p className="text-[10px] 2xl:text-xs font-bold mt-2 uppercase tracking-widest opacity-50">Creative Developer</p>
+        <p className="text-[10px] 2xl:text-xs font-bold mt-2 uppercase tracking-widest opacity-50">A programming enthusiast</p>
       </div>
 
       {/* 2. 动态分类标签渲染区 */}
       <div className="pointer-events-auto">
         <div className="text-[10px] 2xl:text-xs font-black uppercase tracking-widest mb-4 sc-border border-b pb-2 opacity-50">
-          Index / Categories
+          目录 / 标签
         </div>
         <div className="flex flex-col gap-3 font-mono text-xs 2xl:text-sm font-bold uppercase">
           {categories.length > 0 ? (
@@ -52,7 +52,7 @@ export default function LeftSidebar({ categories }: LeftSidebarProps) {
                   onClick={() => setShowAllCats(!showAllCats)}
                   className="text-left mt-2 text-[10px] 2xl:text-xs font-black uppercase tracking-widest opacity-50 hover:opacity-100 transition-opacity"
                 >
-                  {showAllCats ? '[- COLLAPSE]' : '[+ VIEW ALL]'}
+                  {showAllCats ? '[- 收起]' : '[+ 查看全部]'}
                 </button>
               )}
             </>

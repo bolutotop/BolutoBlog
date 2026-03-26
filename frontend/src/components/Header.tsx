@@ -46,7 +46,7 @@ export default function Header({
         {/* 2. 右侧导航 */}
         <nav className="hidden md:flex gap-4 md:gap-8 text-[10px] md:text-xs font-bold uppercase tracking-widest">
           <Link href="/" className="hover:line-through">主页</Link>
-          <Link href="/blog" className="hover:line-through">目录</Link>
+          <Link href="/blog" className="hover:line-through">日志</Link>
           <Link href="/archive" className="hover:line-through">归档</Link>
         </nav>
 

@@ -92,7 +92,7 @@ export default function CalendarWidget({ variant }: CalendarWidgetProps) {
     <div className={`relative ${isMobile ? 'max-w-[260px] mx-auto' : 'w-full'}`}>
       
       <div className={`flex justify-between items-center shrink-0 ${isMobile ? 'mb-4' : 'mb-6'}`}>
-        <span className={`font-black uppercase tracking-widest opacity-50 ${isMobile ? 'text-[10px]' : 'text-[10px] 2xl:text-xs'}`}>Publication Log</span>
+        <span className={`font-black uppercase tracking-widest opacity-50 ${isMobile ? 'text-[10px]' : 'text-[10px] 2xl:text-xs'}`}>时间表</span>
         <div className="flex items-center gap-3 relative z-30">
           <button onClick={handlePrevMonth} className="w-5 h-5 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity sc-border border hover:bg-[var(--sc-text)]/10"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg></button>
           <span className={`font-mono font-bold w-[4.5rem] text-center ${isMobile ? 'text-[10px]' : 'text-[10px] 2xl:text-xs'}`}>{year}.{String(month + 1).padStart(2, '0')}</span>

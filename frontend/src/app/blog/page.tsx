@@ -112,7 +112,7 @@ return (
           </div>
           
           <div className="uppercase font-black text-[clamp(3rem,8vw,12rem)] leading-[0.85] tracking-tighter text-[var(--sc-text)] flex flex-wrap items-center gap-6">
-            <SplitText text="目录" />
+            <SplitText text="全部文章" />
             <span className="text-[clamp(1rem,2vw,3rem)] font-mono opacity-40 translate-y-[-20%] hero-bottom-content">
               ({totalPosts})
             </span>
@@ -145,7 +145,7 @@ return (
                   <Link href={`/blog/${featuredPost.slug}`}>
                     <img src={featuredPost.image} alt={featuredPost.title} className="parallax-img absolute -top-[15%] left-0 w-full h-[130%] object-cover object-center opacity-90 transition-transform duration-[1.5s] ease-out group-hover:scale-105" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center backdrop-blur-sm z-20 pointer-events-none">
-                      <span className="font-black uppercase tracking-widest text-white text-sm sc-border border py-3 px-6 rounded-full bg-black/50">Read Featured</span>
+                      <span className="font-black uppercase tracking-widest text-white text-sm sc-border border py-3 px-6 rounded-full bg-black/50">阅读文章</span>
                     </div>
                   </Link>
                 </div>
@@ -171,14 +171,14 @@ return (
                   className="btn-ripple group relative overflow-hidden bg-[var(--sc-inverse-bg)] border border-[var(--sc-inverse-bg)] px-10 py-5 flex items-center justify-between transition-transform active:scale-95 duration-500 isolate w-full lg:w-fit"
                 >
                   <span className="relative z-10 font-black text-xs uppercase tracking-[0.2em] text-[var(--sc-inverse-text)] transition-colors duration-300 group-hover:text-transparent">
-                    Read Article
+                    阅读文章
                   </span>
                   <span className="relative z-10 font-black text-xs text-[var(--sc-inverse-text)] group-hover:translate-x-2 transition-transform duration-500 ml-8">→</span>
                   <div 
                     className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-between px-10 group-hover:animate-[rippleSpread_1s_cubic-bezier(0.16,1,0.3,1)_forwards] ripple-mask"
                     style={{ clipPath: 'circle(0% at 50% 50%)' }}
                   >
-                    <span className="font-black text-xs uppercase tracking-[0.2em] text-[var(--sc-text)]">Read Article</span>
+                    <span className="font-black text-xs uppercase tracking-[0.2em] text-[var(--sc-text)]">阅读文章</span>
                     <span className="font-black text-xs text-[var(--sc-text)] group-hover:translate-x-2 transition-transform duration-500 ml-8">→</span>
                   </div>
                 </Link>
@@ -199,7 +199,7 @@ return (
           <div className="content-block">
             <PostLayoutSwitcher 
               posts={gridPosts} 
-              headerTitle="Recent Logs" 
+              headerTitle="近期文章" 
               headerSubtitle="Filter: All" 
             />
           </div>

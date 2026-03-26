@@ -23,7 +23,7 @@ export default function RightSidebar({ dateInfo }: RightSidebarProps) {
         </div>
         <div className="flex items-center gap-1.5 mb-1">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-          <span className="text-[8px] 2xl:text-[10px] font-black uppercase tracking-widest opacity-50">SG</span>
+          <span className="text-[8px] 2xl:text-[10px] font-black uppercase tracking-widest opacity-50">CN</span>
         </div>
       </div>
 
