@@ -199,3 +199,41 @@ export async function searchPostsAction(query: string) {
     return { success: false, posts: [] };
   }
 }
+
+export async function getHomePageConfigAction() {
+  try {
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: 'HOMEPAGE_DATA' }
+    });
+    
+    if (config && config.value) {
+      return { success: true, data: JSON.parse(config.value) };
+    }
+    return { success: false, data: null };
+  } catch (error) {
+    console.error("Failed to fetch home page config:", error);
+    return { success: false, data: null };
+  }
+}
+
+// 2. 保存主页配置
+export async function saveHomePageConfigAction(jsonData: any) {
+  try {
+    await prisma.systemConfig.upsert({
+      where: { key: 'HOMEPAGE_DATA' },
+      update: { value: JSON.stringify(jsonData) },
+      create: { 
+        key: 'HOMEPAGE_DATA', 
+        value: JSON.stringify(jsonData) 
+      }
+    });
+
+    // 🚀 清除 Next.js 缓存，确保前台主页立刻更新！
+    revalidatePath('/'); 
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to save home page config:", error);
+    return { success: false, message: "保存失败" };
+  }
+}

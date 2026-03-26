@@ -25,6 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: '文章列表', href: '/admin', icon: DocumentTextIcon },
     { name: '新建/编辑', href: '/admin/editor', icon: PencilSquareIcon },
     { name: '媒体图库', href: '/admin/gallery', icon: PhotoIcon },
+    { name: '主页设置', href: '/admin/home-settings', icon: PencilSquareIcon },
   ];
 
   return (

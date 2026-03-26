@@ -32,3 +32,9 @@ model Tag {
   children  Tag[]    @relation("TagHierarchy")
   
 }
+
+model SystemConfig {
+  key       String   @id // 唯一键，例如: "HOMEPAGE_DATA"
+  value     String   // 使用 String 存储 JSON 数据，完美兼容 SQLite
+  updatedAt DateTime @updatedAt
+}
