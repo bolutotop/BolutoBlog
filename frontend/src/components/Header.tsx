@@ -47,7 +47,7 @@ export default function Header({
         <nav className="hidden md:flex gap-4 md:gap-8 text-[10px] md:text-xs font-bold uppercase tracking-widest">
           <Link href="/" className="hover:line-through">主页</Link>
           <Link href="/blog" className="hover:line-through">目录</Link>
-          <Link href="#" className="hover:line-through">归档</Link>
+          <Link href="/archive" className="hover:line-through">归档</Link>
         </nav>
 
         {/* 3. 移动端汉堡菜单 */}
