@@ -9,10 +9,10 @@ import {
   QueueListIcon,
   PlusIcon,
   TrashIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  FolderPlusIcon
 } from '@heroicons/react/24/outline';
 
-// 🚀 兜底的默认数据保持不变
 const DEFAULT_PAGE_DATA = {
   hero: {
     titles: ["ZHIHUI", "CREATIVE", "STUDIO"],
@@ -54,8 +54,6 @@ export default function HomeSettingsPage() {
   const [formData, setFormData] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'hero' | 'vision' | 'sections'>('hero');
-  
-  // 控制哪个大 Section 处于展开状态 (手风琴效果)
   const [expandedSection, setExpandedSection] = useState<number | null>(0);
 
   useEffect(() => {
@@ -87,7 +85,37 @@ export default function HomeSettingsPage() {
   };
 
   // ==========================================
-  // 🚀 嵌套数据更新助手函数
+  // 🚀 Section 大板块操作逻辑
+  // ==========================================
+  
+  // 1. 添加一个全新的大板块
+  const addSection = () => {
+    const newSection = {
+      id: `section-${Date.now()}`, // 生成唯一 ID
+      title: "NEW SECTION",
+      className: "overlap-section", // 默认给一个带动画的排版类名
+      isDarkTheme: false,
+      hideSidebars: false,
+      blocks: [] // 初始图文块为空，让用户自己点添加
+    };
+    const newSections = [...formData.sections, newSection];
+    setFormData({ ...formData, sections: newSections });
+    // 自动展开刚刚新建的这个板块
+    setExpandedSection(newSections.length - 1);
+  };
+
+  // 2. 删除整个大板块
+  const removeSection = (sIdx: number) => {
+    if (confirm("⚠️ 危险操作：确定要删除整个大板块及其包含的所有图文吗？此操作不可恢复！")) {
+      const newSections = [...formData.sections];
+      newSections.splice(sIdx, 1);
+      setFormData({ ...formData, sections: newSections });
+      setExpandedSection(null); // 删除后收起所有手风琴
+    }
+  };
+
+  // ==========================================
+  // 🚀 Block 内部图文块操作逻辑
   // ==========================================
   const updateSection = (sIdx: number, field: string, value: any) => {
     const newSections = [...formData.sections];
@@ -103,7 +131,6 @@ export default function HomeSettingsPage() {
     setFormData({ ...formData, sections: newSections });
   };
 
-  // 添加新区块 (附带默认的 Tailwind 样式)
   const addBlock = (sIdx: number) => {
     const newSections = [...formData.sections];
     newSections[sIdx].blocks.push({
@@ -133,7 +160,7 @@ export default function HomeSettingsPage() {
   if (!formData) return <div className="p-10 font-mono animate-pulse">Loading System Core...</div>;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-32">
       
       {/* 头部区域 */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 sticky top-0 bg-[#f8f9fa] pt-4 pb-6 z-50">
@@ -166,7 +193,6 @@ export default function HomeSettingsPage() {
           
           {/* ==================== 1. Hero 设置 ==================== */}
           {activeTab === 'hero' && (
-             // ... [保留原本的 Hero 设置代码] ...
              <div className="space-y-6 max-w-2xl">
               <div>
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">巨型标题阵列 (Title Array)</label>
@@ -211,7 +237,6 @@ export default function HomeSettingsPage() {
 
           {/* ==================== 2. Vision 设置 ==================== */}
           {activeTab === 'vision' && (
-             // ... [保留原本的 Vision 设置代码] ...
              <div className="space-y-6 max-w-2xl">
                <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">背景遮罩文字</label>
@@ -232,7 +257,7 @@ export default function HomeSettingsPage() {
             <div className="space-y-6">
               
               {formData.sections.map((section: any, sIdx: number) => (
-                <div key={section.id || sIdx} className="border border-gray-200 rounded-2xl overflow-hidden bg-white">
+                <div key={section.id || sIdx} className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm">
                   
                   {/* 手风琴头部 (Section 控制) */}
                   <div 
@@ -248,7 +273,19 @@ export default function HomeSettingsPage() {
                         <p className="text-xs text-gray-500 font-medium mt-1">{section.blocks.length} 个图文模块</p>
                       </div>
                     </div>
-                    <ChevronDownIcon className={`w-5 h-5 text-gray-400 transition-transform ${expandedSection === sIdx ? 'rotate-180' : ''}`} />
+                    
+                    <div className="flex items-center gap-3">
+                      {/* 🚀 核心补充：删除整个大板块的按钮 */}
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); removeSection(sIdx); }} 
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="删除整个大板块"
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                      <div className="w-px h-6 bg-gray-300 mx-2"></div>
+                      <ChevronDownIcon className={`w-5 h-5 text-gray-400 transition-transform ${expandedSection === sIdx ? 'rotate-180' : ''}`} />
+                    </div>
                   </div>
 
                   {/* 手风琴内容 (Blocks 控制) */}
@@ -259,24 +296,30 @@ export default function HomeSettingsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-6 border-b border-gray-100">
                         <div>
                           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">板块标题 (Section Title)</label>
-                          <input type="text" value={section.title} onChange={(e) => updateSection(sIdx, 'title', e.target.value)} className="w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-bold uppercase" />
+                          <input type="text" value={section.title} onChange={(e) => updateSection(sIdx, 'title', e.target.value)} className="w-full px-3 py-2 bg-gray-50 border-none rounded-lg text-sm font-bold uppercase focus:ring-2 focus:ring-black" />
                         </div>
                         <div className="flex items-center gap-2 pt-6">
-                          <input type="checkbox" id={`dark-${sIdx}`} checked={section.isDarkTheme} onChange={(e) => updateSection(sIdx, 'isDarkTheme', e.target.checked)} className="rounded text-black focus:ring-black" />
-                          <label htmlFor={`dark-${sIdx}`} className="text-sm font-bold cursor-pointer">黑白反色触发器 (Invert Theme)</label>
+                          <input type="checkbox" id={`dark-${sIdx}`} checked={section.isDarkTheme} onChange={(e) => updateSection(sIdx, 'isDarkTheme', e.target.checked)} className="rounded text-black focus:ring-black w-4 h-4" />
+                          <label htmlFor={`dark-${sIdx}`} className="text-sm font-bold cursor-pointer select-none">黑白反色触发器 (Invert Theme)</label>
                         </div>
                         <div className="flex items-center gap-2 pt-6">
-                          <input type="checkbox" id={`hide-${sIdx}`} checked={section.hideSidebars} onChange={(e) => updateSection(sIdx, 'hideSidebars', e.target.checked)} className="rounded text-black focus:ring-black" />
-                          <label htmlFor={`hide-${sIdx}`} className="text-sm font-bold cursor-pointer">画廊模式 (Hide Sidebars)</label>
+                          <input type="checkbox" id={`hide-${sIdx}`} checked={section.hideSidebars} onChange={(e) => updateSection(sIdx, 'hideSidebars', e.target.checked)} className="rounded text-black focus:ring-black w-4 h-4" />
+                          <label htmlFor={`hide-${sIdx}`} className="text-sm font-bold cursor-pointer select-none">画廊模式 (Hide Sidebars)</label>
                         </div>
                       </div>
 
                       {/* Blocks 列表 */}
                       <div className="space-y-6">
+                        {section.blocks.length === 0 && (
+                          <div className="text-center py-10 text-gray-400 text-sm font-medium border-2 border-dashed border-gray-100 rounded-xl">
+                            当前板块还没有任何内容，点击下方按钮添加吧！
+                          </div>
+                        )}
+
                         {section.blocks.map((block: any, bIdx: number) => (
                           <div key={bIdx} className="bg-gray-50 rounded-xl p-5 border border-gray-100 relative">
                             
-                            {/* 删除按钮 */}
+                            {/* 删除图文块按钮 */}
                             <button onClick={() => removeBlock(sIdx, bIdx)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                               <TrashIcon className="w-5 h-5" />
                             </button>
@@ -337,10 +380,6 @@ export default function HomeSettingsPage() {
                                     <span className="text-xs text-gray-400 font-bold uppercase">No Image</span>
                                   )}
                                 </div>
-                                
-                                <p className="text-[10px] text-gray-400 leading-relaxed">
-                                  <span className="font-bold text-gray-600">高级提示：</span> Tailwind 的宽度控制类名已在此编辑器中被隐藏以保证排版稳定。如需定制极其特殊的图片比例，请在源码级修改。
-                                </p>
                               </div>
                             </div>
                           </div>
@@ -353,13 +392,22 @@ export default function HomeSettingsPage() {
                         className="w-full py-4 mt-4 border-2 border-dashed border-gray-200 rounded-xl text-sm font-bold text-gray-500 hover:text-black hover:border-black hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
                       >
                         <PlusIcon className="w-5 h-5" />
-                        添加新图文模块 (Add Block)
+                        在 {section.title} 中添加新图文模块
                       </button>
 
                     </div>
                   )}
                 </div>
               ))}
+
+              {/* 🚀 核心补充：添加一个全新的大板块按钮 */}
+              <button 
+                onClick={addSection}
+                className="w-full py-6 mt-8 border-2 border-dashed border-gray-300 rounded-2xl text-base font-black text-gray-400 hover:text-black hover:border-black hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 uppercase tracking-widest"
+              >
+                <FolderPlusIcon className="w-6 h-6 stroke-2" />
+                新增全新大板块 (Add New Section)
+              </button>
 
             </div>
           )}
