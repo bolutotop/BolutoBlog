@@ -14,9 +14,13 @@ namespace json = boost::json;
 
 namespace Playground::Network {
     net::awaitable<void> do_session(net::ip::tcp::socket socket) {
-        try {
+try {
             websocket::stream<beast::tcp_stream> ws(std::move(socket));
             ws.set_option(websocket::stream_base::timeout::suggested(beast::role_type::server));
+            
+            // 🚀 防御升级：强制限制单次 WebSocket 接收的最大体积为 128KB (防 OOM 爆破)
+            ws.read_message_max(128 * 1024); 
+            
             co_await ws.async_accept(net::use_awaitable);
             
             for (;;) {

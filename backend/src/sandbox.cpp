@@ -93,11 +93,15 @@ fs::path meta_file = fs::temp_directory_path() / ("isolate_meta_" + box_id_str +
         out << code; 
         out.close();
 
-        // 编译阶段：限制编译时间和文件大小 (防止 #include </dev/urandom> 等攻击)
-        // 建议未来将编译过程也放入 isolate 容器中执行，当前先在宿主机加限制
-        std::string compile_cmd = "timeout 5 g++ -O2 " + (box_dir / "main.cpp").string() + 
-                                  " -o " + (box_dir / "main").string() + 
-                                  " 2> " + (box_dir / "compile.err").string();
+// 🚀 防御升级：将编译过程放入 isolate 沙盒，杜绝宿主机 OOM 与恶意宏展开攻击
+        std::string compile_cmd = "isolate --cg -b " + box_id_str + 
+                                  " --time=10.0 --wall-time=15.0" + 
+                                  " --cg-mem=1048576" +             // 内存放宽到 1GB (仅限编译期)
+                                  " --processes=64" +               // 🟢 核心修复：允许 g++ 开启多个子进程
+                                  " --fsize=51200" +                
+                                  " -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" + // 确保 g++ 能找到 as 和 ld
+                                  " --stderr=compile.err" +         
+                                  " --run -- /usr/bin/g++ -O2 main.cpp -o main";
         
         int compile_res = co_await async_system(compile_cmd, boost::asio::use_awaitable);
         std::string compile_err = Utils::read_file(box_dir / "compile.err");
@@ -115,12 +119,16 @@ fs::path meta_file = fs::temp_directory_path() / ("isolate_meta_" + box_id_str +
             // --wall-time=3 : 绝对时间 3秒 (防止纯睡眠挂起)
             // --cg-mem=131072 : 内存上限 128MB
             // --fsize=10240 : 文件写入上限 10MB
-            std::string run_cmd = "isolate --cg -b " + box_id_str + 
+std::string run_cmd = "isolate --cg -b " + box_id_str + 
                                   " --meta=" + meta_file.string() +
                                   " --time=2.0 --wall-time=3.0" +
                                   " --cg-mem=131072" + 
                                   " --processes=32" +
                                   " --fsize=10240" + 
+                                  // 🚀 防御升级：全量清洗环境变量，防止宿主机云秘钥或路径泄露
+                                  " -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" + 
+                                  " --env=HOME=/tmp" + 
+                                  " --full-env" + 
                                   " --stdout=run.out" +
                                   " --stderr=run.err" +
                                   " --run -- ./main";

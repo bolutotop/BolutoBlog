@@ -6,6 +6,11 @@
 #include <iostream>
 
 int main() {
+    // 🚀 防御升级：每次服务启动前强制清场，回收上一次崩溃遗留的 cgroup 和挂载点
+    std::cout << "[Daemon] Sweeping zombie sandboxes..." << std::endl;
+    std::system("for i in $(seq 0 999); do isolate --cg -b $i --cleanup > /dev/null 2>&1; done");
+    std::cout << "[Daemon] Environment sanitized." << std::endl;
+
     try {
         auto const address = boost::asio::ip::make_address("127.0.0.1");
         auto const port = static_cast<unsigned short>(8080);
