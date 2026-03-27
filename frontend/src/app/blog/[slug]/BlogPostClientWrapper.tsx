@@ -274,11 +274,24 @@ btn.innerHTML = `
           <span class="tracking-wide">[ PLAY ]</span>
         `;
 
-        btn.onclick = () => {
+   const blockEvent = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        };
+
+        // 阻断可能触发折叠的底层事件
+        btn.addEventListener('mousedown', blockEvent);
+        btn.addEventListener('mouseup', blockEvent);
+        btn.addEventListener('touchstart', blockEvent, { passive: false });
+        btn.addEventListener('touchend', blockEvent, { passive: false });
+
+        // 使用捕获阶段 (capture: true) 优先处理点击，确保在 md-editor-rt 之前触发
+        btn.addEventListener('click', (e) => {
+          blockEvent(e);
           setPlaygroundLang(lang);
           setPlaygroundCode(codeNode.innerText);
           setIsPlaygroundOpen(true);
-        };
+        }, { capture: true });
 
         // 🚀 核心查找逻辑：定位语言文本节点
         // md-editor-rt 的 Mac 风格代码块，通常在 pre 的上一级(或同级)有一个头部栏
