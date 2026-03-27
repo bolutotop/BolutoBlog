@@ -104,7 +104,7 @@ return (
 {/* ==================== 1. Hero 区域 ==================== */}
       {/* 🚀 核心修复：把 min-h-[50vh] 加回来作为“滚动缓冲区”，防止下方动画提前触发！ */}
       {/* 💡 结合 justify-start 和 pt-28/40，做到“文字吸顶”与“滚动空间”兼得。 */}
-      <section className="relative min-h-[50vh] lg:min-h-[60vh] pt-28 md:pt-40 px-6 lg:px-12 pb-10 flex flex-col justify-start">
+      <section className="relative min-h-[0vh] lg:min-h-[60vh] pt-28 md:pt-40 px-6 lg:px-12 pb-10 flex flex-col justify-start">
         
         <div className="relative z-10 border-b sc-border pb-8 md:pb-12">
           

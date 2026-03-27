@@ -5,21 +5,18 @@ import gsap from 'gsap';
 import { getCategoriesAction } from '@/app/actions';
 import { ReactLenis } from '@studio-freight/react-lenis';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion'; 
 
 import LeftSidebar from './LeftSidebar';
 import RightSidebar from './RightSidebar';
 import Header from './Header';
 import './studio-layout.css';
 
-// 🚀 核心修复 1：安全的同构钩子。防止在服务端渲染时使用 useLayoutEffect 抛出警告
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
   const [dateInfo, setDateInfo] = useState({ day: '--', month: '--- 202X' });
-  
-  // 🚀 核心修复 2：统一初始化为 0，保证服务端和客户端首次渲染一模一样，彻底消灭 Hydration Error
   const [bootStage, setBootStage] = useState(0); 
-  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const preloaderRef = useRef<HTMLDivElement>(null);
@@ -31,7 +28,37 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // 清除 GSAP 幽灵类名 & 修复路由跳转瞬间跳帧
+  const [showTopBtn, setShowTopBtn] = useState(false);
+  const constraintsRef = useRef<HTMLDivElement>(null);
+
+  // =========================================================================
+  // 🚀 核心新增：精准判断当前是否处于具体的文章页面 (/blog/[slug])
+  // - 以 /blog/ 开头
+  // - 通过 split('/') 切割后长度为 3 (例如 ['', 'blog', 'my-post'])
+  // - 这样就不会误杀 /blog (长度2) 和 /blog/category/xxx (长度4)
+  // =========================================================================
+  const isBlogPostPage = pathname.startsWith('/blog/') && pathname.split('/').length === 3;
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 1000) {
+        setShowTopBtn(true);
+      } else {
+        setShowTopBtn(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    if (lenisRef.current?.lenis) {
+      lenisRef.current.lenis.scrollTo(0, { duration: 1.5, ease: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   useEffect(() => {
     const rootEl = document.getElementById('showcase-root');
     if (rootEl) {
@@ -55,8 +82,6 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
     fetchCategories();
   }, []);
 
-  // 🚀 核心修复 3：使用 useIsomorphicLayoutEffect。
-  // 它会在 Hydration 完成后、浏览器绘制屏幕前瞬间执行，所以如果你第二次进入，页面会直接亮起，绝不闪黑屏。
   useIsomorphicLayoutEffect(() => {
     const d = new Date();
     setDateInfo({
@@ -157,16 +182,13 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
 
   return (
     <ReactLenis ref={lenisRef} root options={{ lerp: 0.1, duration: 1.5, smoothWheel: true }}>
-      <div id="showcase-root" className="showcase-theme min-h-screen font-sans selection:bg-black selection:text-white transition-colors duration-700 overflow-x-hidden relative">
+      
+      <div 
+        ref={constraintsRef} 
+        id="showcase-root" 
+        className="showcase-theme min-h-screen font-sans selection:bg-black selection:text-white transition-colors duration-700 overflow-x-hidden relative"
+      >
         
-        {/* ========================================================
-            🚀 核心修复 4：组件渲染逻辑全面重构
-            - 动画遮罩层和正文层同时渲染，完美匹配服务端渲染结构，绝不报错。
-            - 当第一次进入时，正文层透明度为 0；动画跑完变成 1。
-            - 这样不仅修了 Bug，搜索引擎的爬虫也能 100% 抓取到你的正文了！
-            ======================================================== */}
-            
-        {/* 加载动画遮罩层 */}
         {bootStage < 2 && (
           <div ref={preloaderRef} className="fixed inset-0 z-[99999] bg-[#050505] text-white flex flex-col justify-between p-8 md:p-12 font-mono">
             <div className="text-xs font-bold uppercase tracking-widest opacity-50 flex justify-between">
@@ -181,7 +203,6 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
           </div>
         )}
 
-        {/* 真正的页面主体内容层 */}
         <div 
           className="transition-opacity duration-700 ease-in-out" 
           style={{ 
@@ -205,6 +226,57 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
             {children}
           </div>
         </div>
+
+        {/* ======================================================== */}
+        {/* 🚀 核心修改：增加 !isBlogPostPage 拦截渲染条件 */}
+        {/* ======================================================== */}
+        <AnimatePresence>
+          {showTopBtn && !isBlogPostPage && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0, rotate: -90 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              exit={{ opacity: 0, scale: 0, rotate: 90 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+              
+              drag
+              dragConstraints={constraintsRef}
+              dragElastic={0.1}
+              dragMomentum={false}
+              
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              
+              onClick={scrollToTop}
+              
+              className="fixed bottom-8 right-6 md:bottom-23 md:right-12 z-[9990] w-12 h-12 bg-[var(--sc-inverse-bg)] border-2 border-[var(--sc-inverse-bg)] text-[var(--sc-inverse-text)] flex items-center justify-center cursor-pointer shadow-2xl group overflow-hidden touch-none"
+              aria-label="Scroll to top"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                strokeWidth={3} 
+                stroke="currentColor" 
+                className="w-6 h-6 relative z-10 group-hover:-translate-y-1 transition-transform duration-300"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" />
+              </svg>
+
+              <div className="absolute inset-0 bg-[var(--sc-bg)] origin-bottom scale-y-0 group-hover:scale-y-100 transition-transform duration-300 pointer-events-none" />
+              
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                strokeWidth={3} 
+                stroke="currentColor" 
+                className="w-6 h-6 absolute z-10 text-[var(--sc-text)] opacity-0 group-hover:opacity-100 group-hover:-translate-y-1 transition-all duration-300"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" />
+              </svg>
+            </motion.button>
+          )}
+        </AnimatePresence>
 
       </div>
     </ReactLenis>
