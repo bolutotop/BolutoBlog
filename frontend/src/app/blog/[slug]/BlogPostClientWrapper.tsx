@@ -10,6 +10,9 @@ import './blog-post.css';
 import { MdPreview } from 'md-editor-rt';
 import 'md-editor-rt/lib/preview.css';
 import TocSidebar from '@/components/post/TocSidebar';
+
+import CodePlayground from '@/components/post/CodePlayground'; // 🚀 引入游乐场组件
+
 // 🚀 2. 引入你配置的精美字体
 import '@fontsource/playfair-display/400.css';
 import '@fontsource/playfair-display/700.css';
@@ -54,6 +57,10 @@ interface BlogPostProps {
 }
 
 export default function BlogPostClientWrapper({ post }: BlogPostProps) {
+
+const [isPlaygroundOpen, setIsPlaygroundOpen] = useState(false);
+  const [playgroundCode, setPlaygroundCode] = useState('');
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isReadyToAnimate, setIsReadyToAnimate] = useState(false);
   const [toc, setToc] = useState<{ level: number, text: string, id: string }[]>([]);
@@ -236,6 +243,43 @@ useEffect(() => {
     };
   }, [isReadyToAnimate]);
 
+
+// 🚀 核心修改：劫持 md-editor-rt 渲染出的代码块，强行注入 RUN 按钮
+  useEffect(() => {
+    // 确保 Markdown 已经渲染完毕
+    const timer = setTimeout(() => {
+      // 查找 md-editor-rt 里的所有 pre 标签
+      const codeBlocks = document.querySelectorAll('.md-editor-preview pre');
+      
+      codeBlocks.forEach((pre) => {
+        // 如果已经注入过了，就跳过
+        if (pre.querySelector('.run-code-btn')) return;
+
+        // 强行把 pre 设置为 relative，方便按钮绝对定位
+        (pre as HTMLElement).style.position = 'relative';
+
+        // 创建粗野主义风格的 RUN 按钮
+        const btn = document.createElement('button');
+        btn.className = 'run-code-btn absolute top-3 right-3 bg-[var(--sc-text)] text-[var(--sc-bg)] text-[10px] font-black uppercase px-4 py-2 hover:scale-105 active:scale-95 transition-transform z-10 cursor-pointer shadow-md';
+        btn.innerText = '[ PLAY ]';
+
+        // 绑定点击事件
+        btn.onclick = () => {
+          // 获取这块 pre 里面的纯文本代码
+          const codeNode = pre.querySelector('code');
+          if (codeNode) {
+            setPlaygroundCode(codeNode.innerText);
+            setIsPlaygroundOpen(true);
+          }
+        };
+
+        pre.appendChild(btn);
+      });
+    }, 500); // 延迟 500ms 确保 md-editor-rt 渲染完 DOM
+
+    return () => clearTimeout(timer);
+  }, [post.content, isReadyToAnimate]);
+
   return (
     <StudioLayout>
       <main ref={setRef} className="overflow-x-hidden pb-32 min-h-screen bg-[var(--sc-bg)]">
@@ -337,6 +381,13 @@ useEffect(() => {
         </section>
 
       </main>
+
+      <CodePlayground 
+        isOpen={isPlaygroundOpen} 
+        onClose={() => setIsPlaygroundOpen(false)} 
+        initialCode={playgroundCode} 
+      />
+
     </StudioLayout>
   );
 }
