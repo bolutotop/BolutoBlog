@@ -13,14 +13,10 @@ import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
 import '@fontsource/jetbrains-mono';
 
-// 🚀 1. 引入多语言解析器
 import { cpp } from '@codemirror/lang-cpp';
 import { javascript } from '@codemirror/lang-javascript';
 import { python } from '@codemirror/lang-python';
 
-// ==========================================
-// 🎨 通用语法高亮主题 (跨语言生效)
-// ==========================================
 const macLightHighlight = HighlightStyle.define([
   { tag: [t.keyword, t.modifier, t.meta], color: "#c678dd" },
   { tag: [t.string, t.special(t.string)], color: "#98c379" },
@@ -33,21 +29,10 @@ const macLightHighlight = HighlightStyle.define([
   { tag: [t.variableName, t.propertyName, t.operator, t.punctuation], color: "#383a42" },
 ]);
 
-// 2. 编辑器外壳样式覆盖
 const macLightTheme = EditorView.theme({
-  "&": { 
-    backgroundColor: "#f8f9fa", 
-    color: "#383a42" 
-  },
-  // 🚀 核心修复：强制干掉编辑器聚焦时的默认虚线轮廓
-  "&.cm-focused": {
-    outline: "none"
-  },
-  ".cm-content": { 
-    fontFamily: "'JetBrains Mono', Consolas, monospace", 
-    fontSize: "15px", 
-    lineHeight: "1.6" 
-  },
+  "&": { backgroundColor: "#f8f9fa", color: "#383a42" },
+  "&.cm-focused": { outline: "none" },
+  ".cm-content": { fontFamily: "'JetBrains Mono', Consolas, monospace", fontSize: "15px", lineHeight: "1.6" },
   ".cm-cursor, .cm-dropCursor": { borderLeftColor: "#528bff", borderWidth: "2px" },
   "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": { backgroundColor: "#e5ebf1" },
   ".cm-activeLine": { backgroundColor: "transparent" },
@@ -57,23 +42,21 @@ const macLightTheme = EditorView.theme({
 
 const customMacTheme = [macLightTheme, syntaxHighlighting(macLightHighlight)];
 
-// ==========================================
-// 🚀 组件接口与主体
-// ==========================================
-
+// 🚀 1. 扩展 WSMessage 接口，支持时空消耗与多种错误状态
 interface WSMessage {
-  status?: 'running' | 'success' | 'error';
+  status?: 'running' | 'success' | 'error' | 'timeout' | 'oom' | 'compile_error' | 'runtime_error';
   output?: string;
+  time_ms?: number;
+  memory_kb?: number;
 }
 
 interface CodePlaygroundProps {
   isOpen: boolean;
   onClose: () => void;
   initialCode: string;
-  language?: string; // 🚀 2. 新增 language 参数
+  language?: string;
 }
 
-// 🚀 3. 动态扩展映射工厂
 const getLanguageExtension = (lang: string) => {
   switch (lang.toLowerCase()) {
     case 'js':
@@ -88,7 +71,7 @@ const getLanguageExtension = (lang: string) => {
     case 'c++':
     case 'c':
     default:
-      return cpp(); // 默认回退到 C++
+      return cpp();
   }
 };
 
@@ -99,6 +82,10 @@ export default function CodePlayground({ isOpen, onClose, initialCode, language 
   const [output, setOutput] = useState<string>("> 终端就绪. 等待执行...\n");
   const [isRunning, setIsRunning] = useState<boolean>(false);
   
+  // 🚀 2. 新增状态：保存执行指标和最终状态
+  const [metrics, setMetrics] = useState<{ time: number; memory: number } | null>(null);
+  const [finalStatus, setFinalStatus] = useState<string | null>(null);
+  
   const wsRef = useRef<WebSocket | null>(null);
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
@@ -108,10 +95,11 @@ export default function CodePlayground({ isOpen, onClose, initialCode, language 
     if (isOpen) {
       setCode(initialCode);
       setOutput(`> ${language.toUpperCase()} 终端就绪. 等待执行...\n`);
+      setMetrics(null);
+      setFinalStatus(null);
     }
   }, [isOpen, initialCode, language]);
 
-  // 冻结底层滚动
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -126,7 +114,6 @@ export default function CodePlayground({ isOpen, onClose, initialCode, language 
     };
   }, [isOpen, lenis]);
 
-  // WebSocket
   useEffect(() => {
     if (!isOpen) {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -141,13 +128,31 @@ export default function CodePlayground({ isOpen, onClose, initialCode, language 
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => setOutput(prev => prev + "[WebSocket] Connection established.\n");
-    ws.onmessage = (event: MessageEvent) => {
+ ws.onmessage = (event: MessageEvent) => {
       try {
         const data: WSMessage = JSON.parse(event.data);
-        if (data.output) setOutput(prev => prev + data.output);
+        
+        if (data.output) {
+          // 🚀 增加防卡死机制：终端输出滑动窗口截断 (最大保留 20000 字符)
+          const MAX_TERMINAL_LENGTH = 5000;
+          setOutput(prev => {
+            const nextStr = prev + data.output;
+            if (nextStr.length > MAX_TERMINAL_LENGTH) {
+              return "... [历史输出已截断] ...\n" + nextStr.slice(-MAX_TERMINAL_LENGTH);
+            }
+            return nextStr;
+          });
+        }
+        
+        // 🚀 3. 拦截最终状态，提取指标
         if (data.status && data.status !== 'running') {
           setOutput(prev => prev + "\n> 执行结束.\n");
           setIsRunning(false);
+          setFinalStatus(data.status);
+          
+          if (data.time_ms !== undefined && data.memory_kb !== undefined) {
+            setMetrics({ time: data.time_ms, memory: data.memory_kb });
+          }
         }
       } catch (err) {
         setOutput(prev => prev + "\n[Fatal] 无法解析沙盒响应.\n");
@@ -167,15 +172,16 @@ export default function CodePlayground({ isOpen, onClose, initialCode, language 
     return () => { if (ws.readyState === WebSocket.OPEN) ws.close(); };
   }, [isOpen]);
 
-  useEffect(() => { terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [output]);
+  useEffect(() => { terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [output, metrics]);
 
   const handleExecute = () => {
     if (isRunning) return;
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
     
     setIsRunning(true);
+    setMetrics(null); // 运行前清空旧指标
+    setFinalStatus(null);
     setOutput('> 编译并执行中...\n');
-    // 🚀 4. 执行时将动态语言标识发给后端沙盒
     wsRef.current.send(JSON.stringify({ action: 'execute', code: code, lang: language.toLowerCase() }));
   };
 
@@ -207,7 +213,6 @@ export default function CodePlayground({ isOpen, onClose, initialCode, language 
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 bg-white shrink-0">
               <div className="flex items-center gap-4">
                 <span className="font-black tracking-widest uppercase text-sm md:text-base text-gray-900">Playground</span>
-                {/* 🚀 5. 动态渲染 Header 徽标 */}
                 <span className="font-mono text-[10px] font-bold opacity-60 uppercase bg-gray-100 text-gray-800 px-2 py-1 rounded">
                   {language} Isolate
                 </span>
@@ -235,7 +240,6 @@ export default function CodePlayground({ isOpen, onClose, initialCode, language 
                   <CodeMirror
                     value={code}
                     height="100%"
-                    // 🚀 6. 动态挂载对应的语言解析器
                     extensions={[getLanguageExtension(language), customMacTheme]} 
                     onChange={(val) => setCode(val)}
                     basicSetup={{
@@ -246,15 +250,46 @@ export default function CodePlayground({ isOpen, onClose, initialCode, language 
                 </div>
               </div>
 
-              <div className="w-full md:w-5/12 h-1/2 md:h-full bg-[#fafafa] md:border-l border-gray-100 p-6 md:p-8 overflow-y-auto relative custom-scrollbar selection:bg-blue-100 selection:text-blue-900 flex flex-col">
+              {/* 终端面板 */}
+              <div className="w-full md:w-5/12 h-1/2 md:h-full bg-[#fafafa] md:border-l border-gray-100 flex flex-col relative">
+                
                 <div className="absolute top-4 right-6 text-[10px] font-bold uppercase tracking-widest text-gray-400 pointer-events-none select-none flex items-center gap-2" style={{ fontFamily: "'JetBrains Mono', Consolas, monospace" }}>
                   <span className={`w-2 h-2 rounded-full ${isRunning ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-gray-300'}`}></span>
                   Console
                 </div>
-                <pre className="whitespace-pre-wrap break-all mt-6 flex-1 text-[13px] md:text-[14px] text-gray-600" style={{ fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace", lineHeight: "1.7", letterSpacing: "-0.01em" }}>
-                  {output}
-                </pre>
-                <div ref={terminalEndRef} />
+                
+                <div className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar selection:bg-blue-100 selection:text-blue-900">
+                  <pre className="whitespace-pre-wrap break-all mt-4 text-[13px] md:text-[14px] text-gray-600" style={{ fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace", lineHeight: "1.7", letterSpacing: "-0.01em" }}>
+                    {output}
+                  </pre>
+                  
+                  {/* 🚀 4. 动态渲染指标看板 */}
+                  {finalStatus && metrics && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                      className={`mt-6 p-4 rounded-lg border flex flex-wrap gap-x-6 gap-y-2 text-xs font-mono font-bold
+                        ${finalStatus === 'success' ? 'bg-green-50/50 border-green-100' : 'bg-red-50/50 border-red-100'}
+                      `}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400 uppercase">Status</span>
+                        <span className={finalStatus === 'success' ? 'text-green-600' : 'text-red-500'}>
+                          {finalStatus.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400 uppercase">Time</span>
+                        <span className="text-gray-700">{metrics.time.toFixed(2)} ms</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400 uppercase">Mem</span>
+                        <span className="text-gray-700">{(metrics.memory / 1024).toFixed(2)} MB</span>
+                      </div>
+                    </motion.div>
+                  )}
+                  
+                  <div ref={terminalEndRef} className="h-4" />
+                </div>
               </div>
             </div>
           </motion.div>

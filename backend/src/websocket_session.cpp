@@ -43,11 +43,16 @@ namespace Playground::Network {
                 // 调用沙盒模块执行代码
                 Sandbox::ExecutionResult exec_res = co_await Sandbox::async_execute_code(code);
 
-                // 返回执行结果
-                json::object final_res;
-                final_res["status"] = exec_res.status;
-                final_res["output"] = exec_res.output;
-                co_await ws.async_write(net::buffer(json::serialize(final_res)), net::use_awaitable);
+// 返回执行结果
+json::object final_res;
+final_res["status"] = exec_res.status;
+final_res["output"] = exec_res.output;
+
+// 新增：将时空消耗数据打入 JSON 响应
+final_res["time_ms"] = exec_res.time_ms;
+final_res["memory_kb"] = exec_res.memory_kb;
+
+co_await ws.async_write(net::buffer(json::serialize(final_res)), net::use_awaitable);
             }
         } catch (std::exception const& e) {
             // 正常断开连接时将捕获异常，无需额外处理
