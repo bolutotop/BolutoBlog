@@ -29,7 +29,8 @@ namespace Playground::Network {
                 
                 // 🚀 防御核心：校验 Origin 来源
                 auto origin = req[http::field::origin];
-                //origin != "https://wd.com"
+
+                // if i got domain name like baidu.com ,add this code for that " origin != "https://your_hostname.com" "
                 if (origin != "http://localhost:3000" && 
                     origin != "http://127.0.0.1:3000") {
                     

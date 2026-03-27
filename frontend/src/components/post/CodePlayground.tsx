@@ -86,8 +86,11 @@ export default function CodePlayground({ isOpen, onClose, initialCode, language 
   const [metrics, setMetrics] = useState<{ time: number; memory: number } | null>(null);
   const [finalStatus, setFinalStatus] = useState<string | null>(null);
   
-  const wsRef = useRef<WebSocket | null>(null);
+ const wsRef = useRef<WebSocket | null>(null);
   const terminalEndRef = useRef<HTMLDivElement>(null);
+  
+  // 🚀 新增：用于记录上一次执行请求的时间戳
+  const lastExecutionTime = useRef<number>(0);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -174,14 +177,26 @@ export default function CodePlayground({ isOpen, onClose, initialCode, language 
 
   useEffect(() => { terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [output, metrics]);
 
-  const handleExecute = () => {
+const handleExecute = () => {
+    // 🚀 新增：1 秒防刷节流机制
+    const now = Date.now();
+    if (now - lastExecutionTime.current < 1000) {
+      setOutput(prev => prev + "> [系统拦截] 提交过于频繁，请等待 1 秒后再试...\n");
+      return;
+    }
+
     if (isRunning) return;
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
     
+    // 更新最后一次成功发起请求的时间
+    lastExecutionTime.current = now;
+    
     setIsRunning(true);
-    setMetrics(null); // 运行前清空旧指标
+    setMetrics(null); 
     setFinalStatus(null);
     setOutput('> 编译并执行中...\n');
+    
+    // 如果你集成了之前的 Turnstile token，记得在这里一并发送
     wsRef.current.send(JSON.stringify({ action: 'execute', code: code, lang: language.toLowerCase() }));
   };
 

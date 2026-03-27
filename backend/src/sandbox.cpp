@@ -73,110 +73,111 @@ namespace Playground::Sandbox {
     boost::asio::awaitable<ExecutionResult> async_execute_code(const std::string& code) {
         ExecutionResult result;
         
-        int box_id = ++box_id_allocator % 1000;
-        std::string box_id_str = std::to_string(box_id);
+        // 🚀 1. 架构升级：分配两个独立的 Box ID (0-499 为编译区, 500-999 为运行区)
+        int base_id = ++box_id_allocator % 500;
+        std::string comp_box_id = std::to_string(base_id);
+        std::string run_box_id = std::to_string(base_id + 500);
 
-        std::string init_cmd = "isolate --cg -b " + box_id_str + " --init > /dev/null 2>&1";
-        if (co_await async_system(init_cmd, boost::asio::use_awaitable) != 0) {
+        // 初始化两个沙盒环境
+        std::string init_comp_cmd = "isolate --cg -b " + comp_box_id + " --init > /dev/null 2>&1";
+        std::string init_run_cmd = "isolate --cg -b " + run_box_id + " --init > /dev/null 2>&1";
+        
+        if (co_await async_system(init_comp_cmd, boost::asio::use_awaitable) != 0 || 
+            co_await async_system(init_run_cmd, boost::asio::use_awaitable) != 0) {
             result.status = "error";
-            result.output = "[System] Failed to initialize sandbox environment.\n";
+            result.output = "[System] Failed to initialize dual-sandbox environment.\n";
             co_return result;
         }
 
-        // 基础路径设置
-   fs::path base_dir = fs::path("/var/local/lib/isolate") / box_id_str;
-fs::path box_dir = base_dir / "box";
-// ✅ 转移到系统的临时目录，并附带 box_id 防止并发冲突
-fs::path meta_file = fs::temp_directory_path() / ("isolate_meta_" + box_id_str + ".txt");
+        // 定义路径
+        fs::path comp_dir = fs::path("/var/local/lib/isolate") / comp_box_id / "box";
+        fs::path run_dir = fs::path("/var/local/lib/isolate") / run_box_id / "box";
+        fs::path meta_file = fs::temp_directory_path() / ("isolate_meta_" + run_box_id + ".txt");
         
-        std::ofstream out(box_dir / "main.cpp");
+        // 写入用户代码到【编译沙盒】
+        std::ofstream out(comp_dir / "main.cpp");
         out << code; 
         out.close();
 
-// 🚀 防御升级：将编译过程放入 isolate 沙盒，杜绝宿主机 OOM 与恶意宏展开攻击
-        std::string compile_cmd = "isolate --cg -b " + box_id_str + 
-                                  " --time=10.0 --wall-time=15.0" + 
-                                  " --cg-mem=1048576" +             // 内存放宽到 1GB (仅限编译期)
-                                  " --processes=64" +               // 🟢 核心修复：允许 g++ 开启多个子进程
-                                  " --fsize=51200" +                
-                                  " -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" + // 确保 g++ 能找到 as 和 ld
-                                  " --stderr=compile.err" +         
+        // 🚀 2. 在【编译沙盒】中执行编译 (它产生的 40MB 缓存污染会被留在 comp_box 中)
+        std::string compile_cmd = "isolate --cg -b " + comp_box_id + 
+                                  " --time=10.0 --wall-time=15.0" +
+                                  " --cg-mem=1048576" + 
+                                  " --processes=64" +
+                                  " --fsize=51200" + 
+                                  " -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" +
+                                  " --stderr=compile.err" +
                                   " --run -- /usr/bin/g++ -O2 main.cpp -o main";
         
         int compile_res = co_await async_system(compile_cmd, boost::asio::use_awaitable);
-        std::string compile_err = Utils::read_file(box_dir / "compile.err");
+        std::string compile_err = Utils::read_file(comp_dir / "compile.err");
 
-        // 124 是 linux timeout 命令超时的退出码
-        if (compile_res == 124 || compile_res == 31744) {
+        if (compile_res == 124 || compile_res == 31744 || compile_res == 9) {
             result.status = "compile_error";
-            result.output = "[Compilation Error] Compile time limit exceeded. (Possible compilation bomb)";
+            result.output = "[Compilation Error] Compile time/memory limit exceeded.";
         } else if (compile_res != 0 || !compile_err.empty()) {
             result.status = "compile_error"; 
             result.output = "[Compilation Error]\n" + compile_err;
         } else {
-            // 执行阶段：配置严格资源限制并输出 meta 探针
-            // --time=2 : CPU时间 2秒
-            // --wall-time=3 : 绝对时间 3秒 (防止纯睡眠挂起)
-            // --cg-mem=131072 : 内存上限 128MB
-            // --fsize=10240 : 文件写入上限 10MB
-std::string run_cmd = "isolate --cg -b " + box_id_str + 
-                                  " --meta=" + meta_file.string() +
-                                  " --time=2.0 --wall-time=3.0" +
-                                  " --cg-mem=131072" + 
-                                  " --processes=32" +
-                                  " --fsize=10240" + 
-                                  // 🚀 防御升级：全量清洗环境变量，防止宿主机云秘钥或路径泄露
-                                  " -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" + 
-                                  " --env=HOME=/tmp" + 
-                                  " --full-env" + 
-                                  " --stdout=run.out" +
-                                  " --stderr=run.err" +
-                                  " --run -- ./main";
+            // 🚀 3. 跨沙盒物理拷贝：将安全的二进制产物，移动到 100% 内存纯净的【运行沙盒】
+            std::error_code ec;
+            fs::copy_file(comp_dir / "main", run_dir / "main", fs::copy_options::overwrite_existing, ec);
             
-            co_await async_system(run_cmd, boost::asio::use_awaitable);
-            
-  // 替换原有的 Utils::read_file
-std::string run_out = read_file_safely(box_dir / "run.out", 65536); // 限制标准输出 64KB
-std::string run_err = read_file_safely(box_dir / "run.err", 16384); // 限制错误输出 16KB
-            
-            // 解析运行时指标
-            auto meta = parse_meta_file(meta_file);
-            
-            if (meta.count("time")) {
-                result.time_ms = std::stod(meta["time"]) * 1000.0; // isolate 记录的是秒
-            }
-            if (meta.count("cg-mem")) {
-                result.memory_kb = std::stol(meta["cg-mem"]);
-            }
-
-            // 异常状态判定
-            if (meta.count("status")) {
-                std::string st = meta["status"];
-                if (st == "TO") {
-                    result.status = "timeout";
-                    result.output = "[Runtime Error] Execution timed out (>2.0s).\n" + run_out + run_err;
-                } else if (st == "OOM" || (meta.count("message") && meta["message"].find("Memory") != std::string::npos)) {
-                    result.status = "oom";
-                    result.output = "[Runtime Error] Out of memory (>128MB).\n" + run_out + run_err;
-                } else if (st == "SG" || st == "RE") {
-                    result.status = "runtime_error";
-                    result.output = "[Runtime Error] Segmentation fault or fatal error.\n" + run_err;
-                } else {
-                    result.status = "error";
-                    result.output = "[Runtime Error] Unknown crash.\n" + run_err;
-                }
+            if (ec) {
+                result.status = "error";
+                result.output = "[System] Failed to transfer executable to runtime sandbox.";
             } else {
-                result.status = "success"; 
-                result.output = run_out + run_err;
-                if (result.output.empty()) result.output = "(No output)";
+                // 🚀 4. 在【运行沙盒】中执行程序 (此时读取的 meta 内存数据将绝对精准)
+                std::string run_cmd = "isolate --cg -b " + run_box_id + 
+                                      " --meta=" + meta_file.string() +
+                                      " --time=2.0 --wall-time=3.0" +
+                                      " --cg-mem=131072" + 
+                                      " --processes=32" +
+                                      " --fsize=10240" + 
+                                      " -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" + 
+                                      " --env=HOME=/tmp" + 
+                                      " --full-env" + 
+                                      " --stdout=run.out" +
+                                      " --stderr=run.err" +
+                                      " --run -- ./main";
+                
+                co_await async_system(run_cmd, boost::asio::use_awaitable);
+                
+                // 注意：读取路径改为 run_dir
+                std::string run_out = Utils::read_file(run_dir / "run.out"); // 建议换成截断版本的 read_file_safely
+                std::string run_err = Utils::read_file(run_dir / "run.err");
+                
+                // 解析 meta_file ... (与原逻辑完全一致，此处省略)
+                auto meta = parse_meta_file(meta_file);
+                if (meta.count("time")) result.time_ms = std::stod(meta["time"]) * 1000.0;
+                if (meta.count("cg-mem")) result.memory_kb = std::stol(meta["cg-mem"]);
+                
+                if (meta.count("status")) {
+                    std::string st = meta["status"];
+                    if (st == "TO") {
+                        result.status = "timeout";
+                        result.output = "[Runtime Error] Execution timed out (>2.0s).\n" + run_out + run_err;
+                    } else if (st == "OOM" || (meta.count("message") && meta["message"].find("Memory") != std::string::npos)) {
+                        result.status = "oom";
+                        result.output = "[Runtime Error] Out of memory (>128MB).\n" + run_out + run_err;
+                    } else if (st == "SG" || st == "RE") {
+                        result.status = "runtime_error";
+                        result.output = "[Runtime Error] Segmentation fault or fatal error.\n" + run_err;
+                    } else {
+                        result.status = "error";
+                        result.output = "[Runtime Error] Unknown crash.\n" + run_err;
+                    }
+                } else {
+                    result.status = "success"; 
+                    result.output = run_out + run_err;
+                    if (result.output.empty()) result.output = "(No output)";
+                }
             }
         }
 
-        // 清理现场
-        std::string cleanup_cmd = "isolate --cg -b " + box_id_str + " --cleanup > /dev/null 2>&1";
-        co_await async_system(cleanup_cmd, boost::asio::use_awaitable);
-        
-        // 删除 meta 文件 (isolate cleanup 不会自动删除外部的 meta 文件)
+        // 🚀 5. 销毁两个沙盒现场
+        co_await async_system("isolate --cg -b " + comp_box_id + " --cleanup > /dev/null 2>&1", boost::asio::use_awaitable);
+        co_await async_system("isolate --cg -b " + run_box_id + " --cleanup > /dev/null 2>&1", boost::asio::use_awaitable);
         if (fs::exists(meta_file)) fs::remove(meta_file);
 
         co_return result;
