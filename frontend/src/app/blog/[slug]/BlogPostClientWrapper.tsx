@@ -243,39 +243,78 @@ useEffect(() => {
     };
   }, [isReadyToAnimate]);
 
-
-// 🚀 核心修改：劫持 md-editor-rt 渲染出的代码块，强行注入 RUN 按钮
+const [playgroundLang, setPlaygroundLang] = useState('cpp');
+// 🚀 核心修改：精准劫持代码块，将 PLAY 按钮插入到语言标识左侧
   useEffect(() => {
-    // 确保 Markdown 已经渲染完毕
+    const SUPPORTED_LANGUAGES = ['cpp', 'c', 'c++', 'js', 'javascript', 'ts', 'typescript', 'py', 'python'];
+
     const timer = setTimeout(() => {
-      // 查找 md-editor-rt 里的所有 pre 标签
       const codeBlocks = document.querySelectorAll('.md-editor-preview pre');
       
       codeBlocks.forEach((pre) => {
-        // 如果已经注入过了，就跳过
-        if (pre.querySelector('.run-code-btn')) return;
+        if (pre.getAttribute('data-has-play-btn')) return;
+        
+        const codeNode = pre.querySelector('code');
+        if (!codeNode) return;
 
-        // 强行把 pre 设置为 relative，方便按钮绝对定位
-        (pre as HTMLElement).style.position = 'relative';
+        // 🛡️ 语言白名单拦截
+        const langClass = Array.from(codeNode.classList).find(c => c.startsWith('language-'));
+        const lang = langClass ? langClass.replace('language-', '').toLowerCase() : '';
+        if (!SUPPORTED_LANGUAGES.includes(lang)) return;
 
-        // 创建粗野主义风格的 RUN 按钮
-        const btn = document.createElement('button');
-        btn.className = 'run-code-btn absolute top-3 right-3 bg-[var(--sc-text)] text-[var(--sc-bg)] text-[10px] font-black uppercase px-4 py-2 hover:scale-105 active:scale-95 transition-transform z-10 cursor-pointer shadow-md';
-        btn.innerText = '[ PLAY ]';
+        pre.setAttribute('data-has-play-btn', 'true');
 
-        // 绑定点击事件
+        // 🚀 创建美化版按钮
+        const btn = document.createElement('div'); // 改用 div 作为外壳，更容易控制布局
+        btn.className = 'flex items-center gap-1.5 px-2 py-0.5 mr-2 hover:bg-black/5 rounded transition-colors text-xs font-bold uppercase text-[var(--sc-text)]/60 hover:text-[var(--sc-text)] cursor-pointer select-none';
+btn.innerHTML = `
+          <svg class="w-3.5 h-3.5 stroke-[2.5] mt-[1px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347c-.75.412-1.667-.13-1.667-.986V5.653z" />
+          </svg>
+          <span class="tracking-wide">[ PLAY ]</span>
+        `;
+
         btn.onclick = () => {
-          // 获取这块 pre 里面的纯文本代码
-          const codeNode = pre.querySelector('code');
-          if (codeNode) {
-            setPlaygroundCode(codeNode.innerText);
-            setIsPlaygroundOpen(true);
-          }
+          setPlaygroundLang(lang);
+          setPlaygroundCode(codeNode.innerText);
+          setIsPlaygroundOpen(true);
         };
 
-        pre.appendChild(btn);
+        // 🚀 核心查找逻辑：定位语言文本节点
+        // md-editor-rt 的 Mac 风格代码块，通常在 pre 的上一级(或同级)有一个头部栏
+        // 头部栏里面有 "语言名称" 和 "复制代码"
+        const wrapper = pre.parentElement;
+        if (!wrapper) return;
+
+        // 策略 A：查找官方用于显示语言的 span 标签
+        const langSpan = wrapper.querySelector('.md-editor-code-language');
+        
+        if (langSpan) {
+          // 如果找到了语言标签，直接插到它前面
+          langSpan.parentElement?.insertBefore(btn, langSpan);
+        } else {
+          // 策略 B：由于你的图片中显示的是纯文本 "python 复制代码"，
+          // 我们需要寻找包含这个文本的容器，通常是最右侧的 flex 容器
+          
+          // 获取头部区域 (通常是 pre 的上一个兄弟元素，或者是包装器里的第一个 div)
+          let headerArea = wrapper.firstElementChild;
+          if (headerArea === pre && pre.previousElementSibling) {
+              headerArea = pre.previousElementSibling;
+          }
+
+          if (headerArea) {
+            // 强行改变头部右侧动作区的布局，让它水平居中对齐
+            const rightActionArea = headerArea.lastElementChild as HTMLElement;
+            if (rightActionArea) {
+               rightActionArea.style.display = 'flex';
+               rightActionArea.style.alignItems = 'center';
+               // 插入到右侧区域的最前面
+               rightActionArea.insertBefore(btn, rightActionArea.firstChild);
+            }
+          }
+        }
       });
-    }, 500); // 延迟 500ms 确保 md-editor-rt 渲染完 DOM
+    }, 800); // 稍微增加一点延迟，确保 md-editor-rt 的工具栏渲染完毕
 
     return () => clearTimeout(timer);
   }, [post.content, isReadyToAnimate]);
@@ -382,12 +421,12 @@ useEffect(() => {
 
       </main>
 
-      <CodePlayground 
+<CodePlayground 
         isOpen={isPlaygroundOpen} 
         onClose={() => setIsPlaygroundOpen(false)} 
         initialCode={playgroundCode} 
+        language={playgroundLang} // 🚀 动态传递语言
       />
-
     </StudioLayout>
   );
 }
