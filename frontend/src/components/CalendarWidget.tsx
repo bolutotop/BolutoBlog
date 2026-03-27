@@ -7,12 +7,13 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { getCalendarPostsAction } from '@/app/actions';
 import { motion, AnimatePresence } from 'framer-motion';
-
+import { useLenis } from '@studio-freight/react-lenis';
 interface CalendarWidgetProps {
   variant: 'mobile' | 'desktop';
 }
 
 export default function CalendarWidget({ variant }: CalendarWidgetProps) {
+  const lenis = useLenis();
   const [activeModal, setActiveModal] = useState<any | null>(null);
   const [calendarData, setCalendarData] = useState<Record<number, any[]>>({});
   const [isClosing, setIsClosing] = useState(false);
@@ -32,7 +33,19 @@ export default function CalendarWidget({ variant }: CalendarWidgetProps) {
   const weekDays = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
 
   const isMobile = variant === 'mobile';
-
+useEffect(() => {
+      if (activeModal) {
+        document.body.style.overflow = 'hidden';
+        lenis?.stop();
+      } else {
+        document.body.style.overflow = '';
+        lenis?.start();
+      }
+      return () => {
+        document.body.style.overflow = '';
+        lenis?.start();
+      };
+    }, [activeModal, lenis]);
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -121,12 +134,15 @@ export default function CalendarWidget({ variant }: CalendarWidgetProps) {
         </AnimatePresence>
       </div>
 
-      {mounted && activeModal && createPortal(
-        <div className={`fixed inset-0 z-[99999] flex items-center justify-center transition-opacity duration-400 ${isClosing ? 'opacity-0' : 'opacity-100'}`}>
+  {mounted && activeModal && createPortal(
+        <div 
+          // 🚀 3. 增加 data-lenis-prevent="true" 和 overscroll-contain
+          data-lenis-prevent="true"
+          className={`fixed inset-0 z-[99999] flex items-center justify-center transition-opacity duration-400 overscroll-contain ${isClosing ? 'opacity-0' : 'opacity-100'}`}
+        >
           <div className="absolute inset-0 bg-[var(--sc-bg)]/20 backdrop-blur-xl" onClick={handleCloseModal} />
           
           <div 
-            // 🚀 核心修复：放大了整个弹窗的横向极限尺寸 (max-w-md -> max-w-lg -> max-w-xl)
             className={`
               relative z-10 bg-[var(--sc-bg)] sc-border border shadow-2xl overflow-hidden 
               w-[92vw] max-w-md md:max-w-lg 2xl:max-w-xl max-h-[85vh] 

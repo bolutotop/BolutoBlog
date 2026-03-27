@@ -12,7 +12,7 @@ import { EditorView } from '@codemirror/view';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
 import '@fontsource/jetbrains-mono'; // 全局加载极客字体
-
+import { useLenis } from '@studio-freight/react-lenis';
 // ==========================================
 // 🚀 定制化主题定义 (在组件外定义以优化性能)
 // ==========================================
@@ -76,6 +76,7 @@ interface CodePlaygroundProps {
 }
 
 export default function CodePlayground({ isOpen, onClose, initialCode }: CodePlaygroundProps) {
+    const lenis = useLenis();
   const [mounted, setMounted] = useState(false);
   const [code, setCode] = useState<string>('');
   const [output, setOutput] = useState<string>("> 终端就绪. 等待执行...\n");
@@ -83,6 +84,8 @@ export default function CodePlayground({ isOpen, onClose, initialCode }: CodePla
   
   const wsRef = useRef<WebSocket | null>(null);
   const terminalEndRef = useRef<HTMLDivElement>(null);
+
+
 
   // SSR 防护
   useEffect(() => {
@@ -97,6 +100,22 @@ export default function CodePlayground({ isOpen, onClose, initialCode }: CodePla
     }
   }, [isOpen, initialCode]);
 
+
+  // 🚀 新增：锁定底层页面滚动 (防止滚动穿透)
+useEffect(() => {
+      if (isOpen) {
+        document.body.style.overflow = 'hidden';
+        lenis?.stop(); // 强行暂停背后的平滑滚动
+      } else {
+        document.body.style.overflow = '';
+        lenis?.start(); // 恢复平滑滚动
+      }
+      
+      return () => {
+        document.body.style.overflow = '';
+        lenis?.start();
+      };
+    }, [isOpen, lenis]);
   // WebSocket 链路管理
   useEffect(() => {
     if (!isOpen) {
@@ -173,12 +192,14 @@ export default function CodePlayground({ isOpen, onClose, initialCode }: CodePla
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <motion.div 
+<motion.div 
           initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
           animate={{ opacity: 1, backdropFilter: "blur(8px)" }}
           exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
           transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-[999999] bg-black/60 flex items-center justify-center p-4 md:p-10 pointer-events-auto"
+          // 🚀 增加 data-lenis-prevent 彻底免疫外层拦截
+          data-lenis-prevent="true" 
+          className="fixed inset-0 z-[999999] bg-black/60 flex items-center justify-center p-4 md:p-10 pointer-events-auto overscroll-contain"
         >
           {/* 现代卡片设计，内部嵌套 macOS 风格代码块与黑客终端 */}
           <motion.div 
