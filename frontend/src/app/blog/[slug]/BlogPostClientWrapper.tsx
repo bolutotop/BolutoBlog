@@ -274,10 +274,11 @@ btn.innerHTML = `
           <span class="tracking-wide">[ PLAY ]</span>
         `;
 
-   const blockEvent = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        };
+// ✅ 修复后：明确指定 e 的类型为标准 DOM Event
+const blockEvent = (e: Event) => {
+  e.preventDefault();
+  e.stopPropagation();
+};
 
         // 阻断可能触发折叠的底层事件
         btn.addEventListener('mousedown', blockEvent);
@@ -409,29 +410,122 @@ btn.innerHTML = `
           isMobileMenuOpen={isMobileMenuOpen} 
           setIsMobileMenuOpen={setIsMobileMenuOpen} 
         />
-        {/* ==================== 4. 底部返回操作区 ==================== */}
-        <section className="py-20 px-6 lg:px-12 border-t sc-border flex justify-center">
-          <Link 
-            href="/blog" 
-            scroll={false} 
-            onClick={() => window.scrollTo(0, 0)}
-            onMouseMove={handleMouseMove}
-            className="group relative overflow-hidden bg-[var(--sc-inverse-bg)] border border-[var(--sc-inverse-bg)] px-16 py-8 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 duration-500 isolate w-fit"
-          >
-            <span className="relative z-10 font-black text-sm md:text-base uppercase tracking-[0.2em] text-[var(--sc-inverse-text)] transition-colors duration-300 group-hover:text-transparent">
-              返回
-            </span>
-            <div 
-              className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-center px-16 group-hover:animate-[rippleSpread_1s_cubic-bezier(0.16,1,0.3,1)_forwards]"
-              style={{ clipPath: 'circle(0% at var(--x, 50%) var(--y, 50%))' }}
-            >
-              <span className="font-black text-sm md:text-base uppercase tracking-[0.2em] text-[var(--sc-text)]">
-                返回
-              </span>
-            </div>
-          </Link>
-        </section>
+        {/* ==================== 4. 底部整合页脚 (版权矩阵 + 操作区) ==================== */}
+        <section className="max-w-[1600px] mx-auto w-full px-6 lg:px-12 mt-1 mb-12 relative z-10 bg-[var(--sc-bg)]">
+          <div className="w-full h-px bg-[var(--sc-border)] mb-8 opacity-50"></div>
+          {/* 第一部分：感谢阅读 & 返回列表 */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+            <div className="flex flex-col gap-1">
 
+            </div>
+            <Link 
+              href="/blog" 
+              scroll={false} 
+              className="text-xs font-bold uppercase tracking-widest hover:opacity-50 transition-opacity flex items-center gap-2 w-fit"
+            >
+              ← 返回日志列表
+            </Link>
+          </div>
+
+          {/* 第二部分：版权与元数据矩阵 (带 CC 水印) */}
+          <div className="w-full border border-[var(--sc-border)] p-6 md:p-10 relative overflow-hidden group mb-8">
+            
+            {/* 右侧巨大的 CC 背景水印 */}
+            <div className="absolute -right-4 -bottom-8 text-[12rem] md:text-[16rem] font-black text-[var(--sc-text)] opacity-[0.03] select-none pointer-events-none leading-none">
+              CC
+            </div>
+
+            {/* 文章标题与路径 */}
+            <div className="mb-8 md:mb-12 relative z-10">
+<div className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-2">
+              ---ZHIHUIBLOG---
+              </div>
+              <h3 className="text-lg md:text-xl font-black tracking-tight mb-2">
+                {post.title}
+              </h3>
+              <div className="text-xs font-mono opacity-50 break-all select-all selection:bg-[var(--sc-text)] selection:text-[var(--sc-bg)]">
+                https://yourdomain.com/blog/{post.slug || 'post-id'}
+              </div>
+            </div>
+
+            {/* 四列元数据 */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-xs relative z-10">
+              <div className="flex flex-col gap-2">
+                <span className="font-bold uppercase tracking-widest opacity-40">作者</span>
+                <span className="font-mono font-bold text-sm">Zhihui</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                <span className="font-bold uppercase tracking-widest opacity-40">发布于</span>
+                <span className="font-mono font-bold text-sm">{post.date}</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                <span className="font-bold uppercase tracking-widest opacity-40">更新于</span>
+                <span className="font-mono font-bold text-sm">{post.date}</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                <span className="font-bold uppercase tracking-widest opacity-40">许可协议</span>
+                <a 
+                  href="https://creativecommons.org/licenses/by/4.0/deed.zh-hans" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="font-mono font-bold text-sm hover:underline hover:opacity-70 transition-opacity flex items-center gap-1.5 w-fit"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-9.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v3c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5v-3z"/>
+                  </svg>
+                  CC BY 4.0
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* 第三部分：底部操作与版权信息 */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="text-[10px] font-mono opacity-40 uppercase tracking-widest order-2 md:order-1">
+              © {new Date().getFullYear()} Zhihui. All rights reserved.
+            </div>
+            
+            <div className="flex items-center gap-6 text-xs font-bold uppercase tracking-widest order-1 md:order-2">
+              {/* 无弹窗安全分享按钮 (兼容局域网 HTTP) */}
+              <button 
+                onClick={(e) => {
+                  const url = window.location.href;
+                  if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(url);
+                  } else {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = url;
+                    textArea.style.position = "absolute";
+                    textArea.style.left = "-999999px";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try { document.execCommand('copy'); } catch (err) {}
+                    document.body.removeChild(textArea);
+                  }
+                  
+                  const target = e.currentTarget;
+                  const originalText = target.innerText;
+                  target.innerText = "已复制 ✓";
+                  setTimeout(() => { target.innerText = originalText; }, 2000);
+                }}
+                className="hover:opacity-50 transition-opacity w-[4.5rem] text-left"
+              >
+                分享文章
+              </button>
+              
+              <span className="w-1 h-1 rounded-full bg-[var(--sc-border)]"></span>
+              
+              <button 
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="hover:opacity-50 transition-opacity"
+              >
+                回到顶部 ↑
+              </button>
+            </div>
+          </div>
+
+        </section>
       </main>
 
 <CodePlayground 
