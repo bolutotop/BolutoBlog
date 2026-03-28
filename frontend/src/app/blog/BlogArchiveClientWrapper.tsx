@@ -155,7 +155,7 @@ ScrollTrigger.create({
 
   return (
     <StudioLayout>
-      <main ref={setRef} className="overflow-x-hidden pb-32 min-h-screen">
+      <main ref={setRef} className="overflow-x-hidden min-h-screen">
         {children}
       </main>
     </StudioLayout>

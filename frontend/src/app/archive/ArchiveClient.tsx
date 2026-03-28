@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-
+import Footer from '@/components/Footer';
 type Post = {
   id: string;
   title: string;
@@ -68,7 +68,7 @@ export default function ArchiveClient({ posts }: { posts: Post[] }) {
   );
 
   return (
-    <main className="min-h-screen pt-32 pb-32 px-6 lg:px-12 max-w-[1600px] mx-auto overflow-hidden">
+    <main className="min-h-screen pt-32  px-6 lg:px-12 max-w-[1600px] mx-auto overflow-hidden">
       
       {/* ========================================================= */}
       {/* 🚀 核心修改：头部区域改为纯纵向排列 (flex-col)，取消 justify-between */}
@@ -183,12 +183,14 @@ export default function ArchiveClient({ posts }: { posts: Post[] }) {
                 </div>
 
               </div>
+              
             ))}
           </motion.div>
         )}
 
       </AnimatePresence>
-
+<Footer />
     </main>
+    
   );
 }

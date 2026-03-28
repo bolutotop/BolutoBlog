@@ -8,6 +8,7 @@ import prisma from '@/lib/prisma';
 import BlogArchiveClientWrapper from './BlogArchiveClientWrapper';
 import PostLayoutSwitcher from '@/components/blog/PostLayoutSwitcher';
 import PaginationWidget from '@/components/blog/PaginationWidget';
+import Footer from '@/components/Footer'; 
 
 // 巨型标题文字切割组件
 const SplitText = ({ text, className = "" }: { text: string, className?: string }) => (
@@ -217,7 +218,7 @@ return (
 
         </div>
       </section>
-
+<Footer />
     </BlogArchiveClientWrapper>
   );
 }

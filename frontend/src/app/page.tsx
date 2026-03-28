@@ -6,7 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Link from 'next/link';
 import StudioLayout from '@/components/StudioLayout';
 import { getHomePageConfigAction } from '@/app/actions';
-
+import Footer from '@/components/Footer';
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
@@ -342,7 +342,7 @@ export default function ShowcasePage() {
 
   return (
     <StudioLayout>
-    <main ref={setRef} className="overflow-x-hidden pb-32">
+    <main ref={setRef} className="overflow-x-hidden">
       <style jsx global>{`
         .stroke-text { -webkit-text-stroke: 2px var(--sc-text); color: transparent; }
       `}</style>
@@ -462,7 +462,7 @@ export default function ShowcasePage() {
           </div>
         </section>
       ))}
-
+<Footer />
     </main>
     </StudioLayout>
   );
