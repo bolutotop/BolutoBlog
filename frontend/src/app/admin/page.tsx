@@ -1,80 +1,109 @@
 import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import DeleteButton from '@/components/admin/DeleteButton';
-import { PlusIcon, ArrowRightOnRectangleIcon, PencilSquareIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import SearchBar from '@/components/admin/SearchBar'; // 🚀 引入搜索组件
+import { PlusIcon, DocumentTextIcon, PencilSquareIcon, XCircleIcon } from '@heroicons/react/24/outline';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminDashboard() {
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  // 兼容 Next.js 15 的异步 searchParams
+  searchParams: Promise<{ q?: string }>; 
+}) {
+  const { q } = await searchParams;
+  const keyword = q || '';
+
+  // 🚀 Prisma 查询逻辑：如果存在关键字，则模糊匹配 标题、路径 或 分类
+  const whereClause = keyword
+    ? {
+        OR: [
+          { title: { contains: keyword } },
+          { slug: { contains: keyword } },
+          { category: { contains: keyword } },
+        ],
+      }
+    : {};
+
   const posts = await prisma.post.findMany({
+    where: whereClause,
     orderBy: { createdAt: 'desc' },
   });
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      
+      {/* 页面头部 */}
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">控制中心</h1>
-          <p className="text-sm text-gray-500 mt-2 font-medium">
-            共找到 {posts.length} 篇文章
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">内容控制中心</h1>
+          <p className="text-sm text-gray-500 mt-1.5 font-medium">
+            {keyword ? (
+              <>在全库搜索 "<span className="text-gray-900 font-bold">{keyword}</span>" ，共找到 <span className="font-bold text-gray-900">{posts.length}</span> 个结果</>
+            ) : (
+              <>当前全站共计 <span className="font-bold text-gray-900">{posts.length}</span> 篇文章</>
+            )}
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
+        {/* 🚀 搜索框与新建按钮 */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+            <SearchBar />
+            
             <Link 
                 href="/admin/editor" 
-                className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-full text-sm font-bold hover:opacity-80 transition active:scale-95 shadow-md"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gray-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-800 transition-all shadow-md hover:shadow-lg active:scale-95 shrink-0"
             >
                 <PlusIcon className="w-4 h-4 stroke-2" />
-                写新文章
+                创作新内容
             </Link>
-            <button className="flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-50 transition">
-                <ArrowRightOnRectangleIcon className="w-4 h-4 text-gray-400" />
-                退出
-            </button>
         </div>
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-3xl shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap min-w-[800px]"> 
-            <thead className="border-b border-gray-100">
+      {/* 数据表格区域 */}
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left text-sm whitespace-nowrap min-w-[850px]"> 
+            <thead className="bg-gray-50/80 border-b border-gray-200">
               <tr>
-                <th className="px-8 py-5 font-bold text-gray-400 w-[40%]">标题</th>
-                <th className="px-8 py-5 font-bold text-gray-400 w-[20%]">分类</th>
-                <th className="px-8 py-5 font-bold text-gray-400 w-[15%]">状态</th>
-                <th className="px-8 py-5 font-bold text-gray-400 w-[15%]">日期</th>
-                <th className="px-8 py-5 font-bold text-gray-400 w-[10%] text-right">操作</th>
+                <th className="px-6 py-4 font-bold text-gray-500 uppercase tracking-widest text-[11px] w-[40%]">文章标题 / 路径</th>
+                <th className="px-6 py-4 font-bold text-gray-500 uppercase tracking-widest text-[11px] w-[20%]">分类标签</th>
+                <th className="px-6 py-4 font-bold text-gray-500 uppercase tracking-widest text-[11px] w-[15%]">发布状态</th>
+                <th className="px-6 py-4 font-bold text-gray-500 uppercase tracking-widest text-[11px] w-[15%]">创建日期</th>
+                <th className="px-6 py-4 font-bold text-gray-500 uppercase tracking-widest text-[11px] w-[10%] text-right">操作</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            
+            <tbody className="divide-y divide-gray-100">
               {posts.map((post) => (
-                <tr key={post.id} className="hover:bg-[#fafafa] transition-colors group">
+                <tr key={post.id} className="hover:bg-gray-50/50 transition-colors group">
                   
                   {/* 标题带跳转 */}
-                  <td className="px-8 py-6 align-top">
-                    {/* target="_blank" 在新标签页打开前台文章 */}
-                    <Link href={`/posts/${post.slug}`} target="_blank" className="font-bold text-base text-gray-900 block max-w-xs truncate hover:text-purple-600 transition-colors" title={post.title}>
+                  <td className="px-6 py-4 align-middle">
+                    <Link href={`/blog/${post.slug}`} target="_blank" className="font-bold text-sm text-gray-900 block max-w-xs truncate hover:text-blue-600 transition-colors" title={post.title}>
                         {post.title}
                     </Link>
-                    <div className="text-xs text-gray-400 font-mono mt-1.5 truncate max-w-[200px]">
+                    <div className="text-xs text-gray-400 font-mono mt-1 truncate max-w-[250px]">
                         /{post.slug}
                     </div>
                   </td>
 
                   {/* 分类 */}
-                  <td className="px-8 py-6 align-top">
-                    <div className="flex flex-wrap gap-2">
-                        {post.category ? post.category.split(',').map((tag) => {
-                            const [p, c] = tag.trim().split('/');
+                  <td className="px-6 py-4 align-middle">
+                    <div className="flex flex-wrap gap-1.5">
+                        {post.category ? post.category.split(',').filter(Boolean).map((tag) => {
+                            const parts = tag.trim().split('/');
+                            const p = parts[0];
+                            const c = parts.length > 1 ? parts[1] : null;
                             if (!p) return null;
                             return (
                             <span 
                                 key={tag} 
-                                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border border-gray-100 bg-gray-50 text-gray-600 whitespace-nowrap"
+                                className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-semibold border border-gray-200 bg-white text-gray-600 whitespace-nowrap shadow-sm"
                             >
                                 {p}
-                                {c && <span className="text-gray-300 mx-1.5">/</span>}
+                                {c && <span className="text-gray-300 mx-1">/</span>}
                                 {c && <span>{c}</span>}
                             </span>
                             )
@@ -82,46 +111,60 @@ export default async function AdminDashboard() {
                     </div>
                   </td>
 
-                  {/* 恢复真实发布状态 */}
-                  <td className="px-8 py-6 align-top">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${
+                  {/* 状态徽章 */}
+                  <td className="px-6 py-4 align-middle">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border ${
                       post.published 
-                        ? 'border-green-200 bg-green-50 text-green-700' 
-                        : 'border-yellow-200 bg-yellow-50 text-yellow-700'
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700' 
+                        : 'border-amber-200 bg-amber-50 text-amber-700'
                     }`}>
-                        {post.published ? '已发布' : '草稿'}
+                        <span className={`w-1.5 h-1.5 rounded-full ${post.published ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                        {post.published ? 'Published' : 'Draft'}
                     </span>
                   </td>
 
-                  <td className="px-8 py-6 align-top text-gray-500">
+                  {/* 日期 */}
+                  <td className="px-6 py-4 align-middle text-gray-500 font-mono text-xs">
                     {post.createdAt.toISOString().split('T')[0]}
                   </td>
 
-                  <td className="px-8 py-6 align-top text-right">
-                     <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* 操作按钮 */}
+                  <td className="px-6 py-4 align-middle text-right">
+                     <div className="flex items-center justify-end gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
                         <Link 
                            href={`/admin/editor?id=${post.id}`} 
-                           className="flex items-center text-purple-600 hover:text-purple-800 transition-colors font-medium text-xs gap-1"
-                           title="编辑"
+                           className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all"
+                           title="编辑文章"
                         >
-                           <PencilSquareIcon className="w-4 h-4"/>
+                           <PencilSquareIcon className="w-5 h-5"/>
                         </Link>
-                        <span className="text-gray-200">|</span>
-                        <div className="scale-90 origin-right">
-                           <DeleteButton id={post.id} title={post.title} />
-                        </div>
+                        <DeleteButton id={post.id} title={post.title} />
                      </div>
                   </td>
+                  
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         
+        {/* 🚀 空数据状态优化 (区分全局空数据 和 搜索无结果) */}
         {posts.length === 0 && (
-           <div className="py-20 text-center text-gray-400 flex flex-col items-center gap-3">
-              <DocumentTextIcon className="w-10 h-10 text-gray-200" />
-              <p className="text-sm font-medium">暂无数据</p>
+           <div className="py-24 text-center flex flex-col items-center justify-center">
+              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                  {keyword ? <XCircleIcon className="w-8 h-8 text-gray-400" /> : <DocumentTextIcon className="w-8 h-8 text-gray-400" />}
+              </div>
+              <h3 className="text-gray-900 text-sm font-bold mb-1">
+                {keyword ? `未找到与 "${keyword}" 相关的文章` : '还没有任何文章'}
+              </h3>
+              <p className="text-xs text-gray-500 font-medium mb-4">
+                {keyword ? '换个关键词试试，或者检查拼写错误' : '点击右上角按钮开始创作你的第一篇内容'}
+              </p>
+              {keyword && (
+                <Link href="/admin" className="text-sm text-blue-600 hover:underline font-semibold">
+                  清除搜索条件
+                </Link>
+              )}
            </div>
         )}
       </div>

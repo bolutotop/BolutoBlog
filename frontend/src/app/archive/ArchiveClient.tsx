@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import Footer from '@/components/Footer';
+
 type Post = {
   id: string;
   title: string;
@@ -189,7 +189,6 @@ export default function ArchiveClient({ posts }: { posts: Post[] }) {
         )}
 
       </AnimatePresence>
-<Footer />
     </main>
     
   );

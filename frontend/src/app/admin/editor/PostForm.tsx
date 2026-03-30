@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { savePostAction } from '../../actions'; 
-import { ArrowLeftIcon, CheckCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, CheckCircleIcon, TrashIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline';
 import Editor from '@/components/admin/Editor';
-
 import Link from 'next/link';
 
 interface PostFormProps {
@@ -17,7 +16,6 @@ const DRAFT_KEY = 'admin-post-draft-v2';
 export default function PostForm({ initialPost }: PostFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasDraft, setHasDraft] = useState(false);
 
@@ -27,7 +25,7 @@ export default function PostForm({ initialPost }: PostFormProps) {
     id: initialPost?.id || '',
     title: initialPost?.title || '',
     slug: initialPost?.slug || '',
-    category: initialPost?.category || '', // 新增
+    category: initialPost?.category || '', 
     coverImage: initialPost?.coverImage || '',
     content: initialPost?.content || '',
     published: initialPost?.published ? 'true' : 'false',
@@ -36,7 +34,6 @@ export default function PostForm({ initialPost }: PostFormProps) {
   // --- 1. 自动恢复草稿 ---
   useEffect(() => {
     if (isEditMode) return;
-
     const savedDraft = localStorage.getItem(DRAFT_KEY);
     if (savedDraft) {
       try {
@@ -55,7 +52,6 @@ export default function PostForm({ initialPost }: PostFormProps) {
   // --- 2. 自动保存草稿 ---
   useEffect(() => {
     if (isEditMode) return;
-
     const timer = setTimeout(() => {
       if (formData.title || formData.content || formData.slug) {
         const draftData = {
@@ -80,13 +76,7 @@ export default function PostForm({ initialPost }: PostFormProps) {
     if (confirm('确定要清空草稿吗？此操作无法撤销。')) {
       localStorage.removeItem(DRAFT_KEY);
       setFormData({
-        id: '',
-        title: '',
-        slug: '',
-        category: '', // 新增
-        coverImage: '',
-        content: '',
-        published: 'false',
+        id: '', title: '', slug: '', category: '', coverImage: '', content: '', published: 'false',
       });
       setHasDraft(false);
       setLastSaved(null);
@@ -100,7 +90,6 @@ export default function PostForm({ initialPost }: PostFormProps) {
     }
     
     setIsLoading(true);
-
     const data = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
       if (key !== '_saveTime') {
@@ -110,7 +99,6 @@ export default function PostForm({ initialPost }: PostFormProps) {
 
     try {
       const result = await savePostAction(data);
-      
       if (result.success) {
         if (!isEditMode) {
             localStorage.removeItem(DRAFT_KEY);
@@ -128,22 +116,24 @@ export default function PostForm({ initialPost }: PostFormProps) {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-20 mt-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/admin" className="p-2 rounded-full hover:bg-zinc-100  transition">
-            <ArrowLeftIcon className="w-5 h-5 text-zinc-600 " />
+    <div className="max-w-[1200px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500">
+      
+      {/* 头部操作栏 */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Link href="/admin" className="p-2 -ml-2 rounded-xl hover:bg-gray-200/50 text-gray-500 transition-colors">
+            <ArrowLeftIcon className="w-5 h-5 stroke-2" />
           </Link>
-          <h1 className="text-3xl font-black text-zinc-900 ">
-            {isEditMode ? '编辑文章' : '写新文章'}
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
+            {isEditMode ? '编辑文章' : '创作新内容'}
           </h1>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 w-full md:w-auto">
             {!isEditMode && lastSaved && (
-              <span className="flex items-center gap-1 text-xs text-zinc-400 animate-pulse hidden md:flex">
-                <CheckCircleIcon className="w-4 h-4" />
-                已自动保存 {lastSaved.toLocaleTimeString()}
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-400 mr-2">
+                <CheckCircleIcon className="w-4 h-4 text-emerald-500" />
+                已存草稿 {lastSaved.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </span>
             )}
             
@@ -151,7 +141,7 @@ export default function PostForm({ initialPost }: PostFormProps) {
                <button 
                  type="button"
                  onClick={handleClearDraft} 
-                 className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50  rounded-full transition" 
+                 className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors" 
                  title="清空草稿"
                >
                  <TrashIcon className="w-5 h-5" />
@@ -161,89 +151,101 @@ export default function PostForm({ initialPost }: PostFormProps) {
             <button
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className="px-6 py-2.5 bg-black  text-white  rounded-full font-bold hover:scale-105 active:scale-95 transition disabled:opacity-50"
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 active:scale-95 transition-all disabled:opacity-50 shadow-md hover:shadow-lg"
             >
-                {isLoading ? '保存中...' : (isEditMode ? '更新文章' : '发布文章')}
+                {isLoading ? (
+                   <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> 保存中...</span>
+                ) : (
+                   <><CloudArrowUpIcon className="w-5 h-5 stroke-2" /> {isEditMode ? '更新文章' : '发布文章'}</>
+                )}
             </button>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-                <div>
-                    <label className="block text-sm font-bold text-zinc-500 mb-1">文章标题</label>
-                    <input
-                        name="title"
-                        value={formData.title}
-                        onChange={handleChange}
-                        className="w-full text-lg font-bold px-4 py-3 rounded-xl border border-zinc-200  bg-white  outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Article Title"
-                        required
-                    />
-                </div>
-                 <div>
-                    <label className="block text-sm font-bold text-zinc-500 mb-1">URL Slug</label>
-                    <input
-                        name="slug"
-                        value={formData.slug}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 rounded-xl border border-zinc-200  bg-white  outline-none font-mono text-sm"
-                        placeholder="为空时将根据标题自动生成"
-                    />
-                </div>
-            </div>
-
-            <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        
+        {/* 卡片 1：文章元数据配置 */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 md:p-8 shadow-sm space-y-6">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-5">
                     <div>
-                        <label className="block text-sm font-bold text-zinc-500 mb-1">分类 (Tags)</label>
+                        <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2">文章标题 / Title</label>
                         <input
-                            name="category"
-                            type="text"
-                            value={formData.category}
+                            name="title"
+                            value={formData.title}
                             onChange={handleChange}
-                            placeholder="e.g. Tech/React, Life"
-                            className="w-full px-4 py-3 rounded-xl border border-zinc-200 bg-white  outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full text-base font-semibold px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 outline-none focus:bg-white focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
+                            placeholder="输入文章标题..."
                             required
                         />
                     </div>
-                     <div>
-                        <label className="block text-sm font-bold text-zinc-500 mb-1">发布状态</label>
-                        <select
-                            name="published"
-                            value={formData.published}
+                    <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2">路由别名 / Slug</label>
+                        <input
+                            name="slug"
+                            value={formData.slug}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 rounded-xl border border-zinc-200  bg-white  outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="false">📝 存为草稿</option>
-                            <option value="true">✅ 正式发布</option>
-                        </select>
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 outline-none font-mono text-sm focus:bg-white focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
+                            placeholder="留空则自动生成 (例: my-first-post)"
+                        />
                     </div>
                 </div>
-                <div>
-                    <label className="block text-sm font-bold text-zinc-500 mb-1">封面图 URL</label>
-                    <input
-                        name="coverImage"
-                        value={formData.coverImage}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 rounded-xl border border-zinc-200  bg-white outline-none text-sm"
-                        placeholder="https://..."
-                    />
+
+                <div className="space-y-5">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2">分类标签 / Tags</label>
+                            <input
+                                name="category"
+                                type="text"
+                                value={formData.category}
+                                onChange={handleChange}
+                                placeholder="例: Tech/React, Life"
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 outline-none text-sm focus:bg-white focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
+                                required
+                            />
+                        </div>
+                         <div>
+                            <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2">发布状态 / Status</label>
+                            <select
+                                name="published"
+                                value={formData.published}
+                                onChange={handleChange}
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 outline-none text-sm font-semibold focus:bg-white focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all appearance-none cursor-pointer"
+                            >
+                                <option value="false">📝 存为草稿 (Draft)</option>
+                                <option value="true">✅ 正式发布 (Published)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2">封面图链接 / Cover URL</label>
+                        <input
+                            name="coverImage"
+                            value={formData.coverImage}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 outline-none font-mono text-sm focus:bg-white focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all"
+                            placeholder="https://images.unsplash.com/..."
+                        />
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div>
-            <div className="mb-2">
-                <label className="block text-sm font-bold text-zinc-500">正文内容 (Markdown)</label>
+        {/* 卡片 2：正文编辑器 */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-2 md:p-5 shadow-sm min-h-[500px] flex flex-col">
+            <div className="mb-4 px-3 pt-3 md:px-0 md:pt-0">
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500">正文内容 / Markdown Content</label>
             </div>
             
-            {/* 替换为原生 textarea，强制使用等宽字体并提供足够的高度 */}
-           <Editor 
-                value={formData.content} 
-                onChange={(v) => setFormData(prev => ({ ...prev, content: v }))} 
-            />
+            <div className="flex-1 border border-gray-100 rounded-xl overflow-hidden">
+               {/* 你的 Editor 组件渲染在这里 */}
+               <Editor 
+                  value={formData.content} 
+                  onChange={(v) => setFormData(prev => ({ ...prev, content: v }))} 
+               />
+            </div>
         </div>
       </form>
     </div>
