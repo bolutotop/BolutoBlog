@@ -4,14 +4,45 @@ import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
+import { auth } from '@/auth'; // 🚀 引入 auth 校验器
 
+// =========================================================================
+// 🛡️ 核心鉴权包裹器 (保护敏感的写操作)
+// =========================================================================
+async function protectAction<T>(action: () => Promise<T>): Promise<T | { success: false; message: string }> {
+  try {
+    const session = await auth();
+    
+    // 未登录拦截
+    if (!session || !session.user) {
+      console.error("❌ 拦截未授权的服务操作 (Unauthorized Server Action)");
+      return { success: false, message: "Unauthorized Request: 请先登录" };
+    }
+    
+    // 执行真正的业务逻辑并直接透传返回结果，避免多层嵌套
+    return await action();
+    
+  } catch (error: any) {
+    console.error("Action 出错:", error);
+    
+    // 全局处理 Prisma 唯一性冲突错误
+    if (error.code === 'P2002') {
+        return { success: false, message: '数据冲突：URL Slug 或关键字段已存在，请换一个' };
+    }
+    return { success: false, message: error.message || "Internal Server Error" };
+  }
+}
+
+// =========================================================================
+// 🔒 需要管理员权限的写操作 (Mutations) - 使用 protectAction 包裹
+// =========================================================================
 
 export async function savePostAction(formData: FormData) {
-  try {
+  return await protectAction(async () => {
     const id = formData.get('id') as string;
     const title = formData.get('title') as string;
     let slug = formData.get('slug') as string;
-    const category = formData.get('category') as string; // 新增提取 category
+    const category = formData.get('category') as string;
     const content = formData.get('content') as string;
     const coverImage = formData.get('coverImage') as string;
     const published = formData.get('published') === 'true';
@@ -21,87 +52,83 @@ export async function savePostAction(formData: FormData) {
     }
 
     if (id) {
-      // 编辑模式
       await prisma.post.update({
         where: { id },
-        // 加入 category
         data: { title, slug, category, content, coverImage, published }
       });
     } else {
-      // 新建模式
       await prisma.post.create({
-        // 加入 category
         data: { title, slug, category, content, coverImage, published }
       });
     }
 
     revalidatePath('/admin');
-    revalidatePath('/'); // 同步刷新前台主页缓存
+    revalidatePath('/'); 
     
     return { success: true };
-  } catch (error: any) {
-    if (error.code === 'P2002') {
-        return { success: false, message: 'URL Slug 已存在，请换一个' };
-    }
-    return { success: false, message: error.message || 'Database error' };
-  }
+  });
 }
 
-
-// app/actions.ts 追加内容
-
 export async function deletePostAction(id: string) {
-  try {
+  return await protectAction(async () => {
     await prisma.post.delete({
       where: { id }
     });
     
-    // 强制刷新前后台缓存，使 UI 立即更新
     revalidatePath('/admin');
     revalidatePath('/');
     
     return { success: true };
-  } catch (error: any) {
-    return { success: false, message: error.message || '删除失败' };
-  }
+  });
 }
 
-
 export async function uploadImage(formData: FormData) {
-  try {
+  return await protectAction(async () => {
     const file = formData.get('file') as File;
     if (!file) throw new Error('未检测到文件');
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // 定义存储路径: public/uploads
-    const uploadDir = join(process.cwd(), 'uploads');
+    const uploadDir = join(process.cwd(), 'public', 'uploads'); // 注意：通常需要存放在 public 下才能直接访问
     
-    // 确保目录存在，不存在则自动创建
     try {
       await mkdir(uploadDir, { recursive: true });
     } catch (e) {
       // 目录已存在，忽略错误
     }
 
-    // 生成唯一文件名，过滤特殊字符防止路径注入
     const safeFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const uniqueName = `${Date.now()}-${safeFilename}`;
     const filePath = join(uploadDir, uniqueName);
 
-    // 写入物理文件系统
     await writeFile(filePath, buffer);
 
-    // 返回可访问的公开 URL
-    return `/uploads/${uniqueName}`;
-  } catch (error: any) {
-    console.error('Image upload failed:', error);
-    throw new Error(error.message || '上传失败');
-  }
+    // 返回给前端
+    return { success: true, url: `/uploads/${uniqueName}` };
+  });
 }
 
-// app/actions.ts 追加内容
+export async function saveHomePageConfigAction(jsonData: any) {
+  return await protectAction(async () => {
+    await prisma.systemConfig.upsert({
+      where: { key: 'HOMEPAGE_DATA' },
+      update: { value: JSON.stringify(jsonData) },
+      create: { 
+        key: 'HOMEPAGE_DATA', 
+        value: JSON.stringify(jsonData) 
+      }
+    });
+
+    revalidatePath('/'); 
+
+    return { success: true };
+  });
+}
+
+// =========================================================================
+// 🌍 公开的读操作 (Queries) - 保持原样，不包裹鉴权，允许前台访客直接读取
+// =========================================================================
 
 export async function getCalendarPostsAction() {
   try {
@@ -116,10 +143,8 @@ export async function getCalendarPostsAction() {
   }
 }
 
-
 export async function getCategoriesAction() {
   try {
-    // 1. 获取所有包含分类的文章
     const posts = await prisma.post.findMany({
       where: { category: { not: null } },
       select: { category: true },
@@ -127,69 +152,43 @@ export async function getCategoriesAction() {
 
     const topLevelCategories = new Set<string>();
 
-    // 2. 遍历并解析字符串 (例如："Tech/React, Life")
     posts.forEach(post => {
       if (!post.category) return;
-      
-      // 先按逗号拆分出所有分类
       const categories = post.category.split(',').map(c => c.trim());
-      
       categories.forEach(cat => {
-        // 再按斜杠拆分，永远只取第一项作为“一级标签”
         const topLevel = cat.split('/')[0].trim();
-        if (topLevel) {
-          topLevelCategories.add(topLevel); // Set 会自动去重
-        }
+        if (topLevel) topLevelCategories.add(topLevel);
       });
     });
 
-    // 3. 转回数组并返回
     return { success: true, categories: Array.from(topLevelCategories) };
   } catch (error) {
-    console.error("Failed to fetch top-level categories from posts:", error);
+    console.error("Failed to fetch top-level categories:", error);
     return { success: false, categories: [] };
   }
 }
 
-
 export async function searchPostsAction(query: string) {
-  // 如果搜索词为空，直接返回空数组，不查数据库
-  if (!query || query.trim() === '') {
-    return { success: true, posts: [] };
-  }
+  if (!query || query.trim() === '') return { success: true, posts: [] };
 
   try {
-    // 🚀 核心查询逻辑：
-    // 这里我们特意使用了 contains (在 SQL 底层就是 LIKE '%关键字%')
     const posts = await prisma.post.findMany({
       where: {
         published: true,
         OR: [
-          // 条件 A：标题中包含你输入的字符（输入 1，匹配 "123"）
           { title: { contains: query } },
-          // 条件 B：标签分类中包含你输入的字符（输入 1，匹配 "Tech 1"）
           { category: { contains: query } }
         ]
       },
-      // 为了保证搜索速度和前端全屏排版不被撑爆，只提取必要的字段，并限制最多返回 6 条
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        category: true,
-        createdAt: true,
-      },
+      select: { id: true, title: true, slug: true, category: true, createdAt: true },
       take: 6, 
       orderBy: { createdAt: 'desc' }
     });
 
-    // 格式化一下日期，让前端拿到手就能直接渲染，不用再算一遍
     const formattedPosts = posts.map(post => ({
       ...post,
       date: post.createdAt.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
+        month: 'short', day: 'numeric', year: 'numeric' 
       })
     }));
 
@@ -213,27 +212,5 @@ export async function getHomePageConfigAction() {
   } catch (error) {
     console.error("Failed to fetch home page config:", error);
     return { success: false, data: null };
-  }
-}
-
-// 2. 保存主页配置
-export async function saveHomePageConfigAction(jsonData: any) {
-  try {
-    await prisma.systemConfig.upsert({
-      where: { key: 'HOMEPAGE_DATA' },
-      update: { value: JSON.stringify(jsonData) },
-      create: { 
-        key: 'HOMEPAGE_DATA', 
-        value: JSON.stringify(jsonData) 
-      }
-    });
-
-    // 🚀 清除 Next.js 缓存，确保前台主页立刻更新！
-    revalidatePath('/'); 
-
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to save home page config:", error);
-    return { success: false, message: "保存失败" };
   }
 }

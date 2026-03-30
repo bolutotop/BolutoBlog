@@ -38,3 +38,54 @@ model SystemConfig {
   value     String   // 使用 String 存储 JSON 数据，完美兼容 SQLite
   updatedAt DateTime @updatedAt
 }
+
+
+// 🚀 新增用于验证的 4 个基础模型 (Auth.js 官方标准)
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? // 👈 删除了 @db.Text
+  access_token       String? // 👈 删除了 @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? // 👈 删除了 @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  
+  // 🚀 你原有的 Post 模型可以保持不动，也可以在这里建立关联（可选）
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
