@@ -3,15 +3,15 @@ import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import BlogArchiveClientWrapper from '../../BlogArchiveClientWrapper';
 import PaginationWidget from '@/components/blog/PaginationWidget'; // 根据你的实际路径调整
-
+import Footer from '@/components/Footer';
 import PostLayoutSwitcher from '@/components/blog/PostLayoutSwitcher';
 // 巨型标题文字切割组件 (保持不变)
 const SplitText = ({ text, className = "" }: { text: string, className?: string }) => (
   <div className={`flex flex-wrap overflow-hidden pb-4 -mb-4 ${className}`}>
     {text.split('').map((char, i) => (
-      <span 
-        key={i} 
-        className="hero-char inline-block translate-y-[150%] rotate-12 opacity-0" 
+      <span
+        key={i}
+        className="hero-char inline-block translate-y-[150%] rotate-12 opacity-0"
         style={{ whiteSpace: 'pre' }}
       >
         {char}
@@ -21,7 +21,7 @@ const SplitText = ({ text, className = "" }: { text: string, className?: string 
 );
 
 // 每页显示的文章数量 (Featured 1 篇 + Grid 中 n 篇)
-const POSTS_PER_PAGE = 3; 
+const POSTS_PER_PAGE = 3;
 
 export default async function CategoryArchivePage({
   params,
@@ -32,33 +32,40 @@ export default async function CategoryArchivePage({
 }) {
   const resolvedParams = await params;
   const decodedCategory = decodeURIComponent(resolvedParams.category);
-  
+
   const resolvedSearchParams = await searchParams;
   const currentPage = Number(resolvedSearchParams.page) || 1;
 
-  // 🚀 1. 粗筛：找出所有字面上包含该字符的文章，但不直接分页，因为需要“精筛”
-  const allCandidatePosts = await prisma.post.findMany({
-    where: { 
+  // 🚀 1. 轻量筛选：只拉 id 和 category 用于精确过滤，不拉 content 等大字段
+  const allCandidates = await prisma.post.findMany({
+    where: {
       published: true,
       category: { contains: decodedCategory }
     },
+    select: { id: true, category: true },
     orderBy: { createdAt: 'desc' }
   });
 
-  // 🚀 2. 精筛：在服务端内存中进行严格的“一级标签全等匹配”
-  const allFilteredPosts = allCandidatePosts.filter(post => {
-    if (!post.category) return false;
-    const topLevelTags = post.category.split(',').map(cat => cat.split('/')[0].trim());
-    return topLevelTags.includes(decodedCategory);
-  });
+  // 🚀 2. 精筛：严格的一级标签全等匹配，只保留 ID
+  const filteredIds = allCandidates
+    .filter(post => {
+      if (!post.category) return false;
+      const topLevelTags = post.category.split(',').map(cat => cat.split('/')[0].trim());
+      return topLevelTags.includes(decodedCategory);
+    })
+    .map(post => post.id);
 
-  const totalPosts = allFilteredPosts.length;
+  const totalPosts = filteredIds.length;
   const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
 
-  // 🚀 3. 内存分页：根据当前页截取数据
+  // 🚀 3. 精准分页：只取当前页的 ID 切片，再查完整数据
   const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
-  const endIndex = startIndex + POSTS_PER_PAGE;
-  const paginatedPosts = allFilteredPosts.slice(startIndex, endIndex);
+  const pageIds = filteredIds.slice(startIndex, startIndex + POSTS_PER_PAGE);
+
+  const paginatedPosts = await prisma.post.findMany({
+    where: { id: { in: pageIds } },
+    orderBy: { createdAt: 'desc' },
+  });
 
   // 如果没有数据（或者页码超出范围），可以给个提示或者直接返回空状态
   if (paginatedPosts.length === 0) {
@@ -91,13 +98,13 @@ export default async function CategoryArchivePage({
     slug: rawFeaturedPost.slug,
     category: rawFeaturedPost.category || 'Uncategorized',
     date: formatDate(rawFeaturedPost.createdAt),
-    excerpt: rawFeaturedPost.content.substring(0, 150) + '...', 
-    image: rawFeaturedPost.coverImage || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop', 
+    excerpt: rawFeaturedPost.content.substring(0, 150) + '...',
+    image: rawFeaturedPost.coverImage || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
   } : null;
 
   const gridPosts = rawGridPosts.map((post, index) => ({
     id: post.id,
-    displayIndex: String(startIndex + (isFirstPage ? index + 2 : index + 1)).padStart(2, '0'), 
+    displayIndex: String(startIndex + (isFirstPage ? index + 2 : index + 1)).padStart(2, '0'),
     title: post.title,
     slug: post.slug,
     category: post.category || 'Uncategorized',
@@ -106,23 +113,23 @@ export default async function CategoryArchivePage({
     image: post.coverImage || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
   }));
 
-return (
+  return (
     <BlogArchiveClientWrapper postsCount={totalPosts} lastUpdated={featuredPost ? featuredPost.date : gridPosts[0]?.date || 'N/A'}>
-      
+
       {/* ==================== 1. Hero 区域 (定制化大字) ==================== */}
       {/* 🚀 核心修复：把 justify-end 改为 justify-start，加入 pt-28/40 让文字吸顶。保留 min-h-[50vh] 作为滚动缓冲池 */}
       <section className="relative min-h-[50vh] lg:min-h-[60vh] flex flex-col justify-start pt-28 md:pt-40 px-6 lg:px-12 pb-10">
         {/* 💡 缩小底边距 pb-12 -> pb-8 md:pb-12 */}
         <div className="relative z-10 border-b sc-border pb-8 md:pb-12">
-          
+
           <div className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] opacity-50 mb-4 animate-pulse">
             Filtered By Category
           </div>
-          
+
           <div className="uppercase font-black text-[clamp(3rem,8vw,12rem)] leading-[0.85] tracking-tighter text-[var(--sc-text)]">
             <SplitText text={decodedCategory.toUpperCase()} />
           </div>
-          
+
           <div className="uppercase font-black text-[clamp(3rem,8vw,12rem)] leading-[0.85] tracking-tighter text-[var(--sc-text)] flex flex-wrap items-center gap-6">
             <SplitText text="ARCHIVE" />
             <span className="text-[clamp(1rem,2vw,3rem)] font-mono opacity-40 translate-y-[-20%] hero-bottom-content">
@@ -149,7 +156,7 @@ return (
         <section className="dark-section hide-sidebar-trigger relative py-16 md:py-32 px-6 lg:px-12 mt-0 bg-[var(--sc-bg)] transition-colors duration-700">
           <div className="max-w-[1600px] mx-auto w-full">
             <div className="flex flex-col lg:flex-row gap-12 lg:gap-24 items-center">
-              
+
               <div className="w-full lg:w-7/12">
                 <div className="img-mask-container w-full h-[50vh] lg:h-[80vh] max-h-[800px] bg-[var(--sc-border)] relative overflow-hidden group cursor-pointer">
                   <Link href={`/blog/${featuredPost.slug}`}>
@@ -167,16 +174,16 @@ return (
                   <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">{featuredPost.category}</span>
                   <span className="text-[10px] font-mono opacity-40 ml-auto">{featuredPost.date}</span>
                 </div>
-                
+
                 <h3 className="text-[clamp(2.5rem,4vw,5rem)] font-black tracking-tight uppercase mb-8 leading-[0.95]">
                   {featuredPost.title}
                 </h3>
-                
+
                 <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-12">
                   {featuredPost.excerpt}
                 </p>
-                
-                <Link 
+
+                <Link
                   href={`/blog/${featuredPost.slug}`}
                   className="btn-ripple group relative overflow-hidden bg-[var(--sc-inverse-bg)] border border-[var(--sc-inverse-bg)] px-10 py-5 flex items-center justify-between transition-transform active:scale-95 duration-500 isolate w-full lg:w-fit"
                 >
@@ -184,7 +191,7 @@ return (
                     Read Article
                   </span>
                   <span className="relative z-10 font-black text-xs text-[var(--sc-inverse-text)] group-hover:translate-x-2 transition-transform duration-500 ml-8">→</span>
-                  <div 
+                  <div
                     className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-between px-10 group-hover:animate-[rippleSpread_1s_cubic-bezier(0.16,1,0.3,1)_forwards] ripple-mask"
                     style={{ clipPath: 'circle(0% at 50% 50%)' }}
                   >
@@ -201,32 +208,33 @@ return (
       {/* ==================== 3. Grid List (自带双视图切换) ==================== */}
       {/* 💡 调整列表距离上方块的间距：原 py-20 改为 pt-12 pb-20，拉近顶部距离 */}
       <section className="relative pt-12 pb-20 px-6 lg:px-12 bg-[var(--sc-bg)] transition-colors duration-700">
-        
+
         {/* 🚀 核心修复：去掉了包裹在外面的 content-block，防止分页器被 GSAP 隐藏！ */}
         <div className="max-w-[1600px] mx-auto w-full">
-          
+
           {/* 只有列表区域参与滚动淡入动画 */}
           <div className="content-block">
-            <PostLayoutSwitcher 
-              posts={gridPosts} 
-              headerTitle="Recent Logs" 
-              headerSubtitle={`Filter: ${decodedCategory}`} 
+            <PostLayoutSwitcher
+              posts={gridPosts}
+              headerTitle="Recent Logs"
+              headerSubtitle={`Filter: ${decodedCategory}`}
             />
           </div>
 
           {/* ==================== 4. 分页控件 ==================== */}
           {/* 分页器独立，永远可见 */}
           <div>
-            <PaginationWidget 
-              currentPage={currentPage} 
-              totalPages={totalPages} 
-              basePath={`/blog/category/${resolvedParams.category}`} 
+            <PaginationWidget
+              currentPage={currentPage}
+              totalPages={totalPages}
+              basePath={`/blog/category/${resolvedParams.category}`}
             />
           </div>
 
         </div>
       </section>
-
+      <Footer />
     </BlogArchiveClientWrapper>
+
   );
 }

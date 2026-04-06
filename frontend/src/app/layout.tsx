@@ -9,7 +9,33 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ZHIHUI Dev Log",
+  title: {
+    default: "ZHIHUI Dev Log",
+    template: "%s | ZHIHUI Dev Log",
+  },
+  description: "Zhihui 的个人创意工作室 — 技术日志、编程洞察与创意设计探索。Breaking grids, defying templates.",
+  keywords: ["blog", "programming", "creative studio", "web development", "Zhihui", "技术博客"],
+  authors: [{ name: "Zhihui" }],
+  openGraph: {
+    title: "ZHIHUI Dev Log",
+    description: "Breaking grids. Defying templates. Pure digital architecture.",
+    type: "website",
+    locale: "zh_CN",
+    siteName: "ZHIHUI Dev Log",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ZHIHUI Dev Log",
+    description: "Breaking grids. Defying templates. Pure digital architecture.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
 };
 
 export default function RootLayout({

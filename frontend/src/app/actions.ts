@@ -87,6 +87,18 @@ export async function uploadImage(formData: FormData) {
     const file = formData.get('file') as File;
     if (!file) throw new Error('未检测到文件');
 
+    // 🛡️ 安全校验 1：文件类型白名单
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      throw new Error('不支持的文件类型，仅允许 JPEG / PNG / GIF / WebP / SVG');
+    }
+
+    // 🛡️安全校验 2：文件大小上限 (10MB)
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      throw new Error('文件大小超过 10MB 限制');
+    }
+
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
