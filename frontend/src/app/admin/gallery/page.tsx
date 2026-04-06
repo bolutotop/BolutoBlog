@@ -53,9 +53,11 @@ export default function GalleryPage() {
     formData.append('file', file);
 
     try {
-      const url = await uploadImage(formData);
-      if (url) {
+      const result = await uploadImage(formData);
+      if (result && 'url' in result) {
         fetchImages(); 
+      } else {
+        alert('上传失败：服务器返回异常');
       }
     } catch (err: any) {
       alert(`上传出错: ${err.message}`);

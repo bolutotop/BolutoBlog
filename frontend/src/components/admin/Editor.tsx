@@ -22,8 +22,11 @@ export default function Editor({ value, onChange }: EditorProps) {
         const formData = new FormData();
         formData.append('file', file);
         try {
-          const url = await uploadImage(formData);
-          return url;
+          const result = await uploadImage(formData);
+          if (result && 'url' in result) {
+            return result.url;
+          }
+          return null;
         } catch (error) {
           console.error('Upload failed:', error);
           alert(`图片 ${file.name} 上传失败，请检查网络或图片格式。`);
@@ -32,7 +35,7 @@ export default function Editor({ value, onChange }: EditorProps) {
       })
     );
 
-    const validUrls = res.filter((url) => url !== null) as string[];
+    const validUrls = res.filter((url): url is string => url !== null);
     if (validUrls.length > 0) callback(validUrls);
   };
 

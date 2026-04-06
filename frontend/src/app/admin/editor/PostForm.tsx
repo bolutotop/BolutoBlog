@@ -7,8 +7,18 @@ import { ArrowLeftIcon, CheckCircleIcon, TrashIcon, CloudArrowUpIcon } from '@he
 import Editor from '@/components/admin/Editor';
 import Link from 'next/link';
 
+interface PostData {
+  id: string;
+  title: string;
+  slug: string;
+  category: string | null;
+  coverImage: string | null;
+  content: string;
+  published: boolean;
+}
+
 interface PostFormProps {
-  initialPost?: any;
+  initialPost?: PostData | null;
 }
 
 const DRAFT_KEY = 'admin-post-draft-v2';
@@ -106,7 +116,7 @@ export default function PostForm({ initialPost }: PostFormProps) {
         router.push('/admin');
         router.refresh(); 
       } else {
-        alert('保存失败: ' + result.message);
+        alert('保存失败: ' + ('message' in result ? result.message : '未知错误'));
       }
     } catch (error) {
       alert('发生未知错误');

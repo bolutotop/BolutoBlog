@@ -8,49 +8,10 @@ import StudioLayout from '@/components/StudioLayout';
 import { getHomePageConfigAction } from '@/app/actions';
 import Footer from '@/components/Footer';
 import SplitText from '@/components/SplitText';
+import type { PageData, PageSection, ContentBlock } from '@/types/page';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
-}
-
-// =========================================================================
-// 🔑 TypeScript 类型定义
-// =========================================================================
-interface ContentBlock {
-  layout: 'left-img' | 'right-img' | 'center-img';
-  subtitle: string;
-  title: string;
-  desc: string;
-  tag: string;
-  imgSrc: string;
-  imgAlt: string;
-  imgWrapperClass: string;
-  textWrapperClass: string;
-  imgContainerClass: string;
-  imgClass: string;
-}
-
-interface PageSection {
-  id: string;
-  title: string;
-  className: string;
-  isDarkTheme: boolean;
-  hideSidebars: boolean;
-  blocks: ContentBlock[];
-}
-
-interface PageData {
-  hero: {
-    titles: string[];
-    subtitle: string;
-    btnText: string;
-    btnLink: string;
-  };
-  vision: {
-    title: string;
-    image: string;
-  };
-  sections: PageSection[];
 }
 
 // =========================================================================

@@ -29,6 +29,14 @@ export default async function AdminDashboard({
   const posts = await prisma.post.findMany({
     where: whereClause,
     orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      category: true,
+      published: true,
+      createdAt: true,
+    },
   });
 
   return (

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getHomePageConfigAction, saveHomePageConfigAction } from '@/app/actions';
+import type { PageData, PageSection, ContentBlock } from '@/types/page';
 import { 
   CheckCircleIcon, 
   PhotoIcon, 
@@ -14,7 +15,7 @@ import {
   CloudArrowUpIcon
 } from '@heroicons/react/24/outline';
 
-const DEFAULT_PAGE_DATA = {
+const DEFAULT_PAGE_DATA: PageData = {
   hero: {
     titles: ["ZHIHUI", "CREATIVE", "STUDIO"],
     subtitle: "Breaking grids. Defying templates. Pure uncompromising digital architecture.",
@@ -52,7 +53,7 @@ const DEFAULT_PAGE_DATA = {
 };
 
 export default function HomeSettingsPage() {
-  const [formData, setFormData] = useState<any>(null);
+  const [formData, setFormData] = useState<PageData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'hero' | 'vision' | 'sections'>('hero');
   const [expandedSection, setExpandedSection] = useState<number | null>(0);
@@ -86,7 +87,8 @@ export default function HomeSettingsPage() {
   };
 
   const addSection = () => {
-    const newSection = {
+    if (!formData) return;
+    const newSection: PageSection = {
       id: `section-${Date.now()}`,
       title: "NEW SECTION",
       className: "overlap-section",
@@ -100,6 +102,7 @@ export default function HomeSettingsPage() {
   };
 
   const removeSection = (sIdx: number) => {
+    if (!formData) return;
     if (confirm("⚠️ 危险操作：确定要删除整个大板块及其包含的所有图文吗？此操作不可恢复！")) {
       const newSections = [...formData.sections];
       newSections.splice(sIdx, 1);
@@ -108,23 +111,25 @@ export default function HomeSettingsPage() {
     }
   };
 
-  const updateSection = (sIdx: number, field: string, value: any) => {
+  const updateSection = (sIdx: number, field: keyof PageSection, value: string | boolean) => {
+    if (!formData) return;
     const newSections = [...formData.sections];
     newSections[sIdx] = { ...newSections[sIdx], [field]: value };
     setFormData({ ...formData, sections: newSections });
   };
 
-  const updateBlock = (sIdx: number, bIdx: number, field: string, value: any) => {
+  const updateBlock = (sIdx: number, bIdx: number, field: keyof ContentBlock, value: string) => {
+    if (!formData) return;
     const newSections = [...formData.sections];
     const newBlocks = [...newSections[sIdx].blocks];
     newBlocks[bIdx] = { ...newBlocks[bIdx], [field]: value };
-    newSections[sIdx].blocks = newBlocks;
+    newSections[sIdx] = { ...newSections[sIdx], blocks: newBlocks };
     setFormData({ ...formData, sections: newSections });
   };
 
   const addBlock = (sIdx: number) => {
-    const newSections = [...formData.sections];
-    newSections[sIdx].blocks.push({
+    if (!formData) return;
+    const newBlock: ContentBlock = {
       layout: "left-img",
       subtitle: "NEW / Subtitle",
       title: "New Block",
@@ -136,14 +141,19 @@ export default function HomeSettingsPage() {
       textWrapperClass: "w-full md:w-6/12",
       imgContainerClass: "w-full h-[50vh] md:h-[60vh] bg-[var(--sc-border)]",
       imgClass: "-top-[10%] left-0 w-full h-[120%] object-cover object-center"
-    });
+    };
+    const newSections = [...formData.sections];
+    newSections[sIdx] = { ...newSections[sIdx], blocks: [...newSections[sIdx].blocks, newBlock] };
     setFormData({ ...formData, sections: newSections });
   };
 
   const removeBlock = (sIdx: number, bIdx: number) => {
+    if (!formData) return;
     if (confirm("确定要删除这个图文块吗？")) {
       const newSections = [...formData.sections];
-      newSections[sIdx].blocks.splice(bIdx, 1);
+      const newBlocks = [...newSections[sIdx].blocks];
+      newBlocks.splice(bIdx, 1);
+      newSections[sIdx] = { ...newSections[sIdx], blocks: newBlocks };
       setFormData({ ...formData, sections: newSections });
     }
   };
@@ -257,7 +267,7 @@ export default function HomeSettingsPage() {
         {activeTab === 'sections' && (
           <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
             
-            {formData.sections.map((section: any, sIdx: number) => (
+            {formData.sections.map((section: PageSection, sIdx: number) => (
               <div key={section.id || sIdx} className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm transition-all duration-300">
                 
                 {/* 手风琴头部 (Section 控制) */}
@@ -318,7 +328,7 @@ export default function HomeSettingsPage() {
                         </div>
                       )}
 
-                      {section.blocks.map((block: any, bIdx: number) => (
+                      {section.blocks.map((block: ContentBlock, bIdx: number) => (
                         <div key={bIdx} className="bg-gray-50/80 rounded-2xl p-5 md:p-6 border border-gray-200 relative shadow-sm hover:shadow-md transition-all">
                           
                           <button onClick={() => removeBlock(sIdx, bIdx)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-all shadow-sm border border-transparent hover:border-red-100">
@@ -417,7 +427,7 @@ export default function HomeSettingsPage() {
   );
 }
 
-function TabButton({ active, onClick, icon, text }: any) {
+function TabButton({ active, onClick, icon, text }: { active: boolean; onClick: () => void; icon: React.ReactNode; text: string }) {
   return (
     <button 
       onClick={onClick}
