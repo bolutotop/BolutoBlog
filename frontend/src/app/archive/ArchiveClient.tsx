@@ -3,6 +3,8 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import SplitText from '@/components/SplitText';
+import Footer from '@/components/Footer';
 
 type Post = {
   id: string;
@@ -68,128 +70,137 @@ export default function ArchiveClient({ posts }: { posts: Post[] }) {
   );
 
   return (
-    <main className="min-h-screen pt-32  px-6 lg:px-12 max-w-[1600px] mx-auto overflow-hidden">
-      
-      {/* ========================================================= */}
-      {/* 🚀 核心修改：头部区域改为纯纵向排列 (flex-col)，取消 justify-between */}
-      {/* ========================================================= */}
-      <div className="flex flex-col gap-8 md:gap-10 border-b-4 sc-border pb-12 mb-16">
-        <div>
-          <div className="font-mono text-xs md:text-sm font-bold opacity-50 uppercase tracking-widest mb-4">
+    <>
+      {/* ==================== 1. Hero 区域 ==================== */}
+      <section className="relative min-h-[50vh] lg:min-h-[60vh] flex flex-col justify-start pt-28 md:pt-40 px-6 lg:px-12 pb-10">
+        <div className="relative z-10 border-b sc-border pb-8 md:pb-12">
+
+          <div className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] opacity-50 mb-4 animate-pulse">
             Total Logs: {posts.length}
           </div>
-          <h1 className="text-[clamp(4rem,10vw,12rem)] font-black uppercase tracking-tighter leading-none m-0">
-            INDEX
-          </h1>
+
+          <div className="uppercase font-black text-[clamp(4rem,10vw,12rem)] leading-[0.85] tracking-tighter text-[var(--sc-text)]">
+            <SplitText text="INDEX" />
+          </div>
         </div>
 
-        {/* 粗野主义切换开关：现在乖乖呆在 INDEX 下方了 */}
-        <div className="flex flex-wrap items-center gap-4 shrink-0 font-mono text-xs md:text-sm font-bold uppercase tracking-widest mt-2 md:mt-4">
-          <button 
-            onClick={() => setViewMode('timeline')}
-            className={`px-6 py-3 transition-colors ${viewMode === 'timeline' ? 'bg-[var(--sc-text)] text-[var(--sc-bg)]' : 'sc-border border hover:opacity-50'}`}
-          >
-            [ 日期 ]
-          </button>
-          <button 
-            onClick={() => setViewMode('category')}
-            className={`px-6 py-3 transition-colors ${viewMode === 'category' ? 'bg-[var(--sc-text)] text-[var(--sc-bg)]' : 'sc-border border hover:opacity-50'}`}
-          >
-            [ 标签 ]
-          </button>
+        {/* 切换按钮 + 底部信息 */}
+        <div className="hero-bottom-content mt-6 md:mt-8 flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8 opacity-0">
+          <div className="flex flex-wrap items-center gap-4 shrink-0 font-mono text-xs md:text-sm font-bold uppercase tracking-widest">
+            <button 
+              onClick={() => setViewMode('timeline')}
+              className={`px-6 py-3 transition-colors ${viewMode === 'timeline' ? 'bg-[var(--sc-text)] text-[var(--sc-bg)]' : 'sc-border border hover:opacity-50'}`}
+            >
+              [ 日期 ]
+            </button>
+            <button 
+              onClick={() => setViewMode('category')}
+              className={`px-6 py-3 transition-colors ${viewMode === 'category' ? 'bg-[var(--sc-text)] text-[var(--sc-bg)]' : 'sc-border border hover:opacity-50'}`}
+            >
+              [ 标签 ]
+            </button>
+          </div>
+          <Link href="/blog" className="text-xs md:text-sm font-black tracking-widest leading-tight uppercase hover:opacity-50 transition-opacity">
+            [ ← RETURN TO LOGS ]
+          </Link>
         </div>
-      </div>
+      </section>
 
-      {/* 内容区域：Framer Motion 动画切换 */}
-      <AnimatePresence mode="wait">
-        
-        {/* ==================================== */}
-        {/* 视角 1：时间线 (Timeline) */}
-        {/* ==================================== */}
-        {viewMode === 'timeline' && (
-          <motion.div
-            key="timeline"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          >
-            {Object.keys(timelineData).sort((a, b) => Number(b) - Number(a)).map(year => (
-              <div key={year} className="mb-24 md:mb-32 flex flex-col lg:flex-row gap-8 lg:gap-24 relative">
-                
-                {/* 年份侧边栏 (巨型年份悬浮效果) */}
-                <div className="lg:w-1/4 shrink-0 relative">
-                  <div className="sticky top-32">
-                    <h2 className="text-6xl md:text-[8rem] lg:text-[10rem] font-black tracking-tighter leading-none opacity-10" style={{ WebkitTextStroke: '2px var(--sc-text)', color: 'transparent' }}>
-                      {year}
-                    </h2>
-                    <div className="absolute top-1/2 -translate-y-1/2 left-4 text-2xl md:text-4xl font-black">
-                      {year}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 每月的文章列表 */}
-                <div className="lg:w-3/4 flex flex-col gap-16">
-                  {Object.keys(timelineData[year]).map(month => (
-                    <div key={month}>
-                      <h3 className="font-mono text-sm font-bold uppercase tracking-widest opacity-50 mb-6 sc-border border-l-4 pl-4">
-                        / {month}
-                      </h3>
-                      <div className="flex flex-col sc-border border-t">
-                        {timelineData[year][month].map(post => (
-                          <PostItem key={post.id} post={post} />
-                        ))}
+      {/* ==================== 2. 内容列表 ==================== */}
+      <section className="relative pt-6 pb-20 px-6 lg:px-12 bg-[var(--sc-bg)] transition-colors duration-700">
+        <div className="max-w-[1600px] mx-auto w-full">
+          <AnimatePresence mode="wait">
+            
+            {/* ==================================== */}
+            {/* 视角 1：时间线 (Timeline) */}
+            {/* ==================================== */}
+            {viewMode === 'timeline' && (
+              <motion.div
+                key="timeline"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              >
+                {Object.keys(timelineData).sort((a, b) => Number(b) - Number(a)).map(year => (
+                  <div key={year} className="content-block mb-24 md:mb-32 flex flex-col lg:flex-row gap-8 lg:gap-24 relative">
+                    
+                    {/* 年份侧边栏 (巨型年份悬浮效果) */}
+                    <div className="lg:w-1/4 shrink-0 relative">
+                      <div className="sticky top-32">
+                        <h2 className="text-6xl md:text-[8rem] lg:text-[10rem] font-black tracking-tighter leading-none opacity-10" style={{ WebkitTextStroke: '2px var(--sc-text)', color: 'transparent' }}>
+                          {year}
+                        </h2>
+                        <div className="absolute top-1/2 -translate-y-1/2 left-4 text-2xl md:text-4xl font-black">
+                          {year}
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
 
-              </div>
-            ))}
-          </motion.div>
-        )}
+                    {/* 每月的文章列表 */}
+                    <div className="lg:w-3/4 flex flex-col gap-16">
+                      {Object.keys(timelineData[year]).map(month => (
+                        <div key={month}>
+                          <h3 className="font-mono text-sm font-bold uppercase tracking-widest opacity-50 mb-6 sc-border border-l-4 pl-4">
+                            / {month}
+                          </h3>
+                          <div className="flex flex-col sc-border border-t">
+                            {timelineData[year][month].map(post => (
+                              <PostItem key={post.id} post={post} />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
 
-        {/* ==================================== */}
-        {/* 视角 2：分类 (Category) */}
-        {/* ==================================== */}
-        {viewMode === 'category' && (
-          <motion.div
-            key="category"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col gap-24 md:gap-32"
-          >
-            {Object.keys(categoryData).sort().map(category => (
-              <div key={category} className="flex flex-col">
-                
-                {/* 分类标题栏 */}
-                <div className="flex items-baseline justify-between border-b-[6px] sc-border pb-4 mb-8">
-                  <h2 className="text-4xl md:text-7xl font-black uppercase tracking-tighter">
-                    {category}
-                  </h2>
-                  <span className="font-mono text-lg md:text-2xl font-bold opacity-30">
-                    ({categoryData[category].length})
-                  </span>
-                </div>
+                  </div>
+                ))}
+              </motion.div>
+            )}
 
-                {/* 分类下的文章列表 */}
-                <div className="flex flex-col">
-                  {categoryData[category].map(post => (
-                    <PostItem key={post.id} post={post} />
-                  ))}
-                </div>
+            {/* ==================================== */}
+            {/* 视角 2：分类 (Category) */}
+            {/* ==================================== */}
+            {viewMode === 'category' && (
+              <motion.div
+                key="category"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="flex flex-col gap-24 md:gap-32"
+              >
+                {Object.keys(categoryData).sort().map(category => (
+                  <div key={category} className="content-block flex flex-col">
+                    
+                    {/* 分类标题栏 */}
+                    <div className="flex items-baseline justify-between border-b-[6px] sc-border pb-4 mb-8">
+                      <h2 className="text-4xl md:text-7xl font-black uppercase tracking-tighter">
+                        {category}
+                      </h2>
+                      <span className="font-mono text-lg md:text-2xl font-bold opacity-30">
+                        ({categoryData[category].length})
+                      </span>
+                    </div>
 
-              </div>
-              
-            ))}
-          </motion.div>
-        )}
+                    {/* 分类下的文章列表 */}
+                    <div className="flex flex-col">
+                      {categoryData[category].map(post => (
+                        <PostItem key={post.id} post={post} />
+                      ))}
+                    </div>
 
-      </AnimatePresence>
-    </main>
-    
+                  </div>
+                  
+                ))}
+              </motion.div>
+            )}
+
+          </AnimatePresence>
+        </div>
+      </section>
+
+      <Footer />
+    </>
   );
 }

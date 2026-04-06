@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import StudioLayout from '@/components/StudioLayout';
+import BlogArchiveClientWrapper from '@/app/blog/BlogArchiveClientWrapper';
 import ArchiveClient from './ArchiveClient';
 
 export const dynamic = 'force-dynamic';
@@ -34,8 +34,8 @@ export default async function ArchivePage() {
   });
 
   return (
-    <StudioLayout>
+    <BlogArchiveClientWrapper postsCount={formattedPosts.length} lastUpdated="N/A">
       <ArchiveClient posts={formattedPosts} />
-    </StudioLayout>
+    </BlogArchiveClientWrapper>
   );
 }
