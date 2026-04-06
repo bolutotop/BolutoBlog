@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-// 🚀 引入 framer-motion 处理丝滑展开动画
 import { motion, AnimatePresence } from 'framer-motion';
+import { siteConfig } from '@/config/site';
 
 interface LeftSidebarProps {
   categories: string[];
@@ -34,10 +34,10 @@ export default function LeftSidebar({ categories }: LeftSidebarProps) {
       {/* 1. 个人信息区 */}
       <div className="pointer-events-auto">
         <div className="w-16 h-16 2xl:w-20 2xl:h-20 rounded-full overflow-hidden mb-5 sc-border border-2">
-          <img src="/uploads/1774537145969-_20260326225851.jpg" alt="Zhihui" className="w-full h-full object-cover" />
+          <img src={siteConfig.avatar} alt={siteConfig.name} className="w-full h-full object-cover" />
         </div>
-        <h3 className="font-black uppercase text-[clamp(1.25rem,1.5vw,1.75rem)] leading-none tracking-tight">Zhihui</h3>
-        <p className="text-[10px] 2xl:text-xs font-bold mt-2 uppercase tracking-widest opacity-50">A programming enthusiast</p>
+        <h3 className="font-black uppercase text-[clamp(1.25rem,1.5vw,1.75rem)] leading-none tracking-tight">{siteConfig.name}</h3>
+        <p className="text-[10px] 2xl:text-xs font-bold mt-2 uppercase tracking-widest opacity-50">{siteConfig.tagline}</p>
       </div>
 
       {/* 2. 动态分类标签渲染区 */}

@@ -2,8 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-// 🚀 引入 framer-motion
 import { motion, AnimatePresence } from 'framer-motion';
+import { siteConfig } from '@/config/site';
 
 interface MobileMenuProps {
   isMobileMenuOpen: boolean;
@@ -68,11 +68,11 @@ export default function MobileMenu({
               {/* 个人信息 */}
               <div className="flex items-center gap-5 sc-border border-b pb-6">
                 <div className="w-14 h-14 rounded-full overflow-hidden sc-border border-2 shrink-0">
-                  <img src="/uploads/1774537145969-_20260326225851.jpg" alt="Zhihui" className="w-full h-full object-cover" />
+                  <img src={siteConfig.avatar} alt={siteConfig.name} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <h3 className="font-black uppercase text-xl leading-none tracking-tight">Zhihui</h3>
-                  <p className="text-[10px] font-bold mt-1 uppercase tracking-widest opacity-50">A programming enthusiast</p>
+                  <h3 className="font-black uppercase text-xl leading-none tracking-tight">{siteConfig.name}</h3>
+                  <p className="text-[10px] font-bold mt-1 uppercase tracking-widest opacity-50">{siteConfig.tagline}</p>
                 </div>
               </div>
 

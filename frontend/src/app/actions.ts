@@ -189,6 +189,7 @@ export async function searchPostsAction(query: string) {
         published: true,
         OR: [
           { title: { contains: query } },
+          { content: { contains: query } },
           { category: { contains: query } }
         ]
       },

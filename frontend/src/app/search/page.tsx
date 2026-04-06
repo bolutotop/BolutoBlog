@@ -2,27 +2,15 @@ import React from 'react';
 import Link from 'next/link';
 import prisma from '@/lib/prisma';
 
-// 借用你写好的样式组件
 import BlogArchiveClientWrapper from '@/app/blog/BlogArchiveClientWrapper';
 import PostLayoutSwitcher from '@/components/blog/PostLayoutSwitcher';
 import PaginationWidget from '@/components/blog/PaginationWidget';
 import Footer from '@/components/Footer';
-const POSTS_PER_PAGE = 5;
+import SplitText from '@/components/SplitText';
+import { formatDate } from '@/lib/utils';
+import { siteConfig } from '@/config/site';
 
-// 巨型标题文字切割组件
-const SplitText = ({ text, className = "" }: { text: string, className?: string }) => (
-  <div className={`flex flex-wrap overflow-hidden pb-4 -mb-4 ${className}`}>
-    {text.split('').map((char, i) => (
-      <span
-        key={i}
-        className="hero-char inline-block translate-y-[150%] rotate-12 opacity-0"
-        style={{ whiteSpace: 'pre' }}
-      >
-        {char}
-      </span>
-    ))}
-  </div>
-);
+const POSTS_PER_PAGE = 5;
 
 export default async function SearchResultsPage({
   searchParams,
@@ -61,10 +49,7 @@ export default async function SearchResultsPage({
   ]);
   const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
 
-  // 日期格式化
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  };
+
 
   // 格式化搜索结果文章列表
   const gridPosts = posts.map((post, index) => {
@@ -77,7 +62,7 @@ export default async function SearchResultsPage({
       category: post.category || 'Uncategorized',
       date: formatDate(post.createdAt),
       excerpt: post.content.substring(0, 120) + '...',
-      image: post.coverImage || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+      image: post.coverImage || siteConfig.defaultCoverImage,
     };
   });
 

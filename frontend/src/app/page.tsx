@@ -7,29 +7,56 @@ import Link from 'next/link';
 import StudioLayout from '@/components/StudioLayout';
 import { getHomePageConfigAction } from '@/app/actions';
 import Footer from '@/components/Footer';
+import SplitText from '@/components/SplitText';
+
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-// 专门用于 Hero 区域巨型标题的文字切割组件
-const SplitText = ({ text, className = "" }: { text: string, className?: string }) => (
-  <div className={`flex overflow-hidden pb-4 -mb-4 ${className}`}>
-    {text.split('').map((char, i) => (
-      <span 
-        key={i} 
-        className="hero-char inline-block translate-y-[150%] rotate-12 opacity-0" 
-        style={{ whiteSpace: 'pre' }}
-      >
-        {char}
-      </span>
-    ))}
-  </div>
-);
+// =========================================================================
+// 🔑 TypeScript 类型定义
+// =========================================================================
+interface ContentBlock {
+  layout: 'left-img' | 'right-img' | 'center-img';
+  subtitle: string;
+  title: string;
+  desc: string;
+  tag: string;
+  imgSrc: string;
+  imgAlt: string;
+  imgWrapperClass: string;
+  textWrapperClass: string;
+  imgContainerClass: string;
+  imgClass: string;
+}
+
+interface PageSection {
+  id: string;
+  title: string;
+  className: string;
+  isDarkTheme: boolean;
+  hideSidebars: boolean;
+  blocks: ContentBlock[];
+}
+
+interface PageData {
+  hero: {
+    titles: string[];
+    subtitle: string;
+    btnText: string;
+    btnLink: string;
+  };
+  vision: {
+    title: string;
+    image: string;
+  };
+  sections: PageSection[];
+}
 
 // =========================================================================
 // 🚀 默认兜底数据 (当数据库为空或请求失败时使用，保证页面绝不崩溃)
 // =========================================================================
-const DEFAULT_PAGE_DATA = {
+const DEFAULT_PAGE_DATA: PageData = {
   hero: {
     titles: ["ZHIHUI", "CREATIVE", "STUDIO"],
     subtitle: "Breaking grids. Defying templates. Pure uncompromising digital architecture.",
@@ -230,7 +257,7 @@ export default function ShowcasePage() {
   const [isReadyToAnimate, setIsReadyToAnimate] = useState(false);
   
   // 🚀 核心状态：用于存储从数据库抓取的动态数据
-  const [pageData, setPageData] = useState<any>(null);
+  const [pageData, setPageData] = useState<PageData | null>(null);
 
   // 🚀 初始化抓取数据
   useEffect(() => {
@@ -277,8 +304,8 @@ export default function ShowcasePage() {
       gsap.to('.text-mask-bg', { backgroundPosition: '50% 100%', ease: 'none', scrollTrigger: { trigger: '.text-mask-section', start: 'top bottom', end: 'bottom top', scrub: true } });
       gsap.to('.marquee-track', { xPercent: -50, repeat: -1, duration: 15, ease: 'none' });
       
-      const darkSections = pageData.sections.filter((s: any) => s.isDarkTheme).map((s: any) => `.${s.className}`);
-      const hideSidebarSections = pageData.sections.filter((s: any) => s.hideSidebars).map((s: any) => `.${s.className}`);
+      const darkSections = pageData.sections.filter((s: PageSection) => s.isDarkTheme).map((s: PageSection) => `.${s.className}`);
+      const hideSidebarSections = pageData.sections.filter((s: PageSection) => s.hideSidebars).map((s: PageSection) => `.${s.className}`);
 
       darkSections.forEach((section: string) => {
         ScrollTrigger.create({
@@ -338,7 +365,7 @@ export default function ShowcasePage() {
     return <div className="min-h-screen bg-[var(--sc-bg)]"></div>;
   }
 
-  const dynamicMarqueeString = `ZHIHUI · ${pageData.sections.map((s: any) => s.title).join(' · ')} · `;
+   const dynamicMarqueeString = `ZHIHUI · ${pageData.sections.map((s: PageSection) => s.title).join(' · ')} · `;
 
   return (
     <StudioLayout>
@@ -394,7 +421,7 @@ export default function ShowcasePage() {
       </section>
 
       {/* ==================== 3. 动态渲染所有 Sections ==================== */}
-      {pageData.sections.map((section: any, secIdx: number) => (
+      {pageData.sections.map((section: PageSection, secIdx: number) => (
         <section key={section.id || secIdx} className={`${section.className} relative ${secIdx === 0 ? 'pt-8 pb-16 md:py-32 mt-0 md:mt-20' : 'py-32'} px-6 lg:px-12 mt-12`}>
           
           <div className={`stroke-overlap-text absolute ${secIdx % 2 === 0 ? 'top-[2%] md:top-[5%] left-[5%]' : 'top-[10%] right-[5%]'} text-[15vw] font-black uppercase tracking-tighter stroke-text z-0 pointer-events-none opacity-20 whitespace-nowrap`}>
@@ -402,7 +429,7 @@ export default function ShowcasePage() {
           </div>
 
           <div className="relative z-10 flex flex-col gap-12 md:gap-48 mt-6 md:mt-20 max-w-[1600px] mx-auto w-full">
-            {section.blocks.map((block: any, bIdx: number) => {
+            {section.blocks.map((block: ContentBlock, bIdx: number) => {
               
               if (block.layout === 'left-img') {
                 return (
