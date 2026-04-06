@@ -1,12 +1,7 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/container-queries";
-/* 新增下面这一行启用 prose 类名 */
 @plugin "@tailwindcss/typography";
-
-@theme {
-  /* 你的变量配置保持不变... */
-}
 
 /* 在你的全局 CSS 文件中添加 */
 .custom-scrollbar::-webkit-scrollbar {

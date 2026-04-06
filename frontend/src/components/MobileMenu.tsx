@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { siteConfig } from '@/config/site';
 
@@ -68,7 +69,7 @@ export default function MobileMenu({
               {/* 个人信息 */}
               <div className="flex items-center gap-5 sc-border border-b pb-6">
                 <div className="w-14 h-14 rounded-full overflow-hidden sc-border border-2 shrink-0">
-                  <img src={siteConfig.avatar} alt={siteConfig.name} className="w-full h-full object-cover" />
+                  <Image src={siteConfig.avatar} alt={siteConfig.name} width={56} height={56} className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <h3 className="font-black uppercase text-xl leading-none tracking-tight">{siteConfig.name}</h3>

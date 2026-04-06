@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { siteConfig } from '@/config/site';
 
@@ -34,7 +35,7 @@ export default function LeftSidebar({ categories }: LeftSidebarProps) {
       {/* 1. 个人信息区 */}
       <div className="pointer-events-auto">
         <div className="w-16 h-16 2xl:w-20 2xl:h-20 rounded-full overflow-hidden mb-5 sc-border border-2">
-          <img src={siteConfig.avatar} alt={siteConfig.name} className="w-full h-full object-cover" />
+          <Image src={siteConfig.avatar} alt={siteConfig.name} width={80} height={80} className="w-full h-full object-cover" />
         </div>
         <h3 className="font-black uppercase text-[clamp(1.25rem,1.5vw,1.75rem)] leading-none tracking-tight">{siteConfig.name}</h3>
         <p className="text-[10px] 2xl:text-xs font-bold mt-2 uppercase tracking-widest opacity-50">{siteConfig.tagline}</p>

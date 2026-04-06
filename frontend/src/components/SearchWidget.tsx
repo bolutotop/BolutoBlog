@@ -132,7 +132,7 @@ export default function SearchWidget({
 <div 
           className={`
             /* 📱 移动端：强制屏幕物理居中 (fixed + mx-auto)，完美避开动画冲突 */
-            fixed top-[60px] left-40 right-0 mx-auto w-[90vw] max-w-[300px]
+            fixed top-[60px] left-0 right-0 mx-auto w-[90vw] max-w-[300px]
             
             /* 💻 PC端：绝对不碰！保持你的左边对齐 */
             md:absolute md:top-[120%] md:left-0 md:right-auto md:mx-0 md:w-[400px] 
