@@ -5,7 +5,7 @@ import gsap from 'gsap';
 import { getCategoriesAction } from '@/app/actions';
 import { ReactLenis } from '@studio-freight/react-lenis';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion'; 
+import { motion, AnimatePresence } from 'framer-motion';
 
 import LeftSidebar from './LeftSidebar';
 import RightSidebar from './RightSidebar';
@@ -16,14 +16,14 @@ const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffec
 
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
   const [dateInfo, setDateInfo] = useState({ day: '--', month: '--- 202X' });
-  const [bootStage, setBootStage] = useState(0); 
+  const [bootStage, setBootStage] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
   const preloaderRef = useRef<HTMLDivElement>(null);
   const counterRef = useRef<HTMLDivElement>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [showAllCats, setShowAllCats] = useState(false);
-  
+
   const lenisRef = useRef<any>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -41,13 +41,14 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 1000) {
-        setShowTopBtn(true);
-      } else {
-        setShowTopBtn(false);
-      }
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const docHeight = document.documentElement.scrollHeight;
+      // 距离页面底部 < 300px 时隐藏，避免遮挡 Footer
+      const nearBottom = (docHeight - scrollY - windowHeight) < 300;
+      setShowTopBtn(scrollY > 1000 && !nearBottom);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -93,7 +94,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
 
     if (hasBooted) {
       setBootStage(2);
-      return; 
+      return;
     }
 
     console.log(
@@ -113,7 +114,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
     const ctx = gsap.context(() => {
       const counter = { val: 0 };
       let isLoaded = false;
-      
+
       const updateCounter = () => {
         if (counterRef.current) {
           counterRef.current.innerText = Math.floor(counter.val).toString().padStart(3, '0') + "%";
@@ -146,17 +147,17 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
           ease: "power2.inOut",
           onUpdate: updateCounter
         }, 0)
-        .to(".boot-progress-bar", { width: "100%", duration: 0.5, ease: "power2.inOut" }, 0)
-        .call(() => {
-          setBootStage(1);
-          sessionStorage.setItem('system_booted_v1', 'true');
-        })
-        .to(preloaderRef.current, {
-          yPercent: -100,
-          duration: 1.2,
-          ease: "expo.inOut"
-        }, "+=0.1")
-        .call(() => setBootStage(2));
+          .to(".boot-progress-bar", { width: "100%", duration: 0.5, ease: "power2.inOut" }, 0)
+          .call(() => {
+            setBootStage(1);
+            sessionStorage.setItem('system_booted_v1', 'true');
+          })
+          .to(preloaderRef.current, {
+            yPercent: -100,
+            duration: 1.2,
+            ease: "expo.inOut"
+          }, "+=0.1")
+          .call(() => setBootStage(2));
       };
 
       if (document.readyState === 'complete') {
@@ -182,13 +183,13 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
 
   return (
     <ReactLenis ref={lenisRef} root options={{ lerp: 0.1, duration: 1.5, smoothWheel: true }}>
-      
-      <div 
-        ref={constraintsRef} 
-        id="showcase-root" 
+
+      <div
+        ref={constraintsRef}
+        id="showcase-root"
         className="showcase-theme min-h-screen font-sans selection:bg-black selection:text-white transition-colors duration-700 overflow-x-hidden relative"
       >
-        
+
         {bootStage < 2 && (
           <div ref={preloaderRef} className="fixed inset-0 z-[99999] bg-[#050505] text-white flex flex-col justify-between p-8 md:p-12 font-mono">
             <div className="text-xs font-bold uppercase tracking-widest opacity-50 flex justify-between">
@@ -203,16 +204,16 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
           </div>
         )}
 
-        <div 
-          className="transition-opacity duration-700 ease-in-out" 
-          style={{ 
-            opacity: bootStage >= 1 ? 1 : 0, 
-            pointerEvents: bootStage >= 1 ? 'auto' : 'none' 
+        <div
+          className="transition-opacity duration-700 ease-in-out"
+          style={{
+            opacity: bootStage >= 1 ? 1 : 0,
+            pointerEvents: bootStage >= 1 ? 'auto' : 'none'
           }}
         >
-          <Header 
-            isMobileMenuOpen={isMobileMenuOpen} 
-            setIsMobileMenuOpen={setIsMobileMenuOpen} 
+          <Header
+            isMobileMenuOpen={isMobileMenuOpen}
+            setIsMobileMenuOpen={setIsMobileMenuOpen}
             dateInfo={dateInfo}
             categories={categories}
             showAllCats={showAllCats}
@@ -237,39 +238,39 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               exit={{ opacity: 0, scale: 0, rotate: 90 }}
               transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-              
+
               drag
               dragConstraints={constraintsRef}
               dragElastic={0.1}
               dragMomentum={false}
-              
+
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              
+
               onClick={scrollToTop}
-              
+
               className="fixed bottom-8 right-6 md:bottom-23 md:right-12 z-[9990] w-12 h-12 bg-[var(--sc-inverse-bg)] border-2 border-[var(--sc-inverse-bg)] text-[var(--sc-inverse-text)] flex items-center justify-center cursor-pointer shadow-2xl group overflow-hidden touch-none"
               aria-label="Scroll to top"
             >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                strokeWidth={3} 
-                stroke="currentColor" 
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={3}
+                stroke="currentColor"
                 className="w-6 h-6 relative z-10 group-hover:-translate-y-1 transition-transform duration-300"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" />
               </svg>
 
               <div className="absolute inset-0 bg-[var(--sc-bg)] origin-bottom scale-y-0 group-hover:scale-y-100 transition-transform duration-300 pointer-events-none" />
-              
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                strokeWidth={3} 
-                stroke="currentColor" 
+
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={3}
+                stroke="currentColor"
                 className="w-6 h-6 absolute z-10 text-[var(--sc-text)] opacity-0 group-hover:opacity-100 group-hover:-translate-y-1 transition-all duration-300"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" />
