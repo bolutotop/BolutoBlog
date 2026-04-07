@@ -216,7 +216,7 @@ const DEFAULT_PAGE_DATA: PageData = {
 export default function ShowcasePage() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isReadyToAnimate, setIsReadyToAnimate] = useState(false);
-  
+
   // 🚀 核心状态：用于存储从数据库抓取的动态数据
   const [pageData, setPageData] = useState<PageData | null>(null);
 
@@ -244,12 +244,26 @@ export default function ShowcasePage() {
     }
   }, []);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    e.currentTarget.style.setProperty('--x', `${x}px`);
-    e.currentTarget.style.setProperty('--y', `${y}px`);
+  const handleMagneticMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const btn = e.currentTarget;
+    const rect = btn.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    gsap.to(btn, {
+      x: x * 0.4,
+      y: y * 0.4,
+      duration: 0.6,
+      ease: "power3.out"
+    });
+  };
+
+  const handleMagneticLeave = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    gsap.to(e.currentTarget, {
+      x: 0,
+      y: 0,
+      duration: 1,
+      ease: "elastic.out(1, 0.3)"
+    });
   };
 
   useEffect(() => {
@@ -258,21 +272,21 @@ export default function ShowcasePage() {
     gsap.ticker.lagSmoothing(0);
 
     const ctx = gsap.context(() => {
-      
+
       gsap.to('.hero-char', { y: 0, rotation: 0, opacity: 1, stagger: 0.04, duration: 1.5, ease: 'elastic.out(1, 0.6)', delay: 0.2 });
       gsap.fromTo('.hero-bottom-content', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1.2, ease: 'expo.out', delay: 1.2 });
 
       gsap.to('.text-mask-bg', { backgroundPosition: '50% 100%', ease: 'none', scrollTrigger: { trigger: '.text-mask-section', start: 'top bottom', end: 'bottom top', scrub: true } });
       gsap.to('.marquee-track', { xPercent: -50, repeat: -1, duration: 15, ease: 'none' });
-      
+
       const darkSections = pageData.sections.filter((s: PageSection) => s.isDarkTheme).map((s: PageSection) => `.${s.className}`);
       const hideSidebarSections = pageData.sections.filter((s: PageSection) => s.hideSidebars).map((s: PageSection) => `.${s.className}`);
 
       darkSections.forEach((section: string) => {
         ScrollTrigger.create({
           trigger: section,
-          start: 'top 50%', 
-          end: 'bottom 50%', 
+          start: 'top 50%',
+          end: 'bottom 50%',
           onEnter: () => document.getElementById('showcase-root')?.classList.add('showcase-inverted'),
           onLeave: () => document.getElementById('showcase-root')?.classList.remove('showcase-inverted'),
           onEnterBack: () => document.getElementById('showcase-root')?.classList.add('showcase-inverted'),
@@ -290,11 +304,11 @@ export default function ShowcasePage() {
       });
 
       gsap.to('.stroke-overlap-text', { y: -300, ease: 'none', scrollTrigger: { trigger: '.overlap-section', start: 'top bottom', end: 'bottom top', scrub: true } });
-      
+
       const imageContainers = gsap.utils.toArray('.img-mask-container');
       imageContainers.forEach((container: any) => {
         const img = container.querySelector('.parallax-img');
-        gsap.fromTo(container, 
+        gsap.fromTo(container,
           { clipPath: 'polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%)' },
           { clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', ease: 'expo.out', duration: 1.5, scrollTrigger: { trigger: container, start: 'top 85%' } }
         );
@@ -303,8 +317,8 @@ export default function ShowcasePage() {
 
       const textBlocks = gsap.utils.toArray('.content-block');
       textBlocks.forEach((block: any) => {
-        gsap.fromTo(block, 
-          { y: 50, opacity: 0 }, 
+        gsap.fromTo(block,
+          { y: 50, opacity: 0 },
           { y: 0, opacity: 1, duration: 1, ease: 'expo.out', scrollTrigger: { trigger: block, start: 'top 85%' } }
         );
       });
@@ -315,9 +329,9 @@ export default function ShowcasePage() {
       ScrollTrigger.refresh();
     }, 500);
 
-    return () => { 
+    return () => {
       clearTimeout(timer);
-      ctx.revert(); 
+      ctx.revert();
     };
   }, [isReadyToAnimate, pageData]); // 🚀 依赖项加上 pageData
 
@@ -326,132 +340,200 @@ export default function ShowcasePage() {
     return <div className="min-h-screen bg-[var(--sc-bg)]"></div>;
   }
 
-   const dynamicMarqueeString = `ZHIHUI · ${pageData.sections.map((s: PageSection) => s.title).join(' · ')} · `;
+  const dynamicMarqueeString = `ZHIHUI · ${pageData.sections.map((s: PageSection) => s.title).join(' · ')} · `;
 
   return (
     <StudioLayout>
-    <main ref={setRef} className="overflow-x-hidden">
-      <style jsx global>{`
+      <main ref={setRef} className="overflow-x-hidden">
+        <style jsx global>{`
         .stroke-text { -webkit-text-stroke: 2px var(--sc-text); color: transparent; }
       `}</style>
-      
-      {/* ==================== 1. Hero 区域 ==================== */}
-      <section className="relative min-h-[70vh] lg:min-h-[85vh] flex flex-col justify-start px-6 lg:px-12 pt-28 md:pt-40 pb-20">
-        <div className="relative z-10">
-          {pageData.hero.titles.map((title: string, idx: number) => (
-            <div key={idx} className="uppercase font-black text-[clamp(4rem,11vw,16rem)] leading-[0.85] tracking-tighter text-[var(--sc-text)]">
-              <SplitText text={title} />
+
+        {/* ==================== 1. Hero 区域 (重构：高端抽象编辑美学) ==================== */}
+        <section className="relative min-h-[90vh] flex flex-col justify-center px-6 md:px-12 xl:px-8 2xl:px-20 py-24 bg-surface-container-lowest overflow-hidden">
+
+          {/* 背景层 (Artform Background) */}
+          <div className="absolute inset-0 pointer-events-none">
+            {/* 品牌色氛围光 */}
+            <div className="absolute top-[-10%] right-[-5%] w-[60%] h-[60%] rounded-full bg-secondary-container/10 blur-[120px]" />
+            <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[100px]" />
+
+            {/* 抽象水印字形 */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[45vw] font-headline font-black text-on-surface/[0.02] select-none leading-none -rotate-12">
+              Z
             </div>
-          ))}
-        </div>
 
-        <div className="hero-bottom-content mt-12 md:mt-16 flex flex-col md:flex-row md:items-center gap-8 md:gap-12 opacity-0">
-          <div className="text-xs md:text-sm font-bold tracking-widest leading-tight max-w-[280px] md:max-w-[400px] uppercase sc-border border-l-4 pl-4">
-            {pageData.hero.subtitle}
-          </div>
-          <Link 
-            href={pageData.hero.btnLink} 
-            onMouseMove={handleMouseMove}
-            className="group relative overflow-hidden bg-[var(--sc-inverse-bg)] border border-[var(--sc-inverse-bg)] px-10 py-5 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 duration-500 ease-[cubic-bezier(0.8,0,0.2,1)] isolate w-fit"
-          >
-            <span className="relative z-10 font-black text-xs md:text-sm uppercase tracking-[0.2em] text-[var(--sc-inverse-text)] transition-colors duration-300 group-hover:text-transparent">{pageData.hero.btnText}</span>
-            <span className="relative z-10 font-black text-xs md:text-sm text-[var(--sc-inverse-text)] group-hover:translate-x-3 transition-transform duration-500 ease-[cubic-bezier(0.8,0,0.2,1)] ml-4">→</span>
-            <div 
-              className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-center px-10 group-hover:animate-[rippleSpread_1.2s_cubic-bezier(0.16,1,0.3,1)_forwards]"
-              style={{ clipPath: 'circle(0% at var(--x, 50%) var(--y, 50%))' }}
-            >
-              <span className="font-black text-xs md:text-sm uppercase tracking-[0.2em] text-[var(--sc-text)]">{pageData.hero.btnText}</span>
-              <span className="font-black text-xs md:text-sm text-[var(--sc-text)] group-hover:translate-x-3 transition-transform duration-500 ease-[cubic-bezier(0.8,0,0.2,1)] ml-4">→</span>
-            </div>
-          </Link>
-        </div>
-      </section>
-
-      {/* ==================== 2. VISION & 跑马灯 ==================== */}
-      <section className="text-mask-section h-[40vh] md:h-[60vh] flex flex-col items-center justify-center sc-border border-y relative z-10 bg-[var(--sc-bg)]">
-         <h2 className="text-mask-bg text-[20vw] xl:text-[15rem] font-black uppercase tracking-tighter leading-none m-0 p-0 w-full text-center" style={{ backgroundImage: `url('${pageData.vision.image}')`, backgroundSize: '120%', backgroundPosition: '50% 0%', WebkitBackgroundClip: 'text', color: 'transparent' }}>
-           {pageData.vision.title}
-         </h2>
-      </section>
-
-      <section className="py-8 md:py-12 overflow-hidden sc-bg-inverse flex whitespace-nowrap transform -rotate-2 scale-110 relative z-20 shadow-2xl mt-12 md:mt-20">
-        <div className="marquee-track flex gap-12 text-5xl md:text-7xl font-black uppercase tracking-tighter">
-           <span>{dynamicMarqueeString}</span>
-           <span>{dynamicMarqueeString}</span>
-        </div>
-      </section>
-
-      {/* ==================== 3. 动态渲染所有 Sections ==================== */}
-      {pageData.sections.map((section: PageSection, secIdx: number) => (
-        <section key={section.id || secIdx} className={`${section.className} relative ${secIdx === 0 ? 'pt-8 pb-16 md:py-32 mt-0 md:mt-20' : 'py-32'} px-6 lg:px-12 mt-12`}>
-          
-          <div className={`stroke-overlap-text absolute ${secIdx % 2 === 0 ? 'top-[2%] md:top-[5%] left-[5%]' : 'top-[10%] right-[5%]'} text-[15vw] font-black uppercase tracking-tighter stroke-text z-0 pointer-events-none opacity-20 whitespace-nowrap`}>
-            {section.title}
+            {/* 裁切标记 (Crop Marks) */}
+            <div className="absolute top-10 left-10 w-8 h-8 border-t border-l border-outline-variant/40" />
+            <div className="absolute top-10 right-10 w-8 h-8 border-t border-r border-outline-variant/40" />
+            <div className="absolute bottom-10 left-10 w-8 h-8 border-b border-l border-outline-variant/40" />
+            <div className="absolute bottom-10 right-10 w-8 h-8 border-b border-r border-outline-variant/40" />
           </div>
 
-          <div className="relative z-10 flex flex-col gap-12 md:gap-48 mt-6 md:mt-20 max-w-[1600px] mx-auto w-full">
-            {section.blocks.map((block: ContentBlock, bIdx: number) => {
-              
-              if (block.layout === 'left-img') {
-                return (
-                  <div key={bIdx} className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
-                    <div className={`order-1 ${block.imgWrapperClass}`}>
-                      <div className={`img-mask-container relative overflow-hidden ${block.imgContainerClass}`}>
-                        <img src={block.imgSrc} alt={block.imgAlt} className={`parallax-img absolute ${block.imgClass}`} />
-                      </div>
-                    </div>
-                    <div className={`content-block order-2 ${block.textWrapperClass}`}>
-                      <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">{block.subtitle}</div>
-                      <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">{block.title}</h3>
-                      <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6">{block.desc}</p>
-                      {block.tag && <div className="sc-border border-l-2 pl-4 text-[10px] uppercase tracking-widest font-bold opacity-60">{block.tag}</div>}
-                    </div>
-                  </div>
-                );
-              }
+          <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-start gap-16">
 
-              if (block.layout === 'right-img') {
-                return (
-                  <div key={bIdx} className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
-                    <div className={`content-block order-2 md:order-1 text-left md:text-right ${block.textWrapperClass}`}>
-                      <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">{block.subtitle}</div>
-                      <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">{block.title}</h3>
-                      <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6 md:ml-auto">{block.desc}</p>
-                      {block.tag && <div className="sc-border border-l-2 md:border-l-0 md:border-r-2 pl-4 md:pl-0 md:pr-4 text-[10px] uppercase tracking-widest font-bold opacity-60">{block.tag}</div>}
-                    </div>
-                    <div className={`order-1 md:order-2 ${block.imgWrapperClass}`}>
-                      <div className={`img-mask-container relative overflow-hidden ${block.imgContainerClass}`}>
-                        <img src={block.imgSrc} alt={block.imgAlt} className={`parallax-img absolute ${block.imgClass}`} />
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
+            {/* 顶部技术标注 */}
+            <div className="flex flex-col gap-2 font-mono text-[9px] font-bold tracking-[0.3em] uppercase text-on-surface-variant/40 animate-header-layout">
+              <div className="flex items-center gap-4">
+                <span className="text-primary/60">Ref. 00-24/01</span>
+                <div className="h-px w-24 bg-outline-variant/20" />
+              </div>
+              <span>Electronic Archive // Thoughts & Craft</span>
+            </div>
 
-              if (block.layout === 'center-img') {
-                return (
-                  <div key={bIdx} className="flex flex-col items-center text-center gap-12 w-full mt-12">
-                    <div className={`content-block ${block.textWrapperClass}`}>
-                      <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">{block.subtitle}</div>
-                      <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">{block.title}</h3>
-                      <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80">{block.desc}</p>
-                    </div>
-                    <div className={block.imgWrapperClass}>
-                      <div className={`img-mask-container relative overflow-hidden ${block.imgContainerClass}`}>
-                        <img src={block.imgSrc} alt={block.imgAlt} className={`parallax-img absolute ${block.imgClass}`} />
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
+            {/* 核心标题设计 (Typography as Art Object) */}
+            <div className="w-full flex flex-col gap-0">
+              <div className="font-headline font-black text-on-surface text-[clamp(3rem,8vw,10.5rem)] leading-[0.8] tracking-tighter uppercase z-20">
+                <SplitText text={pageData.hero.titles[0] || "ZHIHUI"} />
+              </div>
 
-              return null;
-            })}
+              <div className="font-headline font-light italic text-on-surface-variant text-[clamp(2.5rem,7vw,9.5rem)] leading-[0.85] tracking-tight lowercase z-10 pl-[12%] py-2">
+                <SplitText text={pageData.hero.titles[1] || "creative"} />
+              </div>
+
+              <div className="font-sans font-black text-primary text-[clamp(2.5rem,7vw,9.5rem)] leading-[0.8] tracking-tight uppercase z-30 flex items-center gap-6">
+                <div className="h-[2px] w-[0.15em] bg-primary/20 hidden md:block" />
+                <SplitText text={pageData.hero.titles[2] || "STUDIO"} />
+                <span className="text-[12px] font-mono tracking-widest text-on-surface-variant/30 hidden lg:block">
+                  [V3.0_ARTIFACT]
+                </span>
+              </div>
+            </div>
+
+            {/* 底部排版块 (Minimalist & Balanced) */}
+            <div className="w-full flex flex-col md:flex-row md:items-end md:justify-between gap-8 md:gap-6 hero-bottom-content opacity-0">
+              <div className="border-l border-outline-variant/40 pl-6 py-2 max-w-md">
+                <p className="font-body text-sm md:text-base xl:text-lg leading-relaxed text-on-surface-variant font-light italic opacity-90">
+                  &ldquo;{pageData.hero.subtitle}&rdquo;
+                </p>
+                <div className="mt-6 flex gap-3">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-outline-variant/30" />
+                  ))}
+                </div>
+              </div>
+
+              <div className="shrink-0">
+                <Link
+                  href={pageData.hero.btnLink}
+                  onMouseMove={handleMagneticMove}
+                  onMouseLeave={handleMagneticLeave}
+                  className="group relative inline-flex items-center gap-5 px-6 py-4 border border-on-surface/5 hover:border-primary/30 transition-colors duration-700 bg-surface/50 backdrop-blur-sm overflow-hidden"
+                >
+                  <div className="relative z-10 flex flex-col overflow-hidden h-[20px]">
+                    <span className="font-body text-xs md:text-sm font-bold tracking-wider text-on-surface leading-[20px] transition-transform duration-500 group-hover:-translate-y-full">
+                      {pageData.hero.btnText || "阅读文章"}
+                    </span>
+                    <span className="font-body text-xs md:text-sm font-bold tracking-wider text-primary leading-[20px] transition-transform duration-500 group-hover:-translate-y-full">
+                      {pageData.hero.btnText || "阅读文章"}
+                    </span>
+                  </div>
+
+                  {/* 装饰性箭头 */}
+                  <div className="relative flex items-center gap-2">
+                    <div className="w-1 h-1 rounded-full bg-primary/40 group-hover:scale-[2] group-hover:bg-primary transition-all duration-500" />
+                    <svg className="w-4 h-4 text-on-surface/40 group-hover:text-primary group-hover:translate-x-1.5 transition-all duration-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+
+                  {/* 扫描线效果 */}
+                  <div className="absolute inset-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/20 to-transparent -translate-y-full group-hover:animate-scan" />
+
+                  {/* 背景微光 */}
+                  <div className="absolute inset-0 bg-primary opacity-0 group-hover:opacity-[0.03] transition-opacity duration-700" />
+                </Link>
+              </div>
+            </div>
+
           </div>
         </section>
-      ))}
-<Footer />
-    </main>
+
+        {/* ==================== 2. VISION & 跑马灯 ==================== */}
+        <section className="text-mask-section h-[40vh] md:h-[60vh] flex flex-col items-center justify-center sc-border border-y relative z-10 bg-[var(--sc-bg)]">
+          <h2 className="text-mask-bg text-[20vw] xl:text-[15rem] font-black uppercase tracking-tighter leading-none m-0 p-0 w-full text-center" style={{ backgroundImage: `url('${pageData.vision.image}')`, backgroundSize: '120%', backgroundPosition: '50% 0%', WebkitBackgroundClip: 'text', color: 'transparent' }}>
+            {pageData.vision.title}
+          </h2>
+        </section>
+
+        <section className="py-8 md:py-12 overflow-hidden sc-bg-inverse flex whitespace-nowrap transform -rotate-2 scale-110 relative z-20 shadow-2xl mt-12 md:mt-20">
+          <div className="marquee-track flex gap-12 text-5xl md:text-7xl font-black uppercase tracking-tighter">
+            <span>{dynamicMarqueeString}</span>
+            <span>{dynamicMarqueeString}</span>
+          </div>
+        </section>
+
+        {/* ==================== 3. 动态渲染所有 Sections ==================== */}
+        {pageData.sections.map((section: PageSection, secIdx: number) => (
+          <section key={section.id || secIdx} className={`${section.className} relative ${secIdx === 0 ? 'pt-8 pb-16 md:py-32 mt-0 md:mt-20' : 'py-32'} px-6 lg:px-12 mt-12`}>
+
+            <div className={`stroke-overlap-text absolute ${secIdx % 2 === 0 ? 'top-[2%] md:top-[5%] left-[5%]' : 'top-[10%] right-[5%]'} text-[15vw] font-black uppercase tracking-tighter stroke-text z-0 pointer-events-none opacity-20 whitespace-nowrap`}>
+              {section.title}
+            </div>
+
+            <div className="relative z-10 flex flex-col gap-12 md:gap-48 mt-6 md:mt-20 max-w-[1600px] mx-auto w-full">
+              {section.blocks.map((block: ContentBlock, bIdx: number) => {
+
+                if (block.layout === 'left-img') {
+                  return (
+                    <div key={bIdx} className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
+                      <div className={`order-1 ${block.imgWrapperClass}`}>
+                        <div className={`img-mask-container relative overflow-hidden ${block.imgContainerClass}`}>
+                          <img src={block.imgSrc} alt={block.imgAlt} className={`parallax-img absolute ${block.imgClass}`} />
+                        </div>
+                      </div>
+                      <div className={`content-block order-2 ${block.textWrapperClass}`}>
+                        <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">{block.subtitle}</div>
+                        <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">{block.title}</h3>
+                        <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6">{block.desc}</p>
+                        {block.tag && <div className="sc-border border-l-2 pl-4 text-[10px] uppercase tracking-widest font-bold opacity-60">{block.tag}</div>}
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (block.layout === 'right-img') {
+                  return (
+                    <div key={bIdx} className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
+                      <div className={`content-block order-2 md:order-1 text-left md:text-right ${block.textWrapperClass}`}>
+                        <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">{block.subtitle}</div>
+                        <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">{block.title}</h3>
+                        <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6 md:ml-auto">{block.desc}</p>
+                        {block.tag && <div className="sc-border border-l-2 md:border-l-0 md:border-r-2 pl-4 md:pl-0 md:pr-4 text-[10px] uppercase tracking-widest font-bold opacity-60">{block.tag}</div>}
+                      </div>
+                      <div className={`order-1 md:order-2 ${block.imgWrapperClass}`}>
+                        <div className={`img-mask-container relative overflow-hidden ${block.imgContainerClass}`}>
+                          <img src={block.imgSrc} alt={block.imgAlt} className={`parallax-img absolute ${block.imgClass}`} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (block.layout === 'center-img') {
+                  return (
+                    <div key={bIdx} className="flex flex-col items-center text-center gap-12 w-full mt-12">
+                      <div className={`content-block ${block.textWrapperClass}`}>
+                        <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">{block.subtitle}</div>
+                        <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">{block.title}</h3>
+                        <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80">{block.desc}</p>
+                      </div>
+                      <div className={block.imgWrapperClass}>
+                        <div className={`img-mask-container relative overflow-hidden ${block.imgContainerClass}`}>
+                          <img src={block.imgSrc} alt={block.imgAlt} className={`parallax-img absolute ${block.imgClass}`} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return null;
+              })}
+            </div>
+          </section>
+        ))}
+        <Footer />
+      </main>
     </StudioLayout>
   );
 }

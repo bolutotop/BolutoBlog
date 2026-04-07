@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Newsreader } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react"
+
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["300", "400", "600", "800"],
+  weight: ["300", "400", "500", "600", "800"],
   variable: "--font-inter", 
+});
+
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  style: ['normal', 'italic'],
+  variable: "--font-newsreader",
 });
 
 export const metadata: Metadata = {
@@ -46,7 +53,7 @@ export default function RootLayout({
   return (
     // 🔴 核心修复：移除 dark: 类名，suppressHydrationWarning 忽略插件注入的 class
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans selection:bg-black selection:text-white bg-white text-gray-900`}>
+      <body className={`${inter.variable} ${newsreader.variable} font-body bg-background text-on-background selection:bg-primary/20 selection:text-on-background antialiased`}>
         <SessionProvider>
 {children}
         </SessionProvider>
