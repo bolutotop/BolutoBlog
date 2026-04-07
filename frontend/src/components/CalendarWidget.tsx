@@ -104,29 +104,73 @@ useEffect(() => {
   return (
     <div className={`relative ${isMobile ? 'max-w-[260px] mx-auto' : 'w-full'}`}>
       
-      <div className={`flex justify-between items-center shrink-0 ${isMobile ? 'mb-4' : 'mb-6'}`}>
-        <span className={`font-black uppercase tracking-widest opacity-50 ${isMobile ? 'text-[10px]' : 'text-[10px] 2xl:text-xs'}`}>时间表</span>
-        <div className="flex items-center gap-3 relative z-30">
-          <button onClick={handlePrevMonth} className="w-5 h-5 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity sc-border border hover:bg-[var(--sc-text)]/10"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg></button>
-          <span className={`font-mono font-bold w-[4.5rem] text-center ${isMobile ? 'text-[10px]' : 'text-[10px] 2xl:text-xs'}`}>{year}.{String(month + 1).padStart(2, '0')}</span>
-          <button onClick={handleNextMonth} className="w-5 h-5 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity sc-border border hover:bg-[var(--sc-text)]/10"><svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></button>
+      <div className={`flex justify-between items-end shrink-0 ${isMobile ? 'mb-6' : 'mb-8'}`}>
+        <div className="flex flex-col gap-1">
+          <span className={`font-mono font-bold uppercase tracking-[0.3em] opacity-30 text-[7px] 2xl:text-[8px]`}>REF_CAL.INDEX</span>
+          <span className={`font-display italic font-bold tracking-tight ${isMobile ? 'text-2xl' : 'text-3xl 2xl:text-4xl'}`}>
+            {currentDate.toLocaleString('en-US', { month: 'long' })}
+          </span>
+        </div>
+        
+        <div className="flex items-center gap-4 relative z-30 pb-1">
+          <div className="flex items-center gap-1.5">
+            <button onClick={handlePrevMonth} className="w-5 h-5 flex items-center justify-center opacity-30 hover:opacity-100 transition-all hover:bg-on-surface/5 rounded-full"><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg></button>
+            <span className="font-mono text-[9px] 2xl:text-[10px] opacity-40 font-bold tracking-widest">{year}</span>
+            <button onClick={handleNextMonth} className="w-5 h-5 flex items-center justify-center opacity-30 hover:opacity-100 transition-all hover:bg-on-surface/5 rounded-full"><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></button>
+          </div>
         </div>
       </div>
       
-      <div className={`grid grid-cols-7 gap-1 text-center font-mono font-bold uppercase opacity-40 shrink-0 ${isMobile ? 'text-[9px] mb-2' : 'text-[9px] 2xl:text-[10px] mb-4'}`}>{weekDays.map((d, i) => <div key={i}>{d}</div>)}</div>
+      <div className={`grid grid-cols-7 gap-1 text-center font-mono font-bold uppercase opacity-20 shrink-0 ${isMobile ? 'text-[7px] tracking-[0.3em] mb-4' : 'text-[8px] 2xl:text-[9px] tracking-[0.4em] mb-6'}`}>
+        {weekDays.map((d, i) => <div key={i}>{d}</div>)}
+      </div>
       
       <div className="relative overflow-hidden w-full">
         <AnimatePresence initial={false} mode="popLayout" custom={direction}>
-          <motion.div key={year + '-' + month} custom={direction} variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }} className={`grid grid-cols-7 font-mono w-full ${isMobile ? 'gap-y-2 gap-x-2 text-[10px]' : 'gap-y-2 gap-x-1 text-xs 2xl:text-sm'}`}>
+          <motion.div key={year + '-' + month} custom={direction} variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }} className="grid grid-cols-7 w-full gap-y-1 gap-x-1">
             {allCalendarCells.map((day, idx) => {
               if (day === null) return <div key={`blank-${idx}`} className="aspect-square" />;
+              
               const hasPost = calendarData[day];
               const realToday = new Date();
               const isToday = day === realToday.getDate() && month === realToday.getMonth() && year === realToday.getFullYear();
+              
               return (
-                <button key={day} onClick={() => hasPost && setActiveModal(hasPost)} onMouseMove={hasPost ? handleMouseMove : undefined} disabled={!hasPost} className={`relative aspect-square flex items-center justify-center transition-transform duration-300 ${hasPost ? `group overflow-hidden isolate bg-[var(--sc-inverse-bg)] shadow-md z-10 cursor-pointer ${isMobile ? 'active:scale-90' : 'hover:scale-110 hover:shadow-xl'}` : 'border-transparent opacity-40 cursor-default hover:opacity-100'} ${isToday && !hasPost ? 'sc-border border font-bold opacity-100' : ''}`}>
-                  {hasPost ? (<><span className="relative z-10 font-black text-[var(--sc-inverse-text)] transition-colors duration-300 group-hover:text-transparent">{day}</span><div className="absolute inset-0 bg-[var(--sc-bg)] pointer-events-none z-20 flex items-center justify-center group-hover:animate-[rippleSpread_0.6s_cubic-bezier(0.16,1,0.3,1)_forwards]" style={{ clipPath: 'circle(0% at var(--x, 50%) var(--y, 50%))' }}><span className="font-black text-[var(--sc-text)]">{day}</span></div></>) : (<span>{day}</span>)}
-                  {isToday && !hasPost && <div className={`absolute bg-green-500 rounded-full ${isMobile ? 'w-1 h-1 bottom-0.5' : '-bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1'}`} />}
+                <button
+                  key={day}
+                  onClick={() => hasPost && setActiveModal(hasPost)}
+                  onMouseMove={hasPost ? handleMouseMove : undefined}
+                  disabled={!hasPost}
+                  className={`
+                    relative aspect-square flex items-center justify-center transition-all duration-300 group
+                    ${hasPost ? 'cursor-pointer hover:font-black' : 'cursor-default'}
+                  `}
+                >
+                  {/* 今日高亮 - 艺术圈圈 */}
+                  {isToday && (
+                    <div className="absolute inset-0 flex items-center justify-center z-0">
+                      <div className="w-6 h-6 2xl:w-8 2xl:h-8 border border-on-surface rounded-full opacity-100 animate-[pulse_2s_infinite]" />
+                    </div>
+                  )}
+
+                  {/* 日期数字 */}
+                  <span className={`
+                    relative z-10 font-mono text-[9px] 2xl:text-[10px] tracking-tighter
+                    ${hasPost ? 'opacity-100 font-bold' : 'opacity-25'}
+                    ${isToday ? 'text-on-surface' : ''}
+                  `}>
+                    {day.toString().padStart(2, '0')}
+                  </span>
+
+                  {/* 有文章的标记 - 极细下划线 */}
+                  {hasPost && (
+                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-3 h-[1px] bg-on-surface/40 group-hover:w-5 transition-all duration-300" />
+                  )}
+
+                  {/* Hover 时的微弱底色 */}
+                  {hasPost && (
+                    <div className="absolute inset-0 bg-on-surface/[0.03] scale-0 group-hover:scale-100 rounded-full transition-transform duration-500 -z-10" />
+                  )}
                 </button>
               );
             })}
