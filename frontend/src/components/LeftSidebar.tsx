@@ -15,8 +15,8 @@ export default function LeftSidebar({ categories }: LeftSidebarProps) {
 
   // 🚀 提取渲染单个标签的逻辑，保持代码整洁 (DRY)
   const renderTag = (tag: string, index: number) => (
-    <Link 
-      key={tag} 
+    <Link
+      key={tag}
       href={`/blog/category/${encodeURIComponent(tag)}`}
       className="group flex items-center gap-3 cursor-pointer opacity-70 hover:opacity-100 transition-all hover:translate-x-2"
     >
@@ -31,7 +31,7 @@ export default function LeftSidebar({ categories }: LeftSidebarProps) {
 
   return (
     <aside id="sidebar-left" className="fixed left-0 top-0 h-screen w-64 2xl:w-80 sc-border border-r z-30 flex-col justify-between pt-28 pb-10 px-8 hidden xl:flex pointer-events-none animate-sidebar-left">
-      
+
       {/* 1. 个人信息区 */}
       <div className="pointer-events-auto">
         <div className="w-16 h-16 2xl:w-20 2xl:h-20 rounded-full overflow-hidden mb-5 sc-border border-2">
@@ -46,7 +46,7 @@ export default function LeftSidebar({ categories }: LeftSidebarProps) {
         <div className="text-[10px] 2xl:text-xs font-black uppercase tracking-widest mb-4 sc-border border-b pb-2 opacity-50">
           目录 / 标签
         </div>
-        
+
         {/* 🚀 核心结构修改：去掉外层的 gap，分别处理常驻和折叠区域，避免高度塌陷跳帧 */}
         <div className="flex flex-col font-mono text-xs 2xl:text-sm font-bold uppercase">
           {categories.length > 0 ? (
@@ -64,7 +64,7 @@ export default function LeftSidebar({ categories }: LeftSidebarProps) {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     // 使用与 Showcase 页面一致的高级曲线，手感极佳
-                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} 
+                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                     className="overflow-hidden"
                   >
                     {/* pt-3 巧妙地充当了新展开区域与上方常驻区域的间距 */}
@@ -77,7 +77,7 @@ export default function LeftSidebar({ categories }: LeftSidebarProps) {
 
               {/* 展开/收起 按钮 */}
               {categories.length > 5 && (
-                <button 
+                <button
                   onClick={() => setShowAllCats(!showAllCats)}
                   className="text-left mt-5 text-[10px] 2xl:text-xs font-black uppercase tracking-widest opacity-50 hover:opacity-100 transition-opacity w-fit"
                 >
@@ -90,7 +90,7 @@ export default function LeftSidebar({ categories }: LeftSidebarProps) {
           )}
         </div>
       </div>
-      
+
     </aside>
   );
 }

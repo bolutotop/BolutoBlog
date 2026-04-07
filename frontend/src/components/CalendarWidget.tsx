@@ -115,13 +115,13 @@ useEffect(() => {
         <div className="flex items-center gap-4 relative z-30 pb-1">
           <div className="flex items-center gap-1.5">
             <button onClick={handlePrevMonth} className="w-5 h-5 flex items-center justify-center opacity-30 hover:opacity-100 transition-all hover:bg-on-surface/5 rounded-full"><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg></button>
-            <span className="font-mono text-[9px] 2xl:text-[10px] opacity-40 font-bold tracking-widest">{year}</span>
+            <span className="font-mono text-[11px] 2xl:text-xs opacity-40 font-bold tracking-widest">{year}</span>
             <button onClick={handleNextMonth} className="w-5 h-5 flex items-center justify-center opacity-30 hover:opacity-100 transition-all hover:bg-on-surface/5 rounded-full"><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></button>
           </div>
         </div>
       </div>
       
-      <div className={`grid grid-cols-7 gap-1 text-center font-mono font-bold uppercase opacity-20 shrink-0 ${isMobile ? 'text-[7px] tracking-[0.3em] mb-4' : 'text-[8px] 2xl:text-[9px] tracking-[0.4em] mb-6'}`}>
+      <div className={`grid grid-cols-7 gap-1 text-center font-mono font-bold uppercase opacity-20 shrink-0 ${isMobile ? 'text-[9px] tracking-[0.2em] mb-4' : 'text-[9px] 2xl:text-[10px] tracking-[0.3em] mb-6'}`}>
         {weekDays.map((d, i) => <div key={i}>{d}</div>)}
       </div>
       
@@ -149,14 +149,14 @@ useEffect(() => {
                   {/* 今日高亮 - 艺术圈圈 */}
                   {isToday && (
                     <div className="absolute inset-0 flex items-center justify-center z-0">
-                      <div className="w-6 h-6 2xl:w-8 2xl:h-8 border border-on-surface rounded-full opacity-100 animate-[pulse_2s_infinite]" />
+                      <div className="w-7 h-7 2xl:w-9 2xl:h-9 border border-on-surface rounded-full opacity-100 animate-[pulse_2s_infinite]" />
                     </div>
                   )}
 
                   {/* 日期数字 */}
                   <span className={`
-                    relative z-10 font-mono text-[9px] 2xl:text-[10px] tracking-tighter
-                    ${hasPost ? 'opacity-100 font-bold' : 'opacity-25'}
+                    relative z-10 font-mono text-[11px] 2xl:text-xs tracking-tighter
+                    ${hasPost ? 'opacity-100 font-bold' : 'opacity-30'}
                     ${isToday ? 'text-on-surface' : ''}
                   `}>
                     {day.toString().padStart(2, '0')}
