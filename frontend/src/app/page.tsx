@@ -515,13 +515,13 @@ export default function ShowcasePage() {
 
         {/* ==================== 3. 动态渲染所有 Sections ==================== */}
         {pageData.sections.map((section: PageSection, secIdx: number) => (
-          <section key={section.id || secIdx} className={`${section.className} relative ${secIdx === 0 ? 'pt-8 pb-16 md:py-32 mt-0 md:mt-20' : 'py-32'} px-6 lg:px-12 mt-12`}>
+          <section key={section.id || secIdx} className={`${section.className} relative ${secIdx === 0 ? 'pt-12 pb-16 md:py-32 mt-10 md:mt-24' : 'py-8 md:py-32 mt-4 md:mt-12'} px-6 lg:px-12`}>
 
-            <div className={`stroke-overlap-text absolute ${secIdx % 2 === 0 ? 'top-[2%] md:top-[5%] left-[5%]' : 'top-[10%] right-[5%]'} text-[15vw] font-black uppercase tracking-tighter stroke-text z-0 pointer-events-none opacity-20 whitespace-nowrap`}>
+            <div className={`stroke-overlap-text absolute ${secIdx % 2 === 0 ? 'top-[5%] md:top-[5%] left-[5%]' : 'top-[8%] md:top-[10%] right-[5%]'} text-[18vw] font-black uppercase tracking-tighter stroke-text z-0 pointer-events-none opacity-[0.05] md:opacity-20 whitespace-nowrap`}>
               {section.title}
             </div>
 
-            <div className="relative z-10 flex flex-col gap-12 md:gap-48 mt-6 md:mt-20 max-w-[1600px] mx-auto w-full">
+            <div className="relative z-10 flex flex-col gap-6 md:gap-48 mt-4 md:mt-20 max-w-[1600px] mx-auto w-full">
               {section.blocks.map((block: ContentBlock, bIdx: number) => {
 
                 if (block.layout === 'left-img') {
