@@ -350,7 +350,7 @@ export default function ShowcasePage() {
       `}</style>
 
         {/* ==================== 1. Hero 区域 (重构：高端抽象编辑美学) ==================== */}
-        <section className="relative min-h-[90vh] flex flex-col justify-center px-6 md:px-12 xl:px-8 2xl:px-20 py-24 bg-surface-container-lowest overflow-hidden">
+        <section className="relative min-h-0 md:min-h-[90vh] flex flex-col justify-center px-4 md:px-12 xl:px-8 2xl:px-20 pt-24 pb-12 md:py-24 bg-surface-container-lowest overflow-hidden">
 
           {/* 背景层 (Artform Background) */}
           <div className="absolute inset-0 pointer-events-none">
@@ -359,23 +359,23 @@ export default function ShowcasePage() {
             <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[100px]" />
 
             {/* 抽象水印字形 */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[45vw] font-headline font-black text-on-surface/[0.02] select-none leading-none -rotate-12">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[70vw] md:text-[45vw] font-headline font-black text-on-surface/[0.03] select-none leading-none -rotate-12">
               Z
             </div>
 
-            {/* 裁切标记 (Crop Marks) */}
-            <div className="absolute top-10 left-10 w-8 h-8 border-t border-l border-outline-variant/40" />
-            <div className="absolute top-10 right-10 w-8 h-8 border-t border-r border-outline-variant/40" />
-            <div className="absolute bottom-10 left-10 w-8 h-8 border-b border-l border-outline-variant/40" />
-            <div className="absolute bottom-10 right-10 w-8 h-8 border-b border-r border-outline-variant/40" />
+            {/* 裁切标记 (Crop Marks) - 移动端隐藏 */}
+            <div className="hidden md:block absolute top-10 left-10 w-8 h-8 border-t border-l border-outline-variant/40" />
+            <div className="hidden md:block absolute top-10 right-10 w-8 h-8 border-t border-r border-outline-variant/40" />
+            <div className="hidden md:block absolute bottom-10 left-10 w-8 h-8 border-b border-l border-outline-variant/40" />
+            <div className="hidden md:block absolute bottom-10 right-10 w-8 h-8 border-b border-r border-outline-variant/40" />
           </div>
 
-          <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-start gap-10">
+          <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-start gap-6 md:gap-10">
 
             {/* 顶部技术标注 */}
             <div className="flex flex-col gap-2 font-mono text-[9px] font-bold tracking-[0.3em] uppercase text-on-surface-variant/40 animate-header-layout">
               <div className="flex items-center gap-4">
-                <span className="text-primary/60">Ref. 00-24/01</span>
+                <span className="text-primary/60">Ref. 00-26/04</span>
                 <div className="h-px w-24 bg-outline-variant/20" />
               </div>
               <span>Electronic Archive // Thoughts & Craft</span>
@@ -387,7 +387,7 @@ export default function ShowcasePage() {
                 <SplitText text={pageData.hero.titles[0] || "ZHIHUI"} />
               </div>
 
-              <div className="font-headline font-light italic text-on-surface-variant/60 text-[clamp(2.5rem,7vw,9.5rem)] leading-[0.85] tracking-tight lowercase z-10 pl-[12%] py-2">
+              <div className="font-headline font-light italic text-on-surface-variant/80 md:text-on-surface-variant/60 text-[clamp(2.5rem,7vw,9.5rem)] leading-[0.85] tracking-tight lowercase z-10 pl-[5%] md:pl-[12%] py-1 md:py-2">
                 <SplitText text={pageData.hero.titles[1] || "creative"} />
               </div>
 
@@ -400,15 +400,15 @@ export default function ShowcasePage() {
               </div>
             </div>
 
-            {/* 底部排版块 (Minimalist & Balanced) */}
-            <div className="w-full flex flex-col md:flex-row md:items-end md:justify-between gap-8 md:gap-6 hero-bottom-content opacity-0">
-              <div className="border-l-2 border-outline-variant/30 pl-6 py-2 max-w-md">
-                <p className="font-headline text-base md:text-lg xl:text-xl leading-relaxed text-on-surface-variant/80 font-light italic">
+            {/* 底部排版块 (Left-Right Layout) */}
+            <div className="w-full flex flex-row items-end justify-between gap-4 md:gap-6 hero-bottom-content opacity-0">
+              <div className="border-l-2 border-outline-variant/30 pl-4 md:pl-6 py-1 md:py-2 min-w-0 flex-1">
+                <p className="font-headline text-sm md:text-lg xl:text-xl leading-relaxed text-on-surface-variant/80 font-light italic">
                   &ldquo;{pageData.hero.subtitle}&rdquo;
                 </p>
-                <div className="mt-6 flex items-center gap-3">
-                  <div className="h-px w-12 bg-outline-variant/30" />
-                  <span className="text-[9px] font-mono font-bold tracking-[0.3em] uppercase text-on-surface-variant/30">EST. 2024</span>
+                <div className="mt-2 md:mt-6 flex items-center gap-2 md:gap-3">
+                  <div className="h-px w-6 md:w-12 bg-outline-variant/30" />
+                  <span className="text-[7px] md:text-[9px] font-mono font-bold tracking-[0.2em] md:tracking-[0.3em] uppercase text-on-surface-variant/30">EST. 2024</span>
                 </div>
               </div>
 
@@ -417,29 +417,24 @@ export default function ShowcasePage() {
                   href={pageData.hero.btnLink}
                   onMouseMove={handleMagneticMove}
                   onMouseLeave={handleMagneticLeave}
-                  className="group relative inline-flex items-center gap-6 px-8 py-5 border border-on-surface/8 hover:border-on-surface/20 transition-colors duration-700 bg-surface/50 backdrop-blur-sm overflow-hidden"
+                  className="group relative inline-flex items-center gap-3 md:gap-6 px-4 md:px-8 py-3 md:py-5 border border-on-surface/8 hover:border-on-surface/20 transition-colors duration-700 bg-surface/50 backdrop-blur-sm overflow-hidden"
                 >
-                  <div className="relative z-10 flex flex-col overflow-hidden h-[22px]">
-                    <span className="font-body text-sm font-bold tracking-[0.15em] text-on-surface leading-[22px] transition-transform duration-500 group-hover:-translate-y-full">
+                  <div className="relative z-10 flex flex-col overflow-hidden h-[20px] md:h-[22px]">
+                    <span className="font-body text-xs md:text-sm font-bold tracking-[0.1em] md:tracking-[0.15em] text-on-surface leading-[20px] md:leading-[22px] transition-transform duration-500 group-hover:-translate-y-full">
                       {pageData.hero.btnText || "阅读文章"}
                     </span>
-                    <span className="font-body text-sm font-bold tracking-[0.15em] text-on-surface leading-[22px] transition-transform duration-500 group-hover:-translate-y-full">
+                    <span className="font-body text-xs md:text-sm font-bold tracking-[0.1em] md:tracking-[0.15em] text-on-surface leading-[20px] md:leading-[22px] transition-transform duration-500 group-hover:-translate-y-full">
                       {pageData.hero.btnText || "阅读文章"}
                     </span>
                   </div>
 
-                  {/* 装饰性箭头 */}
-                  <div className="relative flex items-center gap-2">
-                    <div className="w-1 h-1 rounded-full bg-on-surface/30 group-hover:bg-on-surface transition-all duration-500" />
-                    <svg className="w-4 h-4 text-on-surface/30 group-hover:text-on-surface group-hover:translate-x-1.5 transition-all duration-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
+                  {/* 箭头 */}
+                  <svg className="w-4 h-4 text-on-surface/30 group-hover:text-on-surface group-hover:translate-x-1 transition-all duration-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12H19M19 12L13 6M19 12L13 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
 
                   {/* 扫描线效果 */}
                   <div className="absolute inset-0 w-full h-[1px] bg-gradient-to-r from-transparent via-on-surface/10 to-transparent -translate-y-full group-hover:animate-scan" />
-
-                  {/* 背景微光 */}
                   <div className="absolute inset-0 bg-on-surface opacity-0 group-hover:opacity-[0.03] transition-opacity duration-700" />
                 </Link>
               </div>
