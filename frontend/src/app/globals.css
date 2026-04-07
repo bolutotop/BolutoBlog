@@ -61,6 +61,7 @@
   --font-headline: var(--font-newsreader);
   --font-body: var(--font-inter);
   --font-label: var(--font-inter);
+  --font-display: var(--font-playfair);
 
   --animate-scan: scan 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   @keyframes scan {

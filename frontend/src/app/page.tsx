@@ -277,7 +277,21 @@ export default function ShowcasePage() {
       gsap.fromTo('.hero-bottom-content', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1.2, ease: 'expo.out', delay: 1.2 });
 
       gsap.to('.text-mask-bg', { backgroundPosition: '50% 100%', ease: 'none', scrollTrigger: { trigger: '.text-mask-section', start: 'top bottom', end: 'bottom top', scrub: true } });
+
+      // VISION 动态模糊：文字从模糊逐渐变清晰
+      gsap.fromTo('.text-mask-bg',
+        { filter: 'blur(12px)' },
+        { filter: 'blur(0px)', ease: 'none', scrollTrigger: { trigger: '.text-mask-section', start: 'top 80%', end: 'center center', scrub: true } }
+      );
       gsap.to('.marquee-track', { xPercent: -50, repeat: -1, duration: 15, ease: 'none' });
+
+      // 内容区块入场动画
+      gsap.utils.toArray('.content-block-img').forEach((el: any) => {
+        gsap.fromTo(el, { y: 80, opacity: 0 }, { y: 0, opacity: 1, duration: 1.2, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 90%', toggleActions: 'play none none none' } });
+      });
+      gsap.utils.toArray('.content-block-text').forEach((el: any) => {
+        gsap.fromTo(el, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 1, ease: 'power2.out', scrollTrigger: { trigger: el, start: 'top 85%', toggleActions: 'play none none none' } });
+      });
 
       const darkSections = pageData.sections.filter((s: PageSection) => s.isDarkTheme).map((s: PageSection) => `.${s.className}`);
       const hideSidebarSections = pageData.sections.filter((s: PageSection) => s.hideSidebars).map((s: PageSection) => `.${s.className}`);
@@ -340,7 +354,7 @@ export default function ShowcasePage() {
     return <div className="min-h-screen bg-[var(--sc-bg)]"></div>;
   }
 
-  const dynamicMarqueeString = `ZHIHUI · ${pageData.sections.map((s: PageSection) => s.title).join(' · ')} · `;
+  const dynamicMarqueeString = pageData.sections.map((s: PageSection) => s.title).join(' ✦ ') + ' ◆ ZHIHUI ◆ ' + pageData.sections.map((s: PageSection) => s.title).join(' ✦ ') + ' ◆ ';
 
   return (
     <StudioLayout>
@@ -444,10 +458,52 @@ export default function ShowcasePage() {
         </section>
 
         {/* ==================== 2. VISION & 跑马灯 ==================== */}
-        <section className="text-mask-section h-[40vh] md:h-[60vh] flex flex-col items-center justify-center sc-border border-y relative z-10 bg-[var(--sc-bg)]">
-          <h2 className="text-mask-bg text-[20vw] xl:text-[15rem] font-black uppercase tracking-tighter leading-none m-0 p-0 w-full text-center" style={{ backgroundImage: `url('${pageData.vision.image}')`, backgroundSize: '120%', backgroundPosition: '50% 0%', WebkitBackgroundClip: 'text', color: 'transparent' }}>
-            {pageData.vision.title}
-          </h2>
+        <section className="text-mask-section h-[40vh] md:h-[60vh] flex flex-col items-center justify-center sc-border border-y relative z-10 overflow-hidden bg-surface-container-lowest">
+
+          {/* 左上角章节编号 */}
+          <div className="absolute top-6 left-6 md:top-10 md:left-10 flex items-center gap-3 z-20">
+            <span className="text-[11px] font-mono font-bold tracking-[0.3em] uppercase text-on-surface-variant/25">02</span>
+            <div className="h-px w-8 bg-outline-variant/20" />
+            <span className="text-[9px] font-mono tracking-[0.2em] uppercase text-on-surface-variant/20 hidden md:inline">Perspective</span>
+          </div>
+
+          {/* 右下角坐标标注 */}
+          <div className="absolute bottom-6 right-6 md:bottom-10 md:right-10 z-20">
+            <span className="text-[9px] font-mono font-bold tracking-[0.2em] uppercase text-on-surface-variant/20">48.8566°N 2.3522°E</span>
+          </div>
+
+          {/* 主内容区 */}
+          <div className="relative z-10 flex flex-col items-center gap-4 md:gap-6 w-full px-4">
+            {/* 上方装饰线 */}
+            <div className="flex items-center gap-4 w-full max-w-2xl">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-outline-variant/20 to-transparent" />
+            </div>
+
+            {/* 模糊文字 - 动态模糊 */}
+            <h2
+              className="text-mask-bg text-[15vw] xl:text-[12rem] font-display italic font-bold tracking-tight leading-none m-0 p-0 w-full text-center"
+              style={{
+                backgroundImage: `url('${pageData.vision.image}')`,
+                backgroundSize: '120%',
+                backgroundPosition: '50% 0%',
+                WebkitBackgroundClip: 'text',
+                color: 'transparent',
+                filter: 'blur(8px)',
+              }}
+            >
+              {pageData.vision.title}
+            </h2>
+
+            {/* 下方副标题 + 装饰线 */}
+            <div className="flex items-center gap-4 w-full max-w-xl">
+              <div className="flex-1 h-px bg-outline-variant/15" />
+              <span className="text-[10px] md:text-xs font-mono tracking-[0.25em] uppercase text-on-surface-variant/30 whitespace-nowrap">
+                Seeing beyond the surface
+              </span>
+              <div className="flex-1 h-px bg-outline-variant/15" />
+            </div>
+          </div>
+
         </section>
 
         <section className="py-8 md:py-12 overflow-hidden sc-bg-inverse flex whitespace-nowrap transform -rotate-2 scale-110 relative z-20 shadow-2xl mt-12 md:mt-20">
@@ -472,11 +528,11 @@ export default function ShowcasePage() {
                   return (
                     <div key={bIdx} className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
                       <div className={`order-1 ${block.imgWrapperClass}`}>
-                        <div className={`img-mask-container relative overflow-hidden ${block.imgContainerClass}`}>
+                        <div className={`img-mask-container content-block-img relative overflow-hidden ${block.imgContainerClass}`}>
                           <img src={block.imgSrc} alt={block.imgAlt} className={`parallax-img absolute ${block.imgClass}`} />
                         </div>
                       </div>
-                      <div className={`content-block order-2 ${block.textWrapperClass}`}>
+                      <div className={`content-block content-block-text order-2 ${block.textWrapperClass}`}>
                         <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">{block.subtitle}</div>
                         <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">{block.title}</h3>
                         <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6">{block.desc}</p>
@@ -489,14 +545,14 @@ export default function ShowcasePage() {
                 if (block.layout === 'right-img') {
                   return (
                     <div key={bIdx} className="flex flex-col md:flex-row items-center gap-12 lg:gap-24">
-                      <div className={`content-block order-2 md:order-1 text-left md:text-right ${block.textWrapperClass}`}>
+                      <div className={`content-block content-block-text order-2 md:order-1 text-left md:text-right ${block.textWrapperClass}`}>
                         <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">{block.subtitle}</div>
                         <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">{block.title}</h3>
                         <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80 mb-6 md:ml-auto">{block.desc}</p>
                         {block.tag && <div className="sc-border border-l-2 md:border-l-0 md:border-r-2 pl-4 md:pl-0 md:pr-4 text-[10px] uppercase tracking-widest font-bold opacity-60">{block.tag}</div>}
                       </div>
                       <div className={`order-1 md:order-2 ${block.imgWrapperClass}`}>
-                        <div className={`img-mask-container relative overflow-hidden ${block.imgContainerClass}`}>
+                        <div className={`img-mask-container content-block-img relative overflow-hidden ${block.imgContainerClass}`}>
                           <img src={block.imgSrc} alt={block.imgAlt} className={`parallax-img absolute ${block.imgClass}`} />
                         </div>
                       </div>
@@ -507,7 +563,7 @@ export default function ShowcasePage() {
                 if (block.layout === 'center-img') {
                   return (
                     <div key={bIdx} className="flex flex-col items-center text-center gap-12 w-full mt-12">
-                      <div className={`content-block ${block.textWrapperClass}`}>
+                      <div className={`content-block content-block-text ${block.textWrapperClass}`}>
                         <div className="text-[10px] font-bold uppercase tracking-widest mb-4 opacity-60">{block.subtitle}</div>
                         <h3 className="text-[clamp(2rem,3.5vw,4.5rem)] font-black tracking-tight uppercase mb-6">{block.title}</h3>
                         <p className="text-[clamp(0.875rem,1.2vw,1.25rem)] font-medium leading-relaxed opacity-80">{block.desc}</p>
