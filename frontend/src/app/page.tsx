@@ -280,7 +280,7 @@ export default function ShowcasePage() {
 
       // VISION 动态模糊：文字从模糊逐渐变清晰
       gsap.fromTo('.text-mask-bg',
-        { filter: 'blur(12px)' },
+        { filter: 'blur(8px)' },
         { filter: 'blur(0px)', ease: 'none', scrollTrigger: { trigger: '.text-mask-section', start: 'top 80%', end: 'center center', scrub: true } }
       );
       gsap.to('.marquee-track', { xPercent: -50, repeat: -1, duration: 15, ease: 'none' });
@@ -458,30 +458,30 @@ export default function ShowcasePage() {
         </section>
 
         {/* ==================== 2. VISION & 跑马灯 ==================== */}
-        <section className="text-mask-section h-[40vh] md:h-[60vh] flex flex-col items-center justify-center sc-border border-y relative z-10 overflow-hidden bg-surface-container-lowest">
+        <section className="text-mask-section py-12 md:py-0 md:h-[60vh] flex flex-col items-center justify-center sc-border border-y relative z-10 overflow-hidden bg-surface-container-lowest">
 
-          {/* 左上角章节编号 */}
-          <div className="absolute top-6 left-6 md:top-10 md:left-10 flex items-center gap-3 z-20">
+          {/* 左上角章节编号 - 仅桌面 */}
+          <div className="absolute top-10 left-10 hidden md:flex items-center gap-3 z-20">
             <span className="text-[11px] font-mono font-bold tracking-[0.3em] uppercase text-on-surface-variant/25">02</span>
             <div className="h-px w-8 bg-outline-variant/20" />
-            <span className="text-[9px] font-mono tracking-[0.2em] uppercase text-on-surface-variant/20 hidden md:inline">Perspective</span>
+            <span className="text-[9px] font-mono tracking-[0.2em] uppercase text-on-surface-variant/20">Perspective</span>
           </div>
 
-          {/* 右下角坐标标注 */}
-          <div className="absolute bottom-6 right-6 md:bottom-10 md:right-10 z-20">
+          {/* 右下角坐标标注 - 仅桌面 */}
+          <div className="absolute bottom-10 right-10 hidden md:block z-20">
             <span className="text-[9px] font-mono font-bold tracking-[0.2em] uppercase text-on-surface-variant/20">48.8566°N 2.3522°E</span>
           </div>
 
           {/* 主内容区 */}
-          <div className="relative z-10 flex flex-col items-center gap-4 md:gap-6 w-full px-4">
-            {/* 上方装饰线 */}
-            <div className="flex items-center gap-4 w-full max-w-2xl">
+          <div className="relative z-10 flex flex-col items-center gap-3 md:gap-6 w-full px-4">
+            {/* 上方装饰线 - 仅桌面 */}
+            <div className="hidden md:flex items-center gap-4 w-full max-w-2xl">
               <div className="flex-1 h-px bg-gradient-to-r from-transparent via-outline-variant/20 to-transparent" />
             </div>
 
             {/* 模糊文字 - 动态模糊 */}
             <h2
-              className="text-mask-bg text-[15vw] xl:text-[12rem] font-display italic font-bold tracking-tight leading-none m-0 p-0 w-full text-center"
+              className="text-mask-bg text-[20vw] md:text-[15vw] xl:text-[12rem] font-display italic font-bold tracking-tight leading-none m-0 p-0 w-full text-center"
               style={{
                 backgroundImage: `url('${pageData.vision.image}')`,
                 backgroundSize: '120%',
@@ -495,9 +495,9 @@ export default function ShowcasePage() {
             </h2>
 
             {/* 下方副标题 + 装饰线 */}
-            <div className="flex items-center gap-4 w-full max-w-xl">
+            <div className="flex items-center gap-3 md:gap-4 w-full max-w-xl">
               <div className="flex-1 h-px bg-outline-variant/15" />
-              <span className="text-[10px] md:text-xs font-mono tracking-[0.25em] uppercase text-on-surface-variant/30 whitespace-nowrap">
+              <span className="text-[8px] md:text-xs font-mono tracking-[0.2em] md:tracking-[0.25em] uppercase text-on-surface-variant/30 whitespace-nowrap">
                 Seeing beyond the surface
               </span>
               <div className="flex-1 h-px bg-outline-variant/15" />
