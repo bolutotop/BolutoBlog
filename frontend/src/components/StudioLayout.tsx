@@ -234,21 +234,22 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
         <AnimatePresence>
           {showTopBtn && !isBlogPostPage && (
             <motion.button
-              initial={{ opacity: 0, scale: 0, rotate: -90 }}
+              // 1. 优化入场动画：把原来的旋转 (-90度) 改为平滑的从下往上升起，视觉上更稳重
+              initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              exit={{ opacity: 0, scale: 0, rotate: 90 }}
+              exit={{ opacity: 0, scale: 0.5, rotate: 90 }}
               transition={{ type: 'spring', stiffness: 260, damping: 20 }}
 
               drag
-              dragConstraints={constraintsRef}
+              // 2. 🚀 核心修复：移除 constraintsRef，改为固定的像素活动范围
+              // 这允许按钮在原地附近被拖拽把玩，但绝对不会因为页面排版变化而乱飞
+              dragConstraints={{ top: -100, bottom: 100, left: -100, right: 100 }}
               dragElastic={0.1}
               dragMomentum={false}
 
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-
               onClick={scrollToTop}
-
               className="fixed bottom-8 right-6 md:bottom-23 md:right-12 z-[9990] w-12 h-12 bg-[var(--sc-inverse-bg)] border-2 border-[var(--sc-inverse-bg)] text-[var(--sc-inverse-text)] flex items-center justify-center cursor-pointer shadow-2xl group overflow-hidden touch-none"
               aria-label="Scroll to top"
             >
