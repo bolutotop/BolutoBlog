@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { siteConfig } from '@/config/site';
 
 interface MobileMenuProps {
@@ -13,7 +13,22 @@ interface MobileMenuProps {
   categories: string[];
   showAllCats: boolean;
   setShowAllCats: React.Dispatch<React.SetStateAction<boolean>>;
+  navItems: Array<{ name: string; href: string }>;
 }
+
+// 交错动画配置，强制声明为 Variants 类型以修复 TS 报错
+const staggerContainer: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 }
+  }
+};
+
+const staggerItem: Variants = {
+  hidden: { opacity: 0, x: 20 },
+  show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+};
 
 export default function MobileMenu({
   isMobileMenuOpen,
@@ -21,16 +36,14 @@ export default function MobileMenu({
   dateInfo,
   categories,
   showAllCats,
-  setShowAllCats
+  setShowAllCats,
+  navItems
 }: MobileMenuProps) {
   return (
-    // AnimatePresence 负责监听内部组件的卸载，并在完全卸载前执行 exit 动画
     <AnimatePresence>
       {isMobileMenuOpen && (
         <>
-          {/* ========================================= */}
           {/* 1. 模糊黑纱背景 */}
-          {/* ========================================= */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -40,19 +53,13 @@ export default function MobileMenu({
             onClick={() => setIsMobileMenuOpen(false)}
           />
 
-          {/* ========================================= */}
-          {/* 2. 右侧滑出抽屉 */}
-          {/* ========================================= */}
+          {/* 2. 右侧滑出抽屉 (已缩减 max-w 解决留白问题) */}
           <motion.div
-            // 初始状态：在屏幕右侧外
             initial={{ x: '100%' }}
-            // 动画状态：回到原位
             animate={{ x: 0 }}
-            // 退出状态：滑回屏幕右侧外
             exit={{ x: '100%' }}
-            // 使用 spring 弹簧动画，手感更现代、更顺滑
             transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-            className="fixed top-0 right-0 bottom-0 h-full w-[85vw] max-w-[380px] bg-[var(--sc-bg)] z-[70] xl:hidden flex flex-col pt-24 pb-12 px-6 overflow-y-auto sc-border border-l shadow-2xl"
+            className="fixed top-0 right-0 bottom-0 h-full w-[85vw] max-w-[320px] bg-[var(--sc-bg)] z-[70] xl:hidden flex flex-col pt-24 pb-12 px-6 overflow-y-auto sc-border border-l shadow-2xl"
           >
 
             {/* 右上角关闭按钮 */}
@@ -91,6 +98,37 @@ export default function MobileMenu({
                   </div>
                 </div>
               </div>
+
+              {/* 核心导航栏目 */}
+              <motion.nav
+                variants={staggerContainer}
+                initial="hidden"
+                animate="show"
+                // 🟢 调整 1：将 gap-5 改为 gap-3，收缩整体列表的垂直间距
+                className="flex flex-col gap-3 sc-border border-t pt-6"
+              >
+                <div className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2">
+                  系统索引 / Index
+                </div>
+                {navItems.map((item) => (
+                  <motion.div key={item.href} variants={staggerItem}>
+                    <Link
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      // 🟢 调整 2：将 py-2 改为 py-1，进一步压缩单行的占位高度
+                      className="flex items-center justify-between py-1 active:opacity-50 transition-opacity"
+                    >
+                      {/* 🟢 调整 3：将 text-3xl 改为 text-2xl (字号从 30px 缩小至 24px) */}
+                      <span className="text-2xl font-black uppercase tracking-widest">
+                        {item.name}
+                      </span>
+                      <span className="font-mono text-xs opacity-30 tracking-widest">
+                        [ {item.href === '/' ? 'INDEX' : item.href.substring(1).toUpperCase()} ]
+                      </span>
+                    </Link>
+                  </motion.div>
+                ))}
+              </motion.nav>
 
               {/* 分类导航 */}
               <div className="mt-2 sc-border border-t pt-6">

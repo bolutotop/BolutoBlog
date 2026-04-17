@@ -16,8 +16,8 @@ interface HeaderProps {
   setShowAllCats: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function Header({ 
-  isMobileMenuOpen, 
+export default function Header({
+  isMobileMenuOpen,
   setIsMobileMenuOpen,
   dateInfo,
   categories,
@@ -36,12 +36,12 @@ export default function Header({
   return (
     <>
       <header className="fixed top-0 left-0 w-full px-5 py-3 md:px-10 z-50 flex justify-between items-center sc-border border-b backdrop-blur-md bg-[var(--sc-bg)]/80 transition-colors duration-700 pointer-events-none animate-header-layout">
-        
+
         {/* ================================================= */}
         {/* 🚀 1. 切换至 Option C: 硬核档案感 (Space Mono) */}
         {/* ================================================= */}
-        <Link 
-          href="/" 
+        <Link
+          href="/"
           onMouseEnter={() => setIsLogoHovered(true)}
           onMouseLeave={() => setIsLogoHovered(false)}
           className="group flex flex-col pointer-events-auto relative z-50 shrink-0"
@@ -54,15 +54,15 @@ export default function Header({
             <span className="text-xl md:text-2xl uppercase">
               ZHIHUI
             </span>
-            
+
             {/* 状态指示：改为绿色的 Diagnostic 诊断块 */}
-            <motion.div 
-              animate={{ 
+            <motion.div
+              animate={{
                 opacity: [0.4, 1, 0.4],
                 scale: isLogoHovered ? [1.1, 1, 1.1] : 1
               }}
-              transition={{ 
-                duration: isLogoHovered ? 0.8 : 2.5, 
+              transition={{
+                duration: isLogoHovered ? 0.8 : 2.5,
                 repeat: Infinity,
                 ease: "linear"
               }}
@@ -72,7 +72,7 @@ export default function Header({
             {/* 悬停时的绿色光标闪烁效果 */}
             <AnimatePresence>
               {isLogoHovered && (
-                <motion.span 
+                <motion.span
                   initial={{ opacity: 0 }}
                   animate={{ opacity: [0, 1, 0] }}
                   transition={{ duration: 0.6, repeat: Infinity }}
@@ -84,28 +84,28 @@ export default function Header({
             </AnimatePresence>
           </div>
         </Link>
-        
+
         <div className="flex items-center gap-6 md:gap-14 pointer-events-auto relative z-50">
-          
+
           {/* ================================================= */}
           {/* 🚀 中间：搜索框组件 - 保持原样不改动逻辑 */}
           {/* ================================================= */}
-          <SearchWidget 
-            inputRadius="rounded-full" 
-            dropdownRadius="rounded-2xl" 
-            animationSpeed="duration-500" 
+          <SearchWidget
+            inputRadius="rounded-full"
+            dropdownRadius="rounded-2xl"
+            animationSpeed="duration-500"
           />
 
           {/* ================================================= */}
-          {/* 🚀 2. 右侧导航：滑动胶囊交互 */}
+          {/* 🚀 2. 右侧导航：滑动胶囊交互 (增加 hidden xl:flex 移动端隐藏) */}
           {/* ================================================= */}
-          <nav 
+          <nav
             onMouseLeave={() => setHoveredIdx(null)}
-            className="relative flex items-center gap-1 md:gap-3"
+            className="hidden xl:flex relative items-center gap-1 md:gap-3"
           >
             {navItems.map((item, idx) => (
-              <Link 
-                key={item.href} 
+              <Link
+                key={item.href}
                 href={item.href}
                 onMouseEnter={() => setHoveredIdx(idx)}
                 className="group relative px-3 py-1.5 flex items-center justify-center font-[var(--font-inter)]"
@@ -135,7 +135,7 @@ export default function Header({
           </nav>
 
           {/* 3. 移动端汉堡菜单 */}
-          <button 
+          <button
             className="xl:hidden w-6 h-6 flex flex-col justify-center items-center group ml-1 shrink-0"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle Menu"
@@ -147,13 +147,14 @@ export default function Header({
         </div>
       </header>
 
-      <MobileMenu 
+      <MobileMenu
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
         dateInfo={dateInfo}
         categories={categories}
         showAllCats={showAllCats}
         setShowAllCats={setShowAllCats}
+        navItems={navItems}
       />
     </>
   );
