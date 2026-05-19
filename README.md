@@ -220,11 +220,14 @@ sudo journalctl -u myprogram -f
 ```bash
 cd /var/www/BolutoBlog/isolate
 
-# 编译
-make
+# 编译（只编译可执行文件，跳过 man 文档，避免 a2x 缺失报错）
+make isolate isolate-cg-keeper
 
 # 安装到系统（需要 root）
 make install
+
+# 如果想要完整安装包括 man page，先安装 asciidoc：
+# apt install -y asciidoc && make && make install
 
 # 验证
 isolate --version
