@@ -27,6 +27,7 @@ export default async function BlogPostPage({
   // 3. 格式化数据，传递给客户端组件
   const formattedPost = {
     id: post.id,
+    slug: post.slug,
     title: post.title,
     category: post.category || 'Uncategorized',
     date: post.createdAt.toLocaleDateString('en-US', {

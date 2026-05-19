@@ -13,7 +13,7 @@ export default function DeleteButton({ id, title }: { id: string, title: string 
     startTransition(async () => {
       const result = await deletePostAction(id);
       if (!result.success) {
-        alert(result.message);
+        alert('message' in result ? result.message : '删除失败，请重试');
       }
     });
   };

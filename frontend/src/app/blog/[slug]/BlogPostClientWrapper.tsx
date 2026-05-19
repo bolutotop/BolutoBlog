@@ -48,6 +48,7 @@ const SplitText = ({ text, className = "" }: { text: string, className?: string 
 interface BlogPostProps {
   post: {
     id: string;
+    slug: string;
     title: string;
     category: string;
     date: string;
@@ -444,7 +445,7 @@ const blockEvent = (e: Event) => {
                 {post.title}
               </h3>
               <div className="text-xs font-mono opacity-50 break-all select-all selection:bg-[var(--sc-text)] selection:text-[var(--sc-bg)]">
-                https://yourdomain.com/blog/{post.slug || 'post-id'}
+                https://yuehhhh.top/blog/{post.slug || 'post-id'}
               </div>
             </div>
 
