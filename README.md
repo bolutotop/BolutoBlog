@@ -1,246 +1,603 @@
-# 1. 同步服务器的图片到本地 uploads 目录
-# 语法: rsync -avz <服务器用户名>@<服务器IP>:<服务器项目绝对路径>/uploads/ <本地项目绝对路径>/uploads/
-rsync -avz root@你的服务器IP:/var/www/BolutoBlog/frontend/uploads/ ./uploads/
+# BolutoBlog 服务器部署指南
 
-# 2. 同步服务器的数据库到本地 prisma 目录
-rsync -avz root@你的服务器IP:/var/www/BolutoBlog/frontend/prisma/dev.db ./prisma/dev.db
+> **系统要求**：Debian 12 (Bookworm) | **域名**：yuehhhh.top
 
-太棒了！将项目正式推向生产环境（Production）是一个激动人心的里程碑。要让你的系统在公网服务器上安全、稳定地运行，我们需要对现有的开发配置进行一次“全面升格”。
+---
 
-以下是上线前必须修改和确认的核心清单，主要集中在**环境变量**、**第三方授权**和**服务器安全防护**这三个方面：
+## 项目架构
 
-### 1. 环境变量与安全密钥 (`.env`)
-这是上线最关键的一步，所有的本地测试地址都必须替换为真实的公网域名。
+| 目录 | 服务 | 端口 | 说明 |
+|------|------|------|------|
+| `frontend/` | Next.js 博客主体 | 3000（内部） | PM2 守护，Nginx 反代 |
+| `backend/` | C++ WebSocket 判题后端 | 8080（内部） | PM2 守护，Nginx 反代 |
+| `isolate/` | Linux 代码沙箱 | — | 系统级安装，由后端调用 |
 
-* **更新 `AUTH_URL`**：
-    将局域网 IP 改为你的正式域名，例如：
-    `AUTH_URL=https://yourdomain.com`
-* **重新生成 `AUTH_SECRET`**：
-    绝对不能用本地随便敲的字符串。在服务器终端运行 `openssl rand -base64 32`，生成一串全新的高强度密钥填进去。这是保护你 Cookie 不被伪造的底线。
-* **确认 `ADMIN_EMAIL`**：
-    再次核对你的管理员邮箱是否拼写正确，这是你后台唯一的通行证。
+> **对外只暴露 80 / 443 端口**，3000 和 8080 均只对 localhost 开放。
 
-### 2. GitHub OAuth 后台配置
-GitHub 必须知道你的正式域名，否则授权回调会彻底失败。
+---
 
-前往 GitHub -> Settings -> Developer Settings -> OAuth Apps，找到你的应用：
-* **Homepage URL** 改为：`https://yourdomain.com`
-* **Authorization callback URL** 改为：`https://yourdomain.com/api/auth/callback/github`
-
-### 3. 数据库的迁移与持久化
-虽然 SQLite 作为个人博客的数据存储完全够用，但在生产环境中需要注意文件路径。
-
-* 确保 `DATABASE_URL` 指向一个安全且会被定期备份的路径（比如 `file:./production.db`）。
-* 在服务器上拉取代码后，记得运行 `npx prisma generate` 生成客户端，并使用 `npx prisma db push` 或 `npx prisma migrate deploy` 初始化表结构。
-
-### 4. Nginx 反向代理与端口隐藏
-正式上线时，我们通常不会让 Next.js 直接暴露在 80 或 443 端口，而是让 Nginx 挡在最前面。
-
-* **Nginx 配置**：将请求代理到 Next.js 默认运行的 `localhost:3000`。
-* **配置 HTTPS**：使用 Certbot 为 Nginx 配置免费的 Let's Encrypt SSL 证书。Auth.js 在生产环境中强制要求 HTTPS，否则 Cookie 无法安全写入，导致一直让你重新登录。
-
-### 5. 进程守护与构建
-千万不要在服务器上用 `npm run dev` 来运行！
-
-* **生产构建**：在服务器上确保你使用的是熟悉的 Node.js 版本（比如 22.18.0），然后执行 `npm run build`。Next.js 会对所有页面进行极致的性能优化和静态化。
-* **进程守护**：使用 PM2 来启动项目：`pm2 start npm --name "blog-frontend" -- start`。这样即使服务器重启或程序崩溃，PM2 也会自动帮你把博客拉起来。
-
-### 6. 服务器基础防火墙 (极度重要)
-公网环境充满了各种自动化扫描脚本，服务器的端口防护必须做到滴水不漏。
-
-* 配置防火墙（如 UFW 或云服务商的安全组）。
-* **严格实行白名单制**：只放行 `80` (HTTP)、`443` (HTTPS) 和你自定义的 SSH 端口。
-* **绝对不要暴露 3000 端口**：让 Next.js 的 3000 端口仅限服务器内部的 `127.0.0.1` 访问，所有的外部流量必须经过 Nginx 过滤。
-
-
-### 第一件套：PM2 进程守护配置
-
-PM2 可以确保你的博客在遇到异常崩溃或者服务器重启时，能够自动“满血复活”。
-
-**1. 在服务器的项目根目录下，新建一个 `ecosystem.config.js` 文件：**
-
-```javascript
-module.exports = {
-  apps: [
-    {
-      name: "BolutoBlog", // 你的进程名称
-      script: "npm",
-      args: "start",
-      instances: 1, // 对于小型 VPS，单实例就足够了；如果是多核高配，可以写 "max" 开启集群模式
-      autorestart: true, // 崩溃自动重启
-      watch: false, // 生产环境千万不要开启 watch，否则一点风吹草动都会重启
-      max_memory_restart: "1G", // 内存泄漏保护：超过 1G 自动重启
-      env: {
-        NODE_ENV: "production",
-        PORT: 3000, // 仅在服务器内部监听 3000
-      },
-    },
-  ],
-};
-```
-
-**2. 启动与保存命令：**
-在服务器终端（确保你已经执行过 `npm run build` 并且安装了 PM2）运行以下指令：
+## 第一步：系统基础软件安装
 
 ```bash
-# 安装 PM2 (如果还没装的话)
-npm install pm2 -g
+# 以 root 身份登录后执行，Debian 12 默认没有 sudo
+apt update && apt upgrade -y
+apt install -y sudo curl git wget build-essential cmake ninja-build \
+  pkg-config libcap-dev libsystemd-dev \
+  nginx certbot python3-certbot-nginx \
+  ufw unzip
+```
 
-# 启动你的博客进程
-pm2 start ecosystem.config.js
+### 安装 Node.js 22 (LTS)
 
-# 将当前 PM2 进程列表保存，并设置为开机自启
-pm2 save
-pm2 startup
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+apt install -y nodejs
+node -v    # 应显示 v22.x
+npm -v
+npm install -g pm2
+```
+
+### 安装 CMake 3.20+（Debian 12 自带版本可能过低）
+
+```bash
+# 先检查系统自带版本
+cmake --version
+
+# 如果低于 3.20，通过官方脚本安装最新版
+apt remove -y cmake
+curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc \
+  | gpg --dearmor -o /usr/share/keyrings/kitware-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] \
+  https://apt.kitware.com/ubuntu/ focal main" \
+  > /etc/apt/sources.list.d/kitware.list
+# Debian 12 对应 Ubuntu focal，兼容性良好
+apt update
+apt install -y cmake
+
+cmake --version    # 应显示 3.20+
+```
+
+### 安装 Boost 1.86（从源码编译，Debian 12 仓库版本太旧）
+
+> 编译约需 10-15 分钟，请耐心等待。
+
+```bash
+cd /tmp
+
+# 下载 Boost 1.86 源码
+wget https://archives.boost.io/release/1.86.0/source/boost_1_86_0.tar.gz
+tar -xzf boost_1_86_0.tar.gz
+cd boost_1_86_0
+
+# 配置：只编译项目需要的组件 (system, thread, json)
+./bootstrap.sh --prefix=/usr/local --with-libraries=system,thread,json
+
+# 编译并安装（使用所有 CPU 核心加速）
+./b2 install -j$(nproc) variant=release link=shared threading=multi
+
+# 更新动态链接库缓存
+ldconfig
+
+# 验证安装
+ls /usr/local/lib/libboost_system*    # 应该能看到 .so 文件
 ```
 
 ---
 
-### 第二件套：Nginx 反向代理配置
+## 第二步：编译安装 isolate 沙箱
 
-Nginx 就像是你的安保大闸，它站在 80 和 443 端口收发外部流量，然后把干净的请求秘密转发给内部的 3000 端口。
+```bash
+cd /var/www   # 或者你的工作目录
+# 稍后拉项目时 isolate 已包含在 BolutoBlog/isolate/ 目录中
+# 这里先继续，第五步会编译它
+```
 
-**1. 在服务器上创建 Nginx 配置文件：**
-通常在 Ubuntu/Debian 系统中，路径是 `/etc/nginx/sites-available/bolutoblog`。填入以下配置：
+---
+
+## 第三步：拉取项目代码
+
+```bash
+mkdir -p /var/www
+cd /var/www
+git clone https://github.com/bolutotop/BolutoBlog.git
+cd BolutoBlog
+```
+
+---
+
+## 第四步：配置前端环境变量
+
+```bash
+cd /var/www/BolutoBlog/frontend
+nano .env
+```
+
+确认 `.env` 内容如下（重点修改标了 ⚠️）：
+
+```env
+DATABASE_URL="file:./prisma/production.db"
+
+AUTH_URL=https://yuehhhh.top
+AUTH_TRUST_HOST=true
+
+AUTH_GITHUB_ID=Ov23liIsMu9kQ6p0jR5x
+AUTH_GITHUB_SECRET=d2625016f3e7ee05b3699c71d5473e0981484290
+
+# ⚠️ 必须重新生成，在服务器上执行：openssl rand -base64 32
+AUTH_SECRET=<粘贴生成的新密钥>
+
+ADMIN_EMAIL=t550473838@gmail.com
+```
+
+生成新密钥：
+
+```bash
+openssl rand -base64 32
+```
+
+---
+
+## 第五步：安装前端依赖 & 构建
+
+```bash
+cd /var/www/BolutoBlog/frontend
+
+npm install --legacy-peer-deps
+
+# 生成 Prisma 客户端
+npx prisma generate
+
+# 初始化数据库（首次部署）
+npx prisma db push
+
+# 生产构建（会自动进行类型检查，约 1-2 分钟）
+npm run build
+```
+
+---
+
+## 第六步：编译 C++ WebSocket 后端
+
+```bash
+cd /var/www/BolutoBlog/backend
+mkdir -p build && cd build
+
+# 指定 Boost 安装路径（从源码编译的在 /usr/local）
+cmake .. \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBOOST_ROOT=/usr/local \
+  -DBoost_NO_SYSTEM_PATHS=ON
+
+make -j$(nproc)
+
+# 验证二进制文件生成
+ls -la BlogPlaygroundDaemon
+
+#创建进程管理服务文件
+nano /etc/systemd/system/myprogram.service
+
+```
+写入以下内容（根据你的实际情况修改路径）：
+```
+[Unit]
+Description=My C++ Backend Service
+After=network.target
+
+[Service]
+Type=simple
+# 你的程序所在的目录
+WorkingDirectory=/root/my_cpp_project
+# 运行程序的命令（必须写绝对路径）
+ExecStart=/root/my_cpp_project/my_program
+# 如果程序崩溃，自动重启
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+# 重新加载 systemd 配置，让系统识别新服务
+sudo systemctl daemon-reload
+
+# 启动程序
+sudo systemctl start myprogram
+
+# 设置开机自启
+sudo systemctl enable myprogram
+
+# 查看程序当前运行状态（是否在跑，有没有报错）
+sudo systemctl status myprogram
+
+# 实时查看程序的输出日志（相当于 tail -f）
+sudo journalctl -u myprogram -f
+```
+---
+
+## 第七步：编译安装 isolate 沙箱
+
+```bash
+cd /var/www/BolutoBlog/isolate
+
+# 编译
+make
+
+# 安装到系统（需要 root）
+make install
+
+# 验证
+isolate --version
+
+# 首次初始化沙箱环境（每次服务器重启后需要重新执行）
+isolate --cg --init --box-id=0
+```
+
+配置开机自动初始化沙箱（创建 systemd 服务）：
+
+```bash
+cat > /etc/systemd/system/isolate-init.service << 'EOF'
+[Unit]
+Description=Initialize isolate sandbox on boot
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'for i in $(seq 0 999); do isolate --cg -b $i --cleanup > /dev/null 2>&1; done'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable isolate-init.service
+```
+
+---
+
+## 第八步：PM2 启动两个服务
+
+### 8.1 创建统一的 PM2 配置文件
+
+在项目根目录创建 `ecosystem.config.js`：
+
+```bash
+cat > /var/www/BolutoBlog/ecosystem.config.js << 'EOF'
+module.exports = {
+  apps: [
+    {
+      name: "BolutoBlog-Frontend",
+      script: "npm",
+      args: "start",
+      cwd: "/var/www/BolutoBlog/frontend",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "1G",
+      env: {
+        NODE_ENV: "production",
+        PORT: 3000,
+      },
+    },
+    {
+      name: "BolutoBlog-Backend",
+      script: "/var/www/BolutoBlog/backend/build/BlogPlaygroundDaemon",
+      cwd: "/var/www/BolutoBlog/backend",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "512M",
+      env: {
+        LD_LIBRARY_PATH: "/usr/local/lib",  // Boost 动态库路径
+      },
+    },
+  ],
+};
+EOF
+```
+
+### 8.2 启动并保存
+
+```bash
+cd /var/www/BolutoBlog
+pm2 start ecosystem.config.js
+
+# 查看运行状态
+pm2 status
+
+# 开机自启
+pm2 save
+pm2 startup
+# 按照输出的提示，复制并执行那条 sudo env ... 命令
+```
+
+### 8.3 端口冲突排查
+
+如果启动报错，先检查端口是否被占用：
+
+```bash
+# 检查 3000 端口是否被占用
+ss -tlnp | grep 3000
+
+# 检查 8080 端口是否被占用
+ss -tlnp | grep 8080
+
+# 查看占用进程并强制结束
+fuser -k 3000/tcp
+fuser -k 8080/tcp
+
+# 如果是旧的 PM2 进程残留
+pm2 kill
+pm2 start ecosystem.config.js
+```
+
+---
+
+## 第九步：配置 Nginx 反向代理
+
+```bash
+nano /etc/nginx/sites-available/yuehhhh
+```
+
+粘贴以下内容：
 
 ```nginx
-# 将所有 HTTP (80) 流量强制重定向到 HTTPS (443)
+# HTTP → HTTPS 强制跳转
 server {
     listen 80;
-    server_name yourdomain.com www.yourdomain.com; # 替换成你的真实域名
-    
+    listen [::]:80;
+    server_name yuehhhh.top www.yuehhhh.top;
     return 301 https://$host$request_uri;
 }
 
-# 核心 HTTPS 服务器块
+# HTTPS 主服务
 server {
     listen 443 ssl http2;
-    server_name yourdomain.com www.yourdomain.com; # 替换成你的真实域名
+    listen [::]:443 ssl http2;
+    server_name yuehhhh.top www.yuehhhh.top;
 
-    # 证书路径 (一开始可以先注释掉，等用 Certbot 申请证书时它会自动帮你填好)
-    # ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    # ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+    # 证书路径（Certbot 申请后自动填入，先注释）
+    # ssl_certificate /etc/letsencrypt/live/yuehhhh.top/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/yuehhhh.top/privkey.pem;
 
-    # 提高 SSL 安全性的配置
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
 
-    # 核心：反向代理到 Next.js 内部端口
+    # 图片上传大小限制
+    client_max_body_size 20M;
+
+    # ── 前端 Next.js ──────────────────────────
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
-        
-        # 处理 WebSocket 和 Next.js 的特有请求
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
-        
-        # 将用户的真实 IP 传递给你的 Next.js 后台
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # 静态文件缓存优化 (可选：让 Nginx 直接处理 _next/static，减轻 Node.js 压力)
+    # ── 后端 WebSocket (代码执行) ──────────────
+    location /ws/ {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 60s;
+        proxy_send_timeout 60s;
+    }
+
+    # ── Next.js 静态资源长效缓存 ──────────────
     location /_next/static/ {
-        alias /path/to/your/project/.next/static/; # 替换为你的实际绝对路径
+        alias /var/www/BolutoBlog/frontend/.next/static/;
         expires 365d;
+        add_header Cache-Control "public, immutable";
         access_log off;
+    }
+
+    # ── 用户上传图片 ──────────────────────────
+    location /uploads/ {
+        alias /var/www/BolutoBlog/frontend/public/uploads/;
+        expires 30d;
+        add_header Cache-Control "public";
     }
 }
 ```
 
-**2. 激活配置并重启 Nginx：**
+激活并测试：
 
 ```bash
-# 创建软链接激活站点
-sudo ln -s /etc/nginx/sites-available/bolutoblog /etc/nginx/sites-enabled/
+# 激活站点配置
+ln -s /etc/nginx/sites-available/yuehhhh /etc/nginx/sites-enabled/
 
-# 测试配置有没有语法错误
-sudo nginx -t
+# 删除默认站点（避免冲突）
+rm -f /etc/nginx/sites-enabled/default
 
-# 重启 Nginx 生效
-sudo systemctl reload nginx
+# 测试配置语法
+nginx -t
+
+# 此时先只用 HTTP 模式跑（443 的 ssl 块先注释掉或注释证书两行）
+# 等 Certbot 申请完证书再启用
+systemctl reload nginx
+```
+
+### Nginx 端口冲突排查
+
+```bash
+# 检查 80/443 是否被其他服务占用
+ss -tlnp | grep ':80\|:443'
+
+# 常见冲突：Apache2 预装
+systemctl stop apache2
+systemctl disable apache2
+
+# 重新启动 Nginx
+systemctl start nginx
+systemctl enable nginx
 ```
 
 ---
 
-### 🛡️ 最后的收尾：收紧防火墙
+## 第十步：申请 SSL 证书
 
-既然 Nginx 已经接管了流量，请务必在服务器上关掉外部对 3000 端口的直接访问，避免被机器脚本扫描：
-
-```bash
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw allow 22/tcp  # 千万别忘了放行 SSH！
-sudo ufw deny 3000/tcp # 封死 3000 端口的外网访问
-sudo ufw enable
-```
-
-⚠️ **准备工作（极其重要）：**
-在敲入以下命令之前，请务必确保你已经在购买域名的服务商（如阿里云、腾讯云、Cloudflare）那里，**将你的域名（比如 `yourdomain.com` 和 `www.yourdomain.com`）的 A 记录解析到了你这台服务器的公网 IP 上**。如果域名还没生效，Certbot 会直接报错。
-
-确认解析生效后，跟着我执行这四个步骤：
-
-### 第一步：安装 Certbot 和 Nginx 插件
-在你的 Ubuntu/Debian 服务器终端运行：
+> ⚠️ 执行前确认域名 A 记录已解析到服务器 IP：`ping yuehhhh.top`
 
 ```bash
-# 更新软件包列表
-sudo apt update
+# 一键申请，自动修改 Nginx 配置
+certbot --nginx -d yuehhhh.top -d www.yuehhhh.top
 
-# 安装 Certbot 及其 Nginx 专属插件
-sudo apt install certbot python3-certbot-nginx -y
+# 测试自动续期
+certbot renew --dry-run
 ```
 
-### 第二步：一键申请并配置证书（见证奇迹）
-Certbot 极其聪明，加上 `--nginx` 参数后，它会自动去读取我们之前写好的 Nginx 配置文件，自动申请证书，并**自动帮你修改 Nginx 配置文件**来开启 HTTPS。
-
-把下面的域名替换成你真实的域名，然后运行：
+Certbot 完成后，重新加载 Nginx：
 
 ```bash
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+nginx -t && systemctl reload nginx
 ```
-
-运行后，终端会跳出几个交互式问题：
-1. **Enter email address:** 输入你的常用邮箱（用于接收证书即将过期或安全漏洞的紧急通知）。
-2. **Please read the Terms of Service:** 输入 `Y` 同意服务条款。
-3. **Share your email...:** 是否分享邮箱给电子前哨基金会，选 `Y` 或 `N` 都可以。
-4. **Choose whether or not to redirect HTTP traffic to HTTPS:** （如果弹出这个选项）**强烈建议选择 `2` (Redirect)**。这会让所有尝试用 HTTP（80端口）访问你网站的人，被强行跳转到安全的 HTTPS（443端口）。
-
-如果一切顺利，你会看到绿色的 **`Congratulations! You have successfully enabled https://yourdomain.com`**。
-
-### 第三步：测试自动续期 (Set and Forget)
-Let's Encrypt 的免费证书有效期是 90 天，但 Certbot 在安装时已经自动帮你往系统里塞了一个定时任务（Cron job / Systemd timer），它会在证书过期前自动帮你续期。
-
-我们可以用一条命令“演习”一下续期过程，看看有没有报错：
-
-```bash
-sudo certbot renew --dry-run
-```
-如果输出包含 `Congratulations, all simulated renewals succeeded`，那么恭喜你，你的网站证书将获得永久的自动生命，再也不用管它了！
 
 ---
 
-### 🚀 第四步：最后的环境变量闭环（别忘了！）
+## 第十一步：配置防火墙
 
-既然你的网站现在已经穿上了 HTTPS 的防弹衣，别忘了告诉你的 Next.js 和 GitHub！
+```bash
+# 放行必要端口
+ufw allow 22/tcp     # SSH（务必放行！否则会锁死服务器）
+ufw allow 80/tcp
+ufw allow 443/tcp
 
-1. **修改服务器上的 `.env` 文件：**
-   将你的地址更新为带有 `https` 的正式域名：
-   ```env
-   AUTH_URL=https://yourdomain.com
-   # 既然已经有了真实的域名，可以把之前内网测试用的 AUTH_TRUST_HOST 删掉了
-   ```
+# 封死内部端口，禁止外网直接访问
+ufw deny 3000/tcp
+ufw deny 8080/tcp
 
-2. **重启 PM2 让新配置生效：**
-   ```bash
-   pm2 restart BolutoBlog
-   ```
+# 启用防火墙
+ufw enable
 
-3. **修改 GitHub OAuth App：**
-   去 GitHub 后台，把 Homepage URL 和 Callback URL 里的 `http://192.168...` 全部换成你闪亮的 `https://yourdomain.com`。
+# 查看规则
+ufw status verbose
+```
 
-大功告成！现在，在浏览器里输入你的域名，看看那个漂亮的小锁，然后顺滑地登录你的管理员后台吧。如果中间遇到任何 Nginx 报错或者 Certbot 失败的提示，随时把日志甩给我！
+---
+
+## 第十二步：更新 GitHub OAuth 回调地址
+
+前往 [GitHub Developer Settings → OAuth Apps](https://github.com/settings/developers) 修改：
+
+| 字段 | 值 |
+|------|----|
+| Homepage URL | `https://yuehhhh.top` |
+| Authorization callback URL | `https://yuehhhh.top/api/auth/callback/github` |
+
+---
+
+## 验证部署
+
+```bash
+# 检查进程状态
+pm2 status
+
+# 查看前端日志
+pm2 logs BolutoBlog-Frontend --lines 50
+
+# 查看后端日志
+pm2 logs BolutoBlog-Backend --lines 50
+
+# 测试网站响应
+curl -I https://yuehhhh.top
+
+# 检查 Nginx 状态
+systemctl status nginx
+```
+
+---
+
+## 日常运维
+
+### 更新代码
+
+```bash
+cd /var/www/BolutoBlog
+git pull
+
+# 前端有变更
+cd frontend
+npm install          # 依赖有变更时
+npx prisma generate  # schema 有变更时
+npx prisma db push   # schema 有变更时
+npm run build
+pm2 restart BolutoBlog-Frontend
+
+# 后端有变更
+cd ../backend/build
+make -j$(nproc)
+pm2 restart BolutoBlog-Backend
+```
+
+### 数据库备份
+
+```bash
+# 备份到本地
+cp /var/www/BolutoBlog/frontend/prisma/production.db \
+   /var/www/BolutoBlog/frontend/prisma/production.db.bak.$(date +%Y%m%d)
+```
+
+### 同步服务器文件到本地
+
+```bash
+# 同步上传的图片
+rsync -avz root@你的服务器IP:/var/www/BolutoBlog/frontend/public/uploads/ ./frontend/public/uploads/
+
+# 同步数据库
+rsync -avz root@你的服务器IP:/var/www/BolutoBlog/frontend/prisma/production.db ./frontend/prisma/dev.db
+```
+
+---
+
+## 常见问题排查
+
+### Boost 找不到
+
+```bash
+# 确认动态库存在
+ls /usr/local/lib/libboost_system*
+
+# 重新更新缓存
+ldconfig
+
+# 手动指定路径测试
+LD_LIBRARY_PATH=/usr/local/lib ./backend/build/BlogPlaygroundDaemon
+```
+
+### 端口被占用
+
+```bash
+ss -tlnp | grep '3000\|8080\|80\|443'
+fuser -k <端口>/tcp
+```
+
+### Prisma 报错
+
+```bash
+cd /var/www/BolutoBlog/frontend
+npx prisma generate
+npx prisma db push
+pm2 restart BolutoBlog-Frontend
+```
+
+### isolate 初始化失败
+
+```bash
+# 检查 cgroup 是否挂载
+mount | grep cgroup
+
+# 手动初始化单个 box
+isolate --cg --init --box-id=0
+
+# 查看详细错误
+isolate --cg --init --box-id=0 --verbose
+```
